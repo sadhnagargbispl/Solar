@@ -1,0 +1,5 @@
+E:\Sadhna Garg\GithubCore\SolarPortal\SolarPortal.Application\obj\Debug\net8.0\SolarPortal.Application.csproj.AssemblyReference.cache
+E:\Sadhna Garg\GithubCore\SolarPortal\SolarPortal.Application\obj\Debug\net8.0\SolarPortal.Application.GeneratedMSBuildEditorConfig.editorconfig
+E:\Sadhna Garg\GithubCore\SolarPortal\SolarPortal.Application\obj\Debug\net8.0\SolarPortal.Application.AssemblyInfoInputs.cache
+E:\Sadhna Garg\GithubCore\SolarPortal\SolarPortal.Application\obj\Debug\net8.0\SolarPortal.Application.AssemblyInfo.cs
+E:\Sadhna Garg\GithubCore\SolarPortal\SolarPortal.Application\obj\Debug\net8.0\SolarPortal.Application.csproj.CoreCompileInputs.cache

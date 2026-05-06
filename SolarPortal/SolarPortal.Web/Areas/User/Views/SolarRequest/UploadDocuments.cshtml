@@ -1,0 +1,95 @@
+﻿@{
+    ViewData["Title"] = "Upload Documents";
+    int requestId = ViewBag.RequestId;
+    string requestNumber = ViewBag.RequestNumber ?? "";
+}
+
+<div class="page active">
+    <div class="ph">
+        <div class="ph-bc">👤 User / <span>Upload Documents</span></div>
+        <div class="ph-title">📁 Upload KYC Documents</div>
+        <div class="ph-sub">Request @requestNumber — Upload all required documents</div>
+    </div>
+
+    @Html.AntiForgeryToken()
+
+    <div class="g2">
+        <!-- KYC Documents -->
+        <div class="card">
+            <div class="section-t">① KYC Documents</div>
+
+            @{
+                var docs = new[] {
+            ("doc-aadhar","AadharCard","🪪","Aadhar Card","PDF or Image"),
+            ("doc-pan","PANCard","💳","PAN Card","PDF or Image"),
+            ("doc-bank","BankPassbook","🏦","Bank Passbook","PDF or Image"),
+            ("doc-bill","LightBill","💡","Latest Light Bill","PDF or Image")
+            };
+            }
+
+            @foreach (var (inputId, docType, icon, label, hint) in docs)
+            {
+                <div class="fg">
+                    <label>@label <span class="req">*</span></label>
+                    <div class="upload-area" onclick="triggerFile('@inputId')">
+                        <input type="file" id="@inputId" accept="image/*,.pdf"
+                               onchange="previewDoc('@inputId','prev-@inputId','@docType.ToLower()')"
+                               style="opacity:0;position:absolute" />
+                        <div class="upload-icon">@icon</div>
+                        <div class="upload-txt">Upload @label</div>
+                        <div class="upload-hint">@hint</div>
+                    </div>
+                    <div id="prev-@inputId"></div>
+                    <div id="status-@inputId" style="font-size:11px;margin-top:4px"></div>
+                    @if (docType is "AadharCard" or "PANCard")
+                    {
+                        <div id="ocr-@docType.ToLower()" class="hidden"></div>
+                    }
+                    <button type="button" class="btn btn-s btn-sm"
+                            style="margin-top:6px"
+                            onclick="uploadDocument(@requestId, '@docType', '@inputId', 'status-@inputId')">
+                        ⬆ Upload @label
+                    </button>
+                </div>
+            }
+        </div>
+
+        <!-- Property & Other Documents -->
+        <div class="card">
+            <div class="section-t">② Property Documents</div>
+
+            <div class="fg">
+                <label>Property Document <span class="req">*</span></label>
+                <div class="upload-area" onclick="triggerFile('doc-property')">
+                    <input type="file" id="doc-property" accept="image/*,.pdf"
+                           onchange="previewSingle('doc-property','prev-property')"
+                           style="opacity:0;position:absolute" />
+                    <div class="upload-icon">🏠</div>
+                    <div class="upload-txt">Registry / Khasra / Rent agreement</div>
+                    <div class="upload-hint">PDF or Image</div>
+                </div>
+                <div id="prev-property"></div>
+                <div id="status-doc-property" style="font-size:11px;margin-top:4px"></div>
+                <button type="button" class="btn btn-s btn-sm" style="margin-top:6px"
+                        onclick="uploadDocument(@requestId, 'PropertyDocument', 'doc-property', 'status-doc-property')">
+                    ⬆ Upload Document
+                </button>
+            </div>
+
+            <div class="alert alert-s" style="margin-top:16px">
+                <span class="ai">✅</span>
+                All documents uploaded? Your application is under review.
+            </div>
+
+            <div class="btn-row">
+                <a asp-area="User" asp-controller="SolarRequest" asp-action="Index" class="btn btn-p">
+                    🏗️ View My Projects
+                </a>
+                <a asp-area="User" asp-controller="SolarRequest" asp-action="Status"
+                   asp-route-id="@requestId" class="btn btn-s">
+                    📍 Track Status
+                </a>
+            </div>
+        </div>
+    </div>
+</div>

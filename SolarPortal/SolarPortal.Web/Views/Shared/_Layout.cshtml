@@ -1,0 +1,138 @@
+﻿@using Microsoft.AspNetCore.Identity
+@using SolarPortal.Domain.Entities
+@inject UserManager<ApplicationUser> UserManager
+@inject SignInManager<ApplicationUser> SignInManager
+
+@{
+    var user = await UserManager.GetUserAsync(User);
+    var isAdmin = User.IsInRole("Admin");
+    var area = ViewContext.RouteData.Values["area"]?.ToString();
+}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] — Solar Portal</title>
+    <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&family=Noto+Sans:wght@300;400;500;600&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+    <link rel="stylesheet" href="~/css/solar-theme.css" asp-append-version="true" />
+    @await RenderSectionAsync("Styles", required: false)
+</head>
+<body>
+
+    <!-- TOP BAR -->
+    <div class="topbar">
+        <div class="brand">
+            <div class="brand-logo">☀️</div>
+            <span class="brand-name">SOLAR PORTAL</span>
+            <span class="brand-role">@(isAdmin ? "ADMIN" : "USER")</span>
+        </div>
+        <div class="top-right">
+            <div style="position:relative">
+                <button class="top-btn" id="notifBtn">
+                    🔔 <span id="notifCount" class="sb-badge red" style="display:none">0</span>
+                </button>
+            </div>
+            <span style="font-size:13px;color:var(--text2)">@user?.FullName</span>
+            <form asp-controller="Account" asp-action="Logout" method="post" style="display:inline">
+                @Html.AntiForgeryToken()
+                <button type="submit" class="top-btn">⬅ Logout</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- LAYOUT -->
+    <div class="app-layout">
+
+        <!-- SIDEBAR -->
+        <div class="sidebar">
+            @if (isAdmin)
+            {
+                <partial name="~/Views/Shared/_AdminSidebar.cshtml" />
+            }
+            else
+            {
+                <partial name="~/Views/Shared/_UserSidebar.cshtml" />
+            }
+        </div>
+
+        <!-- MAIN CONTENT -->
+        <div class="main-content">
+            @if (TempData["Success"] != null)
+            {
+                <div class="alert alert-s" style="margin:16px 16px 0">
+                    <span class="ai">✅</span> @TempData["Success"]
+                </div>
+            }
+            @if (TempData["Error"] != null)
+            {
+                <div class="alert alert-e" style="margin:16px 16px 0">
+                    <span class="ai">⚠</span> @TempData["Error"]
+                </div>
+            }
+
+            @RenderBody()
+        </div>
+    </div>
+
+    <!-- MOBILE NAV -->
+    <div class="mob-nav">
+        <div class="mob-nav-inner">
+            @if (isAdmin)
+            {
+                <div class="mni" onclick="location.href='@Url.Action("Index","Dashboard",new{area="Admin"})'">
+                    <span class="mi2">📊</span><span class="ml2">Dashboard</span>
+                </div>
+                <div class="mni" onclick="location.href='@Url.Action("Index","Projects",new{area="Admin"})'">
+                    <span class="mi2">🏗️</span><span class="ml2">Projects</span>
+                </div>
+                <div class="mni" onclick="location.href='@Url.Action("Approvals","Projects",new{area="Admin"})'">
+                    <span class="mi2">✅</span><span class="ml2">Approvals</span>
+                </div>
+                <div class="mni" onclick="location.href='@Url.Action("Index","Workers",new{area="Admin"})'">
+                    <span class="mi2">👷</span><span class="ml2">Workers</span>
+                </div>
+            }
+            else
+            {
+                <div class="mni" onclick="location.href='@Url.Action("Index","Dashboard",new{area="User"})'">
+                    <span class="mi2">📊</span><span class="ml2">Dashboard</span>
+                </div>
+                <div class="mni" onclick="location.href='@Url.Action("Index","SolarRequest",new{area="User"})'">
+                    <span class="mi2">🏗️</span><span class="ml2">Projects</span>
+                </div>
+                <div class="mni" onclick="location.href='@Url.Action("Create","SolarRequest",new{area="User"})'">
+                    <span class="mi2">➕</span><span class="ml2">New</span>
+                </div>
+                <div class="mni" onclick="location.href='@Url.Action("Index","Notifications")'">
+                    <span class="mi2">🔔</span><span class="ml2">Alerts</span>
+                </div>
+            }
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/sweetalert2/11.10.5/sweetalert2.all.min.js"></script>
+    <script src="~/js/solar-portal.js" asp-append-version="true"></script>
+    @await RenderSectionAsync("Scripts", required: false)
+
+    <script>
+        // Load notification count
+        async function loadNotifCount() {
+            try {
+                const r = await fetch('/Notifications/GetUnreadCount');
+                const d = await r.json();
+                const badge = document.getElementById('notifCount');
+                if (d.count > 0) {
+                    badge.textContent = d.count;
+                    badge.style.display = 'inline';
+                }
+            } catch {}
+        }
+        loadNotifCount();
+        setInterval(loadNotifCount, 60000);
+    </script>
+</body>
+</html>

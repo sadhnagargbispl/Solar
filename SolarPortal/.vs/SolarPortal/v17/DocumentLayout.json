@@ -1,0 +1,57 @@
+{
+  "Version": 1,
+  "WorkspaceRootPath": "E:\\Sadhna Garg\\GithubCore\\SolarPortal\\",
+  "Documents": [
+    {
+      "AbsoluteMoniker": "D:0:0:{B2EB99EF-7A75-4BB4-9923-0A9BE96181E4}|SolarPortal.Web\\SolarPortal.Web.csproj|e:\\sadhna garg\\githubcore\\solarportal\\solarportal.web\\areas\\user\\views\\dashboard\\index.cshtml||{40D31677-CBC0-4297-A9EF-89D907823A98}",
+      "RelativeMoniker": "D:0:0:{B2EB99EF-7A75-4BB4-9923-0A9BE96181E4}|SolarPortal.Web\\SolarPortal.Web.csproj|solutionrelative:solarportal.web\\areas\\user\\views\\dashboard\\index.cshtml||{40D31677-CBC0-4297-A9EF-89D907823A98}"
+    }
+  ],
+  "DocumentGroupContainers": [
+    {
+      "Orientation": 0,
+      "VerticalTabListWidth": 256,
+      "DocumentGroups": [
+        {
+          "DockedWidth": 200,
+          "SelectedChildIndex": 5,
+          "Children": [
+            {
+              "$type": "Bookmark",
+              "Name": "ST:130:0:{1fc202d4-d401-403c-9834-5b218574bb67}"
+            },
+            {
+              "$type": "Bookmark",
+              "Name": "ST:135:0:{1fc202d4-d401-403c-9834-5b218574bb67}"
+            },
+            {
+              "$type": "Bookmark",
+              "Name": "ST:132:0:{116d2292-e37d-41cd-a077-ebacac4c8cc4}"
+            },
+            {
+              "$type": "Bookmark",
+              "Name": "ST:133:0:{116d2292-e37d-41cd-a077-ebacac4c8cc4}"
+            },
+            {
+              "$type": "Bookmark",
+              "Name": "ST:134:0:{116d2292-e37d-41cd-a077-ebacac4c8cc4}"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 0,
+              "Title": "Index.cshtml",
+              "DocumentMoniker": "E:\\Sadhna Garg\\GithubCore\\SolarPortal\\SolarPortal.Web\\Areas\\User\\Views\\Dashboard\\Index.cshtml",
+              "RelativeDocumentMoniker": "SolarPortal.Web\\Areas\\User\\Views\\Dashboard\\Index.cshtml",
+              "ToolTip": "E:\\Sadhna Garg\\GithubCore\\SolarPortal\\SolarPortal.Web\\Areas\\User\\Views\\Dashboard\\Index.cshtml",
+              "RelativeToolTip": "SolarPortal.Web\\Areas\\User\\Views\\Dashboard\\Index.cshtml",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000759|",
+              "WhenOpened": "2026-05-06T10:52:30.583Z",
+              "EditorCaption": ""
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

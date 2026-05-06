@@ -1,0 +1,93 @@
+/* === PASTE ENTIRE <style> BLOCK FROM solar-portal-complete.html HERE === */
+/* Key variables already defined in design: */
+
+:root {
+    --sun: #F59E0B;
+    --sun2: #FDE68A;
+    --sky: #0EA5E9;
+    --sky2: #0369A1;
+    --green: #10B981;
+    --green2: #065F46;
+    --bg: #0F172A;
+    --bg2: #1E293B;
+    --bg3: #263148;
+    --bg4: #334155;
+    --surface: #1E293B;
+    --border: #334155;
+    --text: #F1F5F9;
+    --text2: #94A3B8;
+    --text3: #64748B;
+    --danger: #EF4444;
+    --warn: #F59E0B;
+    --r: 12px;
+    --shadow: 0 4px 24px rgba(0,0,0,0.5);
+}
+
+/* ... (all CSS from the HTML design — topbar, sidebar, layout, cards, forms, status badges, flow, upload, tables, tabs, etc.) */
+
+/* AUTH LAYOUT */
+.auth-wrapper {
+    min-height: 100vh;
+    background: var(--bg);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+}
+
+.auth-card {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 36px 32px;
+    width: 100%;
+    max-width: 420px;
+    box-shadow: var(--shadow);
+}
+
+.auth-logo {
+    text-align: center;
+    margin-bottom: 28px;
+}
+
+.brand-logo-lg {
+    font-size: 48px;
+    margin-bottom: 8px;
+}
+
+.auth-title {
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 28px;
+    font-weight: 700;
+    color: var(--sun);
+}
+
+.auth-sub {
+    font-size: 13px;
+    color: var(--text3);
+    margin-top: 4px;
+}
+
+.demo-creds {
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 12px;
+    margin-top: 20px;
+}
+
+.pass-toggle {
+    position: absolute;
+    right: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 14px;
+    color: var(--text3);
+}
+
+.page {
+    padding: 20px;
+}

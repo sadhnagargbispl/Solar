@@ -1,0 +1,41 @@
+﻿@{
+    var currentController = ViewContext.RouteData.Values["controller"]?.ToString();
+    var currentAction = ViewContext.RouteData.Values["action"]?.ToString();
+    string IsActive(string ctrl, string? action = null) =>
+        currentController == ctrl && (action == null || currentAction == action) ? "active" : "";
+}
+
+<div class="sb-section">
+    <div class="sb-label">User Menu</div>
+    <a class="sb-item @IsActive("Dashboard")" asp-area="User" asp-controller="Dashboard" asp-action="Index">
+        <span class="sbi">📊</span>Dashboard
+    </a>
+    <a class="sb-item @IsActive("SolarRequest","Status")" asp-area="User" asp-controller="SolarRequest" asp-action="Status">
+        <span class="sbi">📍</span>My Solar Status
+    </a>
+    <a class="sb-item @IsActive("SolarRequest","Create")" asp-area="User" asp-controller="SolarRequest" asp-action="Create">
+        <span class="sbi">➕</span>New Request
+        <span class="sb-badge">New</span>
+    </a>
+</div>
+<div class="sb-section">
+    <div class="sb-label">My Applications</div>
+    <a class="sb-item @IsActive("SolarRequest","Index")" asp-area="User" asp-controller="SolarRequest" asp-action="Index">
+        <span class="sbi">🏗️</span>My Projects
+    </a>
+    <a class="sb-item" asp-area="User" asp-controller="Account" asp-action="SolarAccount">
+        <span class="sbi">💰</span>Solar A/c
+    </a>
+    <a class="sb-item" asp-area="User" asp-controller="Commission" asp-action="Index">
+        <span class="sbi">📈</span>INC Commission
+    </a>
+</div>
+<div class="sb-section">
+    <div class="sb-label">Documents</div>
+    <a class="sb-item @IsActive("SolarRequest","UploadDocuments")" asp-area="User" asp-controller="SolarRequest" asp-action="UploadDocuments" asp-route-id="0">
+        <span class="sbi">📁</span>My Documents
+    </a>
+    <a class="sb-item @IsActive("Notifications")" asp-controller="Notifications" asp-action="Index">
+        <span class="sbi">🔔</span>Notifications
+    </a>
+</div>

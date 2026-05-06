@@ -1,0 +1,16 @@
+using SolarPortal.Domain.Common;
+
+namespace SolarPortal.Domain.Entities;
+
+public class Worker : BaseEntity
+{
+    public string Name { get; set; } = string.Empty;
+    public string MobileNumber { get; set; } = string.Empty;
+    public string? Email { get; set; }
+    public string Specialization { get; set; } = string.Empty; // Electrician, Plumber, etc.
+    public bool IsAvailable { get; set; } = true;
+    public string? City { get; set; }
+    public string? State { get; set; }
+
+    public virtual ICollection<WorkerAssignment> Assignments { get; set; } = new List<WorkerAssignment>();
+}

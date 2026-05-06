@@ -1,0 +1,126 @@
+﻿@model UserDashboardDto
+@{
+    ViewData["Title"] = "My Dashboard";
+}
+
+<div class="page active">
+    <div class="ph">
+        <div class="ph-bc">👤 User / <span>Dashboard</span></div>
+        <div class="ph-title">My Solar Dashboard</div>
+        <div class="ph-sub">Welcome back! Track your solar connection status here.</div>
+    </div>
+
+    <!-- Stats Grid -->
+    <div class="g4" style="margin-bottom:18px">
+        <div class="sc">
+            <div class="sc-label">My Projects</div>
+            <div class="sc-val gold">@Model.TotalProjects</div>
+            <div class="sc-sub">Active applications</div>
+        </div>
+        <div class="sc">
+            <div class="sc-label">Pending Approvals</div>
+            <div class="sc-val blue">@Model.PendingApprovals</div>
+            <div class="sc-sub">Awaiting admin</div>
+        </div>
+        <div class="sc">
+            <div class="sc-label">Total Paid</div>
+            <div class="sc-val green">₹@Model.TotalPaid.ToString("N0")</div>
+            <div class="sc-sub">Across all projects</div>
+        </div>
+        <div class="sc">
+            <div class="sc-label">Due Amount</div>
+            <div class="sc-val red">₹@Model.TotalDue.ToString("N0")</div>
+            <div class="sc-sub">Balance remaining</div>
+        </div>
+    </div>
+
+    <div class="g2">
+        <!-- Recent Applications -->
+        <div class="card">
+            <div class="ct"><span class="ct-dot"></span>Recent Applications</div>
+            <div class="tbl-wrap">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Type</th>
+                            <th>kV</th>
+                            <th>Stage</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var p in Model.MyProjects)
+                        {
+                            <tr>
+                                <td class="td-b">
+                                    <a asp-area="User" asp-controller="SolarRequest" asp-action="Details" asp-route-id="@p.Id"
+                                       style="color:var(--sun)">@p.RequestNumber</a>
+                                </td>
+                                <td>@p.ConnectionType</td>
+                                <td>@p.KVCapacity</td>
+                                <td>@p.CurrentStage.ToString().Replace("_", " ")</td>
+                                <td>
+                                    <span class="sts @GetStatusClass(p.ApprovalStatus)">
+                                        @p.ApprovalStatus
+                                    </span>
+                                </td>
+                            </tr>
+                        }
+                        @if (!Model.MyProjects.Any())
+                        {
+                            <tr>
+                                <td colspan="5" style="text-align:center;color:var(--text3)">
+                                    No applications yet.
+                                    <a asp-area="User" asp-controller="SolarRequest" asp-action="Create"
+                                       style="color:var(--sun)">Apply now →</a>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+            <div class="btn-row">
+                <a asp-area="User" asp-controller="SolarRequest" asp-action="Create" class="btn btn-p">
+                    ➕ New Request
+                </a>
+                <a asp-area="User" asp-controller="SolarRequest" asp-action="Index" class="btn btn-s">
+                    View All →
+                </a>
+            </div>
+        </div>
+
+        <!-- Status Flow -->
+        <div class="card">
+            <div class="ct">
+                <span class="ct-dot"></span>
+                Solar Status Flow
+                @if (Model.LatestProject != null)
+                {
+                    <span style="font-size:11px;color:var(--text3)">— @Model.LatestProject.RequestNumber</span>
+                }
+            </div>
+            @if (Model.LatestProject != null)
+            {
+                <partial name="~/Views/Shared/_StatusFlow.cshtml" model="(int)Model.LatestProject.CurrentStage" />
+            }
+            else
+            {
+                <div style="text-align:center;padding:20px;color:var(--text3)">
+                    No active project found.
+                    <a asp-area="User" asp-controller="SolarRequest" asp-action="Create" style="color:var(--sun)">Start one →</a>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+@functions {
+    string GetStatusClass(Domain.Enums.ApprovalStatus status) => status switch
+    {
+        Domain.Enums.ApprovalStatus.Pending => "sts-pend",
+        Domain.Enums.ApprovalStatus.Approved => "sts-act",
+        Domain.Enums.ApprovalStatus.Rejected => "sts-rej",
+        _ => "sts-pend"
+    };
+}

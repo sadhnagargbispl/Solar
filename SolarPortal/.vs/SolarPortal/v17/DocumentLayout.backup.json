@@ -1,0 +1,1128 @@
+{
+  "Version": 1,
+  "WorkspaceRootPath": "E:\\Sadhna Garg\\GithubCore\\SolarPortal\\",
+  "Documents": [
+    {
+      "AbsoluteMoniker": "D:0:0:{C3BA9CC2-32C0-43F1-8432-632AA2CFB567}|SolarPortal.Application\\SolarPortal.Application.csproj|e:\\sadhna garg\\githubcore\\solarportal\\solarportal.application\\interfaces\\services\\isolarrequestservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{C3BA9CC2-32C0-43F1-8432-632AA2CFB567}|SolarPortal.Application\\SolarPortal.Application.csproj|solutionrelative:solarportal.application\\interfaces\\services\\isolarrequestservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{B2EB99EF-7A75-4BB4-9923-0A9BE96181E4}|SolarPortal.Web\\SolarPortal.Web.csproj|e:\\sadhna garg\\githubcore\\solarportal\\solarportal.web\\areas\\admin\\controllers\\operationscontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{B2EB99EF-7A75-4BB4-9923-0A9BE96181E4}|SolarPortal.Web\\SolarPortal.Web.csproj|solutionrelative:solarportal.web\\areas\\admin\\controllers\\operationscontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{B2EB99EF-7A75-4BB4-9923-0A9BE96181E4}|SolarPortal.Web\\SolarPortal.Web.csproj|e:\\sadhna garg\\githubcore\\solarportal\\solarportal.web\\areas\\admin\\controllers\\workerscontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{B2EB99EF-7A75-4BB4-9923-0A9BE96181E4}|SolarPortal.Web\\SolarPortal.Web.csproj|solutionrelative:solarportal.web\\areas\\admin\\controllers\\workerscontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{B2EB99EF-7A75-4BB4-9923-0A9BE96181E4}|SolarPortal.Web\\SolarPortal.Web.csproj|e:\\sadhna garg\\githubcore\\solarportal\\solarportal.web\\areas\\admin\\controllers\\dashboardcontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{B2EB99EF-7A75-4BB4-9923-0A9BE96181E4}|SolarPortal.Web\\SolarPortal.Web.csproj|solutionrelative:solarportal.web\\areas\\admin\\controllers\\dashboardcontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{B2EB99EF-7A75-4BB4-9923-0A9BE96181E4}|SolarPortal.Web\\SolarPortal.Web.csproj|e:\\sadhna garg\\githubcore\\solarportal\\solarportal.web\\areas\\admin\\controllers\\notificationscontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{B2EB99EF-7A75-4BB4-9923-0A9BE96181E4}|SolarPortal.Web\\SolarPortal.Web.csproj|solutionrelative:solarportal.web\\areas\\admin\\controllers\\notificationscontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{B2EB99EF-7A75-4BB4-9923-0A9BE96181E4}|SolarPortal.Web\\SolarPortal.Web.csproj|e:\\sadhna garg\\githubcore\\solarportal\\solarportal.web\\areas\\admin\\controllers\\projectscontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{B2EB99EF-7A75-4BB4-9923-0A9BE96181E4}|SolarPortal.Web\\SolarPortal.Web.csproj|solutionrelative:solarportal.web\\areas\\admin\\controllers\\projectscontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{B2EB99EF-7A75-4BB4-9923-0A9BE96181E4}|SolarPortal.Web\\SolarPortal.Web.csproj|e:\\sadhna garg\\githubcore\\solarportal\\solarportal.web\\areas\\user\\views\\solarrequest\\uploaddocuments.cshtml||{40D31677-CBC0-4297-A9EF-89D907823A98}",
+      "RelativeMoniker": "D:0:0:{B2EB99EF-7A75-4BB4-9923-0A9BE96181E4}|SolarPortal.Web\\SolarPortal.Web.csproj|solutionrelative:solarportal.web\\areas\\user\\views\\solarrequest\\uploaddocuments.cshtml||{40D31677-CBC0-4297-A9EF-89D907823A98}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{B2EB99EF-7A75-4BB4-9923-0A9BE96181E4}|SolarPortal.Web\\SolarPortal.Web.csproj|e:\\sadhna garg\\githubcore\\solarportal\\solarportal.web\\areas\\user\\views\\solarrequest\\create.cshtml||{40D31677-CBC0-4297-A9EF-89D907823A98}",
+      "RelativeMoniker": "D:0:0:{B2EB99EF-7A75-4BB4-9923-0A9BE96181E4}|SolarPortal.Web\\SolarPortal.Web.csproj|solutionrelative:solarportal.web\\areas\\user\\views\\solarrequest\\create.cshtml||{40D31677-CBC0-4297-A9EF-89D907823A98}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{B2EB99EF-7A75-4BB4-9923-0A9BE96181E4}|SolarPortal.Web\\SolarPortal.Web.csproj|e:\\sadhna garg\\githubcore\\solarportal\\solarportal.web\\areas\\admin\\views\\projects\\approvals.cshtml||{40D31677-CBC0-4297-A9EF-89D907823A98}",
+      "RelativeMoniker": "D:0:0:{B2EB99EF-7A75-4BB4-9923-0A9BE96181E4}|SolarPortal.Web\\SolarPortal.Web.csproj|solutionrelative:solarportal.web\\areas\\admin\\views\\projects\\approvals.cshtml||{40D31677-CBC0-4297-A9EF-89D907823A98}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{B2EB99EF-7A75-4BB4-9923-0A9BE96181E4}|SolarPortal.Web\\SolarPortal.Web.csproj|e:\\sadhna garg\\githubcore\\solarportal\\solarportal.web\\areas\\admin\\views\\dashboard\\index.cshtml||{40D31677-CBC0-4297-A9EF-89D907823A98}",
+      "RelativeMoniker": "D:0:0:{B2EB99EF-7A75-4BB4-9923-0A9BE96181E4}|SolarPortal.Web\\SolarPortal.Web.csproj|solutionrelative:solarportal.web\\areas\\admin\\views\\dashboard\\index.cshtml||{40D31677-CBC0-4297-A9EF-89D907823A98}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{B2EB99EF-7A75-4BB4-9923-0A9BE96181E4}|SolarPortal.Web\\SolarPortal.Web.csproj|e:\\sadhna garg\\githubcore\\solarportal\\solarportal.web\\wwwroot\\js\\solar-portal.js||{14D17961-FE51-464D-9111-C4AF11D7D99A}",
+      "RelativeMoniker": "D:0:0:{B2EB99EF-7A75-4BB4-9923-0A9BE96181E4}|SolarPortal.Web\\SolarPortal.Web.csproj|solutionrelative:solarportal.web\\wwwroot\\js\\solar-portal.js||{14D17961-FE51-464D-9111-C4AF11D7D99A}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{B2EB99EF-7A75-4BB4-9923-0A9BE96181E4}|SolarPortal.Web\\SolarPortal.Web.csproj|e:\\sadhna garg\\githubcore\\solarportal\\solarportal.web\\views\\shared\\_authlayout.cshtml||{40D31677-CBC0-4297-A9EF-89D907823A98}",
+      "RelativeMoniker": "D:0:0:{B2EB99EF-7A75-4BB4-9923-0A9BE96181E4}|SolarPortal.Web\\SolarPortal.Web.csproj|solutionrelative:solarportal.web\\views\\shared\\_authlayout.cshtml||{40D31677-CBC0-4297-A9EF-89D907823A98}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{B2EB99EF-7A75-4BB4-9923-0A9BE96181E4}|SolarPortal.Web\\SolarPortal.Web.csproj|e:\\sadhna garg\\githubcore\\solarportal\\solarportal.web\\wwwroot\\css\\solar-theme.css||{A5401142-F49D-43DB-90B1-F57BA349E55C}",
+      "RelativeMoniker": "D:0:0:{B2EB99EF-7A75-4BB4-9923-0A9BE96181E4}|SolarPortal.Web\\SolarPortal.Web.csproj|solutionrelative:solarportal.web\\wwwroot\\css\\solar-theme.css||{A5401142-F49D-43DB-90B1-F57BA349E55C}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{B2EB99EF-7A75-4BB4-9923-0A9BE96181E4}|SolarPortal.Web\\SolarPortal.Web.csproj|e:\\sadhna garg\\githubcore\\solarportal\\solarportal.web\\views\\shared\\_statusflow.cshtml||{40D31677-CBC0-4297-A9EF-89D907823A98}",
+      "RelativeMoniker": "D:0:0:{B2EB99EF-7A75-4BB4-9923-0A9BE96181E4}|SolarPortal.Web\\SolarPortal.Web.csproj|solutionrelative:solarportal.web\\views\\shared\\_statusflow.cshtml||{40D31677-CBC0-4297-A9EF-89D907823A98}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{B2EB99EF-7A75-4BB4-9923-0A9BE96181E4}|SolarPortal.Web\\SolarPortal.Web.csproj|e:\\sadhna garg\\githubcore\\solarportal\\solarportal.web\\areas\\user\\views\\dashboard\\index.cshtml||{40D31677-CBC0-4297-A9EF-89D907823A98}",
+      "RelativeMoniker": "D:0:0:{B2EB99EF-7A75-4BB4-9923-0A9BE96181E4}|SolarPortal.Web\\SolarPortal.Web.csproj|solutionrelative:solarportal.web\\areas\\user\\views\\dashboard\\index.cshtml||{40D31677-CBC0-4297-A9EF-89D907823A98}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{B2EB99EF-7A75-4BB4-9923-0A9BE96181E4}|SolarPortal.Web\\SolarPortal.Web.csproj|e:\\sadhna garg\\githubcore\\solarportal\\solarportal.web\\views\\shared\\_adminsidebar.cshtml||{40D31677-CBC0-4297-A9EF-89D907823A98}",
+      "RelativeMoniker": "D:0:0:{B2EB99EF-7A75-4BB4-9923-0A9BE96181E4}|SolarPortal.Web\\SolarPortal.Web.csproj|solutionrelative:solarportal.web\\views\\shared\\_adminsidebar.cshtml||{40D31677-CBC0-4297-A9EF-89D907823A98}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{B2EB99EF-7A75-4BB4-9923-0A9BE96181E4}|SolarPortal.Web\\SolarPortal.Web.csproj|e:\\sadhna garg\\githubcore\\solarportal\\solarportal.web\\views\\shared\\_usersidebar.cshtml||{40D31677-CBC0-4297-A9EF-89D907823A98}",
+      "RelativeMoniker": "D:0:0:{B2EB99EF-7A75-4BB4-9923-0A9BE96181E4}|SolarPortal.Web\\SolarPortal.Web.csproj|solutionrelative:solarportal.web\\views\\shared\\_usersidebar.cshtml||{40D31677-CBC0-4297-A9EF-89D907823A98}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{B2EB99EF-7A75-4BB4-9923-0A9BE96181E4}|SolarPortal.Web\\SolarPortal.Web.csproj|e:\\sadhna garg\\githubcore\\solarportal\\solarportal.web\\views\\shared\\_layout.cshtml||{40D31677-CBC0-4297-A9EF-89D907823A98}",
+      "RelativeMoniker": "D:0:0:{B2EB99EF-7A75-4BB4-9923-0A9BE96181E4}|SolarPortal.Web\\SolarPortal.Web.csproj|solutionrelative:solarportal.web\\views\\shared\\_layout.cshtml||{40D31677-CBC0-4297-A9EF-89D907823A98}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{B2EB99EF-7A75-4BB4-9923-0A9BE96181E4}|SolarPortal.Web\\SolarPortal.Web.csproj|e:\\sadhna garg\\githubcore\\solarportal\\solarportal.web\\views\\account\\login.cshtml||{40D31677-CBC0-4297-A9EF-89D907823A98}",
+      "RelativeMoniker": "D:0:0:{B2EB99EF-7A75-4BB4-9923-0A9BE96181E4}|SolarPortal.Web\\SolarPortal.Web.csproj|solutionrelative:solarportal.web\\views\\account\\login.cshtml||{40D31677-CBC0-4297-A9EF-89D907823A98}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{B2EB99EF-7A75-4BB4-9923-0A9BE96181E4}|SolarPortal.Web\\SolarPortal.Web.csproj|e:\\sadhna garg\\githubcore\\solarportal\\solarportal.web\\viewmodels\\createsolarrequestviewmodel.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{B2EB99EF-7A75-4BB4-9923-0A9BE96181E4}|SolarPortal.Web\\SolarPortal.Web.csproj|solutionrelative:solarportal.web\\viewmodels\\createsolarrequestviewmodel.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{B2EB99EF-7A75-4BB4-9923-0A9BE96181E4}|SolarPortal.Web\\SolarPortal.Web.csproj|e:\\sadhna garg\\githubcore\\solarportal\\solarportal.web\\viewmodels\\accountviewmodels.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{B2EB99EF-7A75-4BB4-9923-0A9BE96181E4}|SolarPortal.Web\\SolarPortal.Web.csproj|solutionrelative:solarportal.web\\viewmodels\\accountviewmodels.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{B2EB99EF-7A75-4BB4-9923-0A9BE96181E4}|SolarPortal.Web\\SolarPortal.Web.csproj|e:\\sadhna garg\\githubcore\\solarportal\\solarportal.web\\areas\\user\\controllers\\solarrequestcontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{B2EB99EF-7A75-4BB4-9923-0A9BE96181E4}|SolarPortal.Web\\SolarPortal.Web.csproj|solutionrelative:solarportal.web\\areas\\user\\controllers\\solarrequestcontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{B2EB99EF-7A75-4BB4-9923-0A9BE96181E4}|SolarPortal.Web\\SolarPortal.Web.csproj|e:\\sadhna garg\\githubcore\\solarportal\\solarportal.web\\areas\\user\\controllers\\dashboardcontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{B2EB99EF-7A75-4BB4-9923-0A9BE96181E4}|SolarPortal.Web\\SolarPortal.Web.csproj|solutionrelative:solarportal.web\\areas\\user\\controllers\\dashboardcontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{B2EB99EF-7A75-4BB4-9923-0A9BE96181E4}|SolarPortal.Web\\SolarPortal.Web.csproj|e:\\sadhna garg\\githubcore\\solarportal\\solarportal.web\\controllers\\accountcontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{B2EB99EF-7A75-4BB4-9923-0A9BE96181E4}|SolarPortal.Web\\SolarPortal.Web.csproj|solutionrelative:solarportal.web\\controllers\\accountcontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{C3BA9CC2-32C0-43F1-8432-632AA2CFB567}|SolarPortal.Application\\SolarPortal.Application.csproj|e:\\sadhna garg\\githubcore\\solarportal\\solarportal.application\\services\\fileuploadservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{C3BA9CC2-32C0-43F1-8432-632AA2CFB567}|SolarPortal.Application\\SolarPortal.Application.csproj|solutionrelative:solarportal.application\\services\\fileuploadservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{B2EB99EF-7A75-4BB4-9923-0A9BE96181E4}|SolarPortal.Web\\SolarPortal.Web.csproj|e:\\sadhna garg\\githubcore\\solarportal\\solarportal.web\\middleware\\exceptionhandlingmiddleware.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{B2EB99EF-7A75-4BB4-9923-0A9BE96181E4}|SolarPortal.Web\\SolarPortal.Web.csproj|solutionrelative:solarportal.web\\middleware\\exceptionhandlingmiddleware.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{FF5FF736-D9CE-4931-B390-25B710A818FF}|SolarPortal.Infrastructure\\SolarPortal.Infrastructure.csproj|e:\\sadhna garg\\githubcore\\solarportal\\solarportal.infrastructure\\data\\dbseeder.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{FF5FF736-D9CE-4931-B390-25B710A818FF}|SolarPortal.Infrastructure\\SolarPortal.Infrastructure.csproj|solutionrelative:solarportal.infrastructure\\data\\dbseeder.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{B2EB99EF-7A75-4BB4-9923-0A9BE96181E4}|SolarPortal.Web\\SolarPortal.Web.csproj|e:\\sadhna garg\\githubcore\\solarportal\\solarportal.web\\program.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{B2EB99EF-7A75-4BB4-9923-0A9BE96181E4}|SolarPortal.Web\\SolarPortal.Web.csproj|solutionrelative:solarportal.web\\program.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{FF5FF736-D9CE-4931-B390-25B710A818FF}|SolarPortal.Infrastructure\\SolarPortal.Infrastructure.csproj|e:\\sadhna garg\\githubcore\\solarportal\\solarportal.infrastructure\\dependencyinjection.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{FF5FF736-D9CE-4931-B390-25B710A818FF}|SolarPortal.Infrastructure\\SolarPortal.Infrastructure.csproj|solutionrelative:solarportal.infrastructure\\dependencyinjection.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{C3BA9CC2-32C0-43F1-8432-632AA2CFB567}|SolarPortal.Application\\SolarPortal.Application.csproj|e:\\sadhna garg\\githubcore\\solarportal\\solarportal.application\\interfaces\\services\\inotificationservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{C3BA9CC2-32C0-43F1-8432-632AA2CFB567}|SolarPortal.Application\\SolarPortal.Application.csproj|solutionrelative:solarportal.application\\interfaces\\services\\inotificationservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{C3BA9CC2-32C0-43F1-8432-632AA2CFB567}|SolarPortal.Application\\SolarPortal.Application.csproj|e:\\sadhna garg\\githubcore\\solarportal\\solarportal.application\\interfaces\\services\\idashboardservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{C3BA9CC2-32C0-43F1-8432-632AA2CFB567}|SolarPortal.Application\\SolarPortal.Application.csproj|solutionrelative:solarportal.application\\interfaces\\services\\idashboardservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{C3BA9CC2-32C0-43F1-8432-632AA2CFB567}|SolarPortal.Application\\SolarPortal.Application.csproj|e:\\sadhna garg\\githubcore\\solarportal\\solarportal.application\\services\\notificationservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{C3BA9CC2-32C0-43F1-8432-632AA2CFB567}|SolarPortal.Application\\SolarPortal.Application.csproj|solutionrelative:solarportal.application\\services\\notificationservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{C3BA9CC2-32C0-43F1-8432-632AA2CFB567}|SolarPortal.Application\\SolarPortal.Application.csproj|e:\\sadhna garg\\githubcore\\solarportal\\solarportal.application\\services\\dashboardservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{C3BA9CC2-32C0-43F1-8432-632AA2CFB567}|SolarPortal.Application\\SolarPortal.Application.csproj|solutionrelative:solarportal.application\\services\\dashboardservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{C3BA9CC2-32C0-43F1-8432-632AA2CFB567}|SolarPortal.Application\\SolarPortal.Application.csproj|e:\\sadhna garg\\githubcore\\solarportal\\solarportal.application\\dtos\\workerdto.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{C3BA9CC2-32C0-43F1-8432-632AA2CFB567}|SolarPortal.Application\\SolarPortal.Application.csproj|solutionrelative:solarportal.application\\dtos\\workerdto.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{C3BA9CC2-32C0-43F1-8432-632AA2CFB567}|SolarPortal.Application\\SolarPortal.Application.csproj|e:\\sadhna garg\\githubcore\\solarportal\\solarportal.application\\mappings\\mappingprofile.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{C3BA9CC2-32C0-43F1-8432-632AA2CFB567}|SolarPortal.Application\\SolarPortal.Application.csproj|solutionrelative:solarportal.application\\mappings\\mappingprofile.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{C3BA9CC2-32C0-43F1-8432-632AA2CFB567}|SolarPortal.Application\\SolarPortal.Application.csproj|e:\\sadhna garg\\githubcore\\solarportal\\solarportal.application\\services\\solarrequestservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{C3BA9CC2-32C0-43F1-8432-632AA2CFB567}|SolarPortal.Application\\SolarPortal.Application.csproj|solutionrelative:solarportal.application\\services\\solarrequestservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{C3BA9CC2-32C0-43F1-8432-632AA2CFB567}|SolarPortal.Application\\SolarPortal.Application.csproj|e:\\sadhna garg\\githubcore\\solarportal\\solarportal.application\\common\\serviceresult.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{C3BA9CC2-32C0-43F1-8432-632AA2CFB567}|SolarPortal.Application\\SolarPortal.Application.csproj|solutionrelative:solarportal.application\\common\\serviceresult.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{C3BA9CC2-32C0-43F1-8432-632AA2CFB567}|SolarPortal.Application\\SolarPortal.Application.csproj|e:\\sadhna garg\\githubcore\\solarportal\\solarportal.application\\dtos\\dashboarddto.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{C3BA9CC2-32C0-43F1-8432-632AA2CFB567}|SolarPortal.Application\\SolarPortal.Application.csproj|solutionrelative:solarportal.application\\dtos\\dashboarddto.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{C3BA9CC2-32C0-43F1-8432-632AA2CFB567}|SolarPortal.Application\\SolarPortal.Application.csproj|e:\\sadhna garg\\githubcore\\solarportal\\solarportal.application\\dtos\\paymentdto.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{C3BA9CC2-32C0-43F1-8432-632AA2CFB567}|SolarPortal.Application\\SolarPortal.Application.csproj|solutionrelative:solarportal.application\\dtos\\paymentdto.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{C3BA9CC2-32C0-43F1-8432-632AA2CFB567}|SolarPortal.Application\\SolarPortal.Application.csproj|e:\\sadhna garg\\githubcore\\solarportal\\solarportal.application\\dtos\\solarrequestdto.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{C3BA9CC2-32C0-43F1-8432-632AA2CFB567}|SolarPortal.Application\\SolarPortal.Application.csproj|solutionrelative:solarportal.application\\dtos\\solarrequestdto.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{FF5FF736-D9CE-4931-B390-25B710A818FF}|SolarPortal.Infrastructure\\SolarPortal.Infrastructure.csproj|e:\\sadhna garg\\githubcore\\solarportal\\solarportal.infrastructure\\unitofwork.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{FF5FF736-D9CE-4931-B390-25B710A818FF}|SolarPortal.Infrastructure\\SolarPortal.Infrastructure.csproj|solutionrelative:solarportal.infrastructure\\unitofwork.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{FF5FF736-D9CE-4931-B390-25B710A818FF}|SolarPortal.Infrastructure\\SolarPortal.Infrastructure.csproj|e:\\sadhna garg\\githubcore\\solarportal\\solarportal.infrastructure\\repositories\\solarrequestrepository.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{FF5FF736-D9CE-4931-B390-25B710A818FF}|SolarPortal.Infrastructure\\SolarPortal.Infrastructure.csproj|solutionrelative:solarportal.infrastructure\\repositories\\solarrequestrepository.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{FF5FF736-D9CE-4931-B390-25B710A818FF}|SolarPortal.Infrastructure\\SolarPortal.Infrastructure.csproj|e:\\sadhna garg\\githubcore\\solarportal\\solarportal.infrastructure\\repositories\\genericrepository.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{FF5FF736-D9CE-4931-B390-25B710A818FF}|SolarPortal.Infrastructure\\SolarPortal.Infrastructure.csproj|solutionrelative:solarportal.infrastructure\\repositories\\genericrepository.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{FF5FF736-D9CE-4931-B390-25B710A818FF}|SolarPortal.Infrastructure\\SolarPortal.Infrastructure.csproj|e:\\sadhna garg\\githubcore\\solarportal\\solarportal.infrastructure\\solarportal.infrastructure.csproj||{FA3CD31E-987B-443A-9B81-186104E8DAC1}|",
+      "RelativeMoniker": "D:0:0:{FF5FF736-D9CE-4931-B390-25B710A818FF}|SolarPortal.Infrastructure\\SolarPortal.Infrastructure.csproj|solutionrelative:solarportal.infrastructure\\solarportal.infrastructure.csproj||{FA3CD31E-987B-443A-9B81-186104E8DAC1}|"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{C3BA9CC2-32C0-43F1-8432-632AA2CFB567}|SolarPortal.Application\\SolarPortal.Application.csproj|e:\\sadhna garg\\githubcore\\solarportal\\solarportal.application\\interfaces\\iunitofwork.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{C3BA9CC2-32C0-43F1-8432-632AA2CFB567}|SolarPortal.Application\\SolarPortal.Application.csproj|solutionrelative:solarportal.application\\interfaces\\iunitofwork.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{C3BA9CC2-32C0-43F1-8432-632AA2CFB567}|SolarPortal.Application\\SolarPortal.Application.csproj|e:\\sadhna garg\\githubcore\\solarportal\\solarportal.application\\interfaces\\repositories\\isolarrequestrepository.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{C3BA9CC2-32C0-43F1-8432-632AA2CFB567}|SolarPortal.Application\\SolarPortal.Application.csproj|solutionrelative:solarportal.application\\interfaces\\repositories\\isolarrequestrepository.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{C3BA9CC2-32C0-43F1-8432-632AA2CFB567}|SolarPortal.Application\\SolarPortal.Application.csproj|e:\\sadhna garg\\githubcore\\solarportal\\solarportal.application\\interfaces\\repositories\\igenericrepository.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{C3BA9CC2-32C0-43F1-8432-632AA2CFB567}|SolarPortal.Application\\SolarPortal.Application.csproj|solutionrelative:solarportal.application\\interfaces\\repositories\\igenericrepository.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{B2EB99EF-7A75-4BB4-9923-0A9BE96181E4}|SolarPortal.Web\\SolarPortal.Web.csproj|e:\\sadhna garg\\githubcore\\solarportal\\solarportal.web\\appsettings.json||{90A6B3A7-C1A3-4009-A288-E2FF89E96FA0}",
+      "RelativeMoniker": "D:0:0:{B2EB99EF-7A75-4BB4-9923-0A9BE96181E4}|SolarPortal.Web\\SolarPortal.Web.csproj|solutionrelative:solarportal.web\\appsettings.json||{90A6B3A7-C1A3-4009-A288-E2FF89E96FA0}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{FF5FF736-D9CE-4931-B390-25B710A818FF}|SolarPortal.Infrastructure\\SolarPortal.Infrastructure.csproj|e:\\sadhna garg\\githubcore\\solarportal\\solarportal.infrastructure\\data\\applicationdbcontext.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{FF5FF736-D9CE-4931-B390-25B710A818FF}|SolarPortal.Infrastructure\\SolarPortal.Infrastructure.csproj|solutionrelative:solarportal.infrastructure\\data\\applicationdbcontext.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{B08219B4-497E-47A0-AC15-D85A8EF4ABA1}|SolarPortal.Domain\\SolarPortal.Domain.csproj|e:\\sadhna garg\\githubcore\\solarportal\\solarportal.domain\\common\\baseentity.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{B08219B4-497E-47A0-AC15-D85A8EF4ABA1}|SolarPortal.Domain\\SolarPortal.Domain.csproj|solutionrelative:solarportal.domain\\common\\baseentity.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{B08219B4-497E-47A0-AC15-D85A8EF4ABA1}|SolarPortal.Domain\\SolarPortal.Domain.csproj|e:\\sadhna garg\\githubcore\\solarportal\\solarportal.domain\\entities\\applicationuser.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{B08219B4-497E-47A0-AC15-D85A8EF4ABA1}|SolarPortal.Domain\\SolarPortal.Domain.csproj|solutionrelative:solarportal.domain\\entities\\applicationuser.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{B08219B4-497E-47A0-AC15-D85A8EF4ABA1}|SolarPortal.Domain\\SolarPortal.Domain.csproj|e:\\sadhna garg\\githubcore\\solarportal\\solarportal.domain\\entities\\commission.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{B08219B4-497E-47A0-AC15-D85A8EF4ABA1}|SolarPortal.Domain\\SolarPortal.Domain.csproj|solutionrelative:solarportal.domain\\entities\\commission.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{B08219B4-497E-47A0-AC15-D85A8EF4ABA1}|SolarPortal.Domain\\SolarPortal.Domain.csproj|e:\\sadhna garg\\githubcore\\solarportal\\solarportal.domain\\entities\\dcrdocument.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{B08219B4-497E-47A0-AC15-D85A8EF4ABA1}|SolarPortal.Domain\\SolarPortal.Domain.csproj|solutionrelative:solarportal.domain\\entities\\dcrdocument.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{B08219B4-497E-47A0-AC15-D85A8EF4ABA1}|SolarPortal.Domain\\SolarPortal.Domain.csproj|e:\\sadhna garg\\githubcore\\solarportal\\solarportal.domain\\enums\\projectstatus.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{B08219B4-497E-47A0-AC15-D85A8EF4ABA1}|SolarPortal.Domain\\SolarPortal.Domain.csproj|solutionrelative:solarportal.domain\\enums\\projectstatus.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{B08219B4-497E-47A0-AC15-D85A8EF4ABA1}|SolarPortal.Domain\\SolarPortal.Domain.csproj|e:\\sadhna garg\\githubcore\\solarportal\\solarportal.domain\\entities\\solarrequest.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{B08219B4-497E-47A0-AC15-D85A8EF4ABA1}|SolarPortal.Domain\\SolarPortal.Domain.csproj|solutionrelative:solarportal.domain\\entities\\solarrequest.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{B08219B4-497E-47A0-AC15-D85A8EF4ABA1}|SolarPortal.Domain\\SolarPortal.Domain.csproj|e:\\sadhna garg\\githubcore\\solarportal\\solarportal.domain\\entities\\payment.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{B08219B4-497E-47A0-AC15-D85A8EF4ABA1}|SolarPortal.Domain\\SolarPortal.Domain.csproj|solutionrelative:solarportal.domain\\entities\\payment.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{B08219B4-497E-47A0-AC15-D85A8EF4ABA1}|SolarPortal.Domain\\SolarPortal.Domain.csproj|e:\\sadhna garg\\githubcore\\solarportal\\solarportal.domain\\entities\\document.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{B08219B4-497E-47A0-AC15-D85A8EF4ABA1}|SolarPortal.Domain\\SolarPortal.Domain.csproj|solutionrelative:solarportal.domain\\entities\\document.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{B08219B4-497E-47A0-AC15-D85A8EF4ABA1}|SolarPortal.Domain\\SolarPortal.Domain.csproj|e:\\sadhna garg\\githubcore\\solarportal\\solarportal.domain\\entities\\sitesurvey.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{B08219B4-497E-47A0-AC15-D85A8EF4ABA1}|SolarPortal.Domain\\SolarPortal.Domain.csproj|solutionrelative:solarportal.domain\\entities\\sitesurvey.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{B08219B4-497E-47A0-AC15-D85A8EF4ABA1}|SolarPortal.Domain\\SolarPortal.Domain.csproj|e:\\sadhna garg\\githubcore\\solarportal\\solarportal.domain\\entities\\meterdispatch.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{B08219B4-497E-47A0-AC15-D85A8EF4ABA1}|SolarPortal.Domain\\SolarPortal.Domain.csproj|solutionrelative:solarportal.domain\\entities\\meterdispatch.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{B08219B4-497E-47A0-AC15-D85A8EF4ABA1}|SolarPortal.Domain\\SolarPortal.Domain.csproj|e:\\sadhna garg\\githubcore\\solarportal\\solarportal.domain\\entities\\materialdispatch.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{B08219B4-497E-47A0-AC15-D85A8EF4ABA1}|SolarPortal.Domain\\SolarPortal.Domain.csproj|solutionrelative:solarportal.domain\\entities\\materialdispatch.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{B08219B4-497E-47A0-AC15-D85A8EF4ABA1}|SolarPortal.Domain\\SolarPortal.Domain.csproj|e:\\sadhna garg\\githubcore\\solarportal\\solarportal.domain\\entities\\installation.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{B08219B4-497E-47A0-AC15-D85A8EF4ABA1}|SolarPortal.Domain\\SolarPortal.Domain.csproj|solutionrelative:solarportal.domain\\entities\\installation.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{B08219B4-497E-47A0-AC15-D85A8EF4ABA1}|SolarPortal.Domain\\SolarPortal.Domain.csproj|e:\\sadhna garg\\githubcore\\solarportal\\solarportal.domain\\entities\\worker.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{B08219B4-497E-47A0-AC15-D85A8EF4ABA1}|SolarPortal.Domain\\SolarPortal.Domain.csproj|solutionrelative:solarportal.domain\\entities\\worker.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{B08219B4-497E-47A0-AC15-D85A8EF4ABA1}|SolarPortal.Domain\\SolarPortal.Domain.csproj|e:\\sadhna garg\\githubcore\\solarportal\\solarportal.domain\\entities\\workerassignment.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{B08219B4-497E-47A0-AC15-D85A8EF4ABA1}|SolarPortal.Domain\\SolarPortal.Domain.csproj|solutionrelative:solarportal.domain\\entities\\workerassignment.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{B08219B4-497E-47A0-AC15-D85A8EF4ABA1}|SolarPortal.Domain\\SolarPortal.Domain.csproj|e:\\sadhna garg\\githubcore\\solarportal\\solarportal.domain\\entities\\notification.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{B08219B4-497E-47A0-AC15-D85A8EF4ABA1}|SolarPortal.Domain\\SolarPortal.Domain.csproj|solutionrelative:solarportal.domain\\entities\\notification.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    }
+  ],
+  "DocumentGroupContainers": [
+    {
+      "Orientation": 0,
+      "VerticalTabListWidth": 256,
+      "DocumentGroups": [
+        {
+          "DockedWidth": 200,
+          "SelectedChildIndex": 36,
+          "Children": [
+            {
+              "$type": "Document",
+              "DocumentIndex": 1,
+              "Title": "OperationsController.cs",
+              "DocumentMoniker": "E:\\Sadhna Garg\\GithubCore\\SolarPortal\\SolarPortal.Web\\Areas\\Admin\\Controllers\\OperationsController.cs",
+              "RelativeDocumentMoniker": "SolarPortal.Web\\Areas\\Admin\\Controllers\\OperationsController.cs",
+              "ToolTip": "E:\\Sadhna Garg\\GithubCore\\SolarPortal\\SolarPortal.Web\\Areas\\Admin\\Controllers\\OperationsController.cs",
+              "RelativeToolTip": "SolarPortal.Web\\Areas\\Admin\\Controllers\\OperationsController.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAqwBoAAAAvAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-05-06T10:50:40.548Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 6,
+              "Title": "UploadDocuments.cshtml",
+              "DocumentMoniker": "E:\\Sadhna Garg\\GithubCore\\SolarPortal\\SolarPortal.Web\\Areas\\User\\Views\\SolarRequest\\UploadDocuments.cshtml",
+              "RelativeDocumentMoniker": "SolarPortal.Web\\Areas\\User\\Views\\SolarRequest\\UploadDocuments.cshtml",
+              "ToolTip": "E:\\Sadhna Garg\\GithubCore\\SolarPortal\\SolarPortal.Web\\Areas\\User\\Views\\SolarRequest\\UploadDocuments.cshtml",
+              "RelativeToolTip": "SolarPortal.Web\\Areas\\User\\Views\\SolarRequest\\UploadDocuments.cshtml",
+              "ViewState": "AgIAACcAAAAAAAAAAAAAwF4AAAAGAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000759|",
+              "WhenOpened": "2026-05-06T10:48:16.027Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 7,
+              "Title": "Create.cshtml",
+              "DocumentMoniker": "E:\\Sadhna Garg\\GithubCore\\SolarPortal\\SolarPortal.Web\\Areas\\User\\Views\\SolarRequest\\Create.cshtml",
+              "RelativeDocumentMoniker": "SolarPortal.Web\\Areas\\User\\Views\\SolarRequest\\Create.cshtml",
+              "ToolTip": "E:\\Sadhna Garg\\GithubCore\\SolarPortal\\SolarPortal.Web\\Areas\\User\\Views\\SolarRequest\\Create.cshtml",
+              "RelativeToolTip": "SolarPortal.Web\\Areas\\User\\Views\\SolarRequest\\Create.cshtml",
+              "ViewState": "AgIAAB0BAAAAAAAAAAAAwFQBAAABAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000759|",
+              "WhenOpened": "2026-05-06T10:47:38.224Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 8,
+              "Title": "Approvals.cshtml",
+              "DocumentMoniker": "E:\\Sadhna Garg\\GithubCore\\SolarPortal\\SolarPortal.Web\\Areas\\Admin\\Views\\Projects\\Approvals.cshtml",
+              "RelativeDocumentMoniker": "SolarPortal.Web\\Areas\\Admin\\Views\\Projects\\Approvals.cshtml",
+              "ToolTip": "E:\\Sadhna Garg\\GithubCore\\SolarPortal\\SolarPortal.Web\\Areas\\Admin\\Views\\Projects\\Approvals.cshtml",
+              "RelativeToolTip": "SolarPortal.Web\\Areas\\Admin\\Views\\Projects\\Approvals.cshtml",
+              "ViewState": "AgIAAAoAAAAAAAAAAAAAwEEAAAAGAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000759|",
+              "WhenOpened": "2026-05-06T10:46:44.884Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 9,
+              "Title": "Index.cshtml",
+              "DocumentMoniker": "E:\\Sadhna Garg\\GithubCore\\SolarPortal\\SolarPortal.Web\\Areas\\Admin\\Views\\Dashboard\\Index.cshtml",
+              "RelativeDocumentMoniker": "SolarPortal.Web\\Areas\\Admin\\Views\\Dashboard\\Index.cshtml",
+              "ToolTip": "E:\\Sadhna Garg\\GithubCore\\SolarPortal\\SolarPortal.Web\\Areas\\Admin\\Views\\Dashboard\\Index.cshtml",
+              "RelativeToolTip": "SolarPortal.Web\\Areas\\Admin\\Views\\Dashboard\\Index.cshtml",
+              "ViewState": "AgIAAEUAAAAAAAAAAAAAAIAAAAABAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000759|",
+              "WhenOpened": "2026-05-06T10:46:27.782Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 10,
+              "Title": "solar-portal.js",
+              "DocumentMoniker": "E:\\Sadhna Garg\\GithubCore\\SolarPortal\\SolarPortal.Web\\wwwroot\\js\\solar-portal.js",
+              "RelativeDocumentMoniker": "SolarPortal.Web\\wwwroot\\js\\solar-portal.js",
+              "ToolTip": "E:\\Sadhna Garg\\GithubCore\\SolarPortal\\SolarPortal.Web\\wwwroot\\js\\solar-portal.js",
+              "RelativeToolTip": "SolarPortal.Web\\wwwroot\\js\\solar-portal.js",
+              "ViewState": "AgIAAO4AAAAAAAAAAAAAwCUBAABDAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001646|",
+              "WhenOpened": "2026-05-06T10:42:59.461Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 11,
+              "Title": "_AuthLayout.cshtml",
+              "DocumentMoniker": "E:\\Sadhna Garg\\GithubCore\\SolarPortal\\SolarPortal.Web\\Views\\Shared\\_AuthLayout.cshtml",
+              "RelativeDocumentMoniker": "SolarPortal.Web\\Views\\Shared\\_AuthLayout.cshtml",
+              "ToolTip": "E:\\Sadhna Garg\\GithubCore\\SolarPortal\\SolarPortal.Web\\Views\\Shared\\_AuthLayout.cshtml",
+              "RelativeToolTip": "SolarPortal.Web\\Views\\Shared\\_AuthLayout.cshtml",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAABAAAAAHAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000759|",
+              "WhenOpened": "2026-05-06T10:42:42.702Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 12,
+              "Title": "solar-theme.css",
+              "DocumentMoniker": "E:\\Sadhna Garg\\GithubCore\\SolarPortal\\SolarPortal.Web\\wwwroot\\css\\solar-theme.css",
+              "RelativeDocumentMoniker": "SolarPortal.Web\\wwwroot\\css\\solar-theme.css",
+              "ToolTip": "E:\\Sadhna Garg\\GithubCore\\SolarPortal\\SolarPortal.Web\\wwwroot\\css\\solar-theme.css",
+              "RelativeToolTip": "SolarPortal.Web\\wwwroot\\css\\solar-theme.css",
+              "ViewState": "AgIAACQAAAAAAAAAAAAiwF0AAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.003000|",
+              "WhenOpened": "2026-05-06T10:42:26.368Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 13,
+              "Title": "_StatusFlow.cshtml",
+              "DocumentMoniker": "E:\\Sadhna Garg\\GithubCore\\SolarPortal\\SolarPortal.Web\\Views\\Shared\\_StatusFlow.cshtml",
+              "RelativeDocumentMoniker": "SolarPortal.Web\\Views\\Shared\\_StatusFlow.cshtml",
+              "ToolTip": "E:\\Sadhna Garg\\GithubCore\\SolarPortal\\SolarPortal.Web\\Views\\Shared\\_StatusFlow.cshtml",
+              "RelativeToolTip": "SolarPortal.Web\\Views\\Shared\\_StatusFlow.cshtml",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAACMAAAAGAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000759|",
+              "WhenOpened": "2026-05-06T10:41:21.826Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 14,
+              "Title": "Index.cshtml",
+              "DocumentMoniker": "E:\\Sadhna Garg\\GithubCore\\SolarPortal\\SolarPortal.Web\\Areas\\User\\Views\\Dashboard\\Index.cshtml",
+              "RelativeDocumentMoniker": "SolarPortal.Web\\Areas\\User\\Views\\Dashboard\\Index.cshtml",
+              "ToolTip": "E:\\Sadhna Garg\\GithubCore\\SolarPortal\\SolarPortal.Web\\Areas\\User\\Views\\Dashboard\\Index.cshtml",
+              "RelativeToolTip": "SolarPortal.Web\\Areas\\User\\Views\\Dashboard\\Index.cshtml",
+              "ViewState": "AgIAAEMAAAAAAAAAAAAiwH0AAAABAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000759|",
+              "WhenOpened": "2026-05-06T10:41:00.165Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 15,
+              "Title": "_AdminSidebar.cshtml",
+              "DocumentMoniker": "E:\\Sadhna Garg\\GithubCore\\SolarPortal\\SolarPortal.Web\\Views\\Shared\\_AdminSidebar.cshtml",
+              "RelativeDocumentMoniker": "SolarPortal.Web\\Views\\Shared\\_AdminSidebar.cshtml",
+              "ToolTip": "E:\\Sadhna Garg\\GithubCore\\SolarPortal\\SolarPortal.Web\\Views\\Shared\\_AdminSidebar.cshtml",
+              "RelativeToolTip": "SolarPortal.Web\\Views\\Shared\\_AdminSidebar.cshtml",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAADAAAAAGAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000759|",
+              "WhenOpened": "2026-05-06T10:40:25.638Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 16,
+              "Title": "_UserSidebar.cshtml",
+              "DocumentMoniker": "E:\\Sadhna Garg\\GithubCore\\SolarPortal\\SolarPortal.Web\\Views\\Shared\\_UserSidebar.cshtml",
+              "RelativeDocumentMoniker": "SolarPortal.Web\\Views\\Shared\\_UserSidebar.cshtml",
+              "ToolTip": "E:\\Sadhna Garg\\GithubCore\\SolarPortal\\SolarPortal.Web\\Views\\Shared\\_UserSidebar.cshtml",
+              "RelativeToolTip": "SolarPortal.Web\\Views\\Shared\\_UserSidebar.cshtml",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAACgAAAAGAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000759|",
+              "WhenOpened": "2026-05-06T10:40:14.217Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 17,
+              "Title": "_Layout.cshtml",
+              "DocumentMoniker": "E:\\Sadhna Garg\\GithubCore\\SolarPortal\\SolarPortal.Web\\Views\\Shared\\_Layout.cshtml",
+              "RelativeDocumentMoniker": "SolarPortal.Web\\Views\\Shared\\_Layout.cshtml",
+              "ToolTip": "E:\\Sadhna Garg\\GithubCore\\SolarPortal\\SolarPortal.Web\\Views\\Shared\\_Layout.cshtml",
+              "RelativeToolTip": "SolarPortal.Web\\Views\\Shared\\_Layout.cshtml",
+              "ViewState": "AgIAAFAAAAAAAAAAAAAAAIkAAAAHAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000759|",
+              "WhenOpened": "2026-05-06T10:39:59.533Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 18,
+              "Title": "Login.cshtml",
+              "DocumentMoniker": "E:\\Sadhna Garg\\GithubCore\\SolarPortal\\SolarPortal.Web\\Views\\Account\\Login.cshtml",
+              "RelativeDocumentMoniker": "SolarPortal.Web\\Views\\Account\\Login.cshtml",
+              "ToolTip": "E:\\Sadhna Garg\\GithubCore\\SolarPortal\\SolarPortal.Web\\Views\\Account\\Login.cshtml",
+              "RelativeToolTip": "SolarPortal.Web\\Views\\Account\\Login.cshtml",
+              "ViewState": "AgIAAAwAAAAAAAAAAAAiwEUAAAABAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000759|",
+              "WhenOpened": "2026-05-06T10:39:45.488Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 19,
+              "Title": "CreateSolarRequestViewModel.cs",
+              "DocumentMoniker": "E:\\Sadhna Garg\\GithubCore\\SolarPortal\\SolarPortal.Web\\ViewModels\\CreateSolarRequestViewModel.cs",
+              "RelativeDocumentMoniker": "SolarPortal.Web\\ViewModels\\CreateSolarRequestViewModel.cs",
+              "ToolTip": "E:\\Sadhna Garg\\GithubCore\\SolarPortal\\SolarPortal.Web\\ViewModels\\CreateSolarRequestViewModel.cs",
+              "RelativeToolTip": "SolarPortal.Web\\ViewModels\\CreateSolarRequestViewModel.cs",
+              "ViewState": "AgIAAAMAAAAAAAAAAAAmwDwAAAABAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-05-06T10:39:35.281Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 20,
+              "Title": "AccountViewModels.cs",
+              "DocumentMoniker": "E:\\Sadhna Garg\\GithubCore\\SolarPortal\\SolarPortal.Web\\ViewModels\\AccountViewModels.cs",
+              "RelativeDocumentMoniker": "SolarPortal.Web\\ViewModels\\AccountViewModels.cs",
+              "ToolTip": "E:\\Sadhna Garg\\GithubCore\\SolarPortal\\SolarPortal.Web\\ViewModels\\AccountViewModels.cs",
+              "RelativeToolTip": "SolarPortal.Web\\ViewModels\\AccountViewModels.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAADAAAAABAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-05-06T10:39:27.045Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 4,
+              "Title": "NotificationsController.cs",
+              "DocumentMoniker": "E:\\Sadhna Garg\\GithubCore\\SolarPortal\\SolarPortal.Web\\Areas\\Admin\\Controllers\\NotificationsController.cs",
+              "RelativeDocumentMoniker": "SolarPortal.Web\\Areas\\Admin\\Controllers\\NotificationsController.cs",
+              "ToolTip": "E:\\Sadhna Garg\\GithubCore\\SolarPortal\\SolarPortal.Web\\Areas\\Admin\\Controllers\\NotificationsController.cs",
+              "RelativeToolTip": "SolarPortal.Web\\Areas\\Admin\\Controllers\\NotificationsController.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAACwAAAABAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-05-06T10:35:30.782Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 2,
+              "Title": "WorkersController.cs",
+              "DocumentMoniker": "E:\\Sadhna Garg\\GithubCore\\SolarPortal\\SolarPortal.Web\\Areas\\Admin\\Controllers\\WorkersController.cs",
+              "RelativeDocumentMoniker": "SolarPortal.Web\\Areas\\Admin\\Controllers\\WorkersController.cs",
+              "ToolTip": "E:\\Sadhna Garg\\GithubCore\\SolarPortal\\SolarPortal.Web\\Areas\\Admin\\Controllers\\WorkersController.cs",
+              "RelativeToolTip": "SolarPortal.Web\\Areas\\Admin\\Controllers\\WorkersController.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAADYAAAABAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-05-06T10:34:24.05Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 5,
+              "Title": "ProjectsController.cs",
+              "DocumentMoniker": "E:\\Sadhna Garg\\GithubCore\\SolarPortal\\SolarPortal.Web\\Areas\\Admin\\Controllers\\ProjectsController.cs",
+              "RelativeDocumentMoniker": "SolarPortal.Web\\Areas\\Admin\\Controllers\\ProjectsController.cs",
+              "ToolTip": "E:\\Sadhna Garg\\GithubCore\\SolarPortal\\SolarPortal.Web\\Areas\\Admin\\Controllers\\ProjectsController.cs",
+              "RelativeToolTip": "SolarPortal.Web\\Areas\\Admin\\Controllers\\ProjectsController.cs",
+              "ViewState": "AgIAAAcAAAAAAAAAAAAmwEAAAAABAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-05-06T10:34:15.376Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 21,
+              "Title": "SolarRequestController.cs",
+              "DocumentMoniker": "E:\\Sadhna Garg\\GithubCore\\SolarPortal\\SolarPortal.Web\\Areas\\User\\Controllers\\SolarRequestController.cs",
+              "RelativeDocumentMoniker": "SolarPortal.Web\\Areas\\User\\Controllers\\SolarRequestController.cs",
+              "ToolTip": "E:\\Sadhna Garg\\GithubCore\\SolarPortal\\SolarPortal.Web\\Areas\\User\\Controllers\\SolarRequestController.cs",
+              "RelativeToolTip": "SolarPortal.Web\\Areas\\User\\Controllers\\SolarRequestController.cs",
+              "ViewState": "AgIAAIIAAAAAAAAAAADwv6QAAAAJAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-05-06T10:33:43.358Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 22,
+              "Title": "DashboardController.cs",
+              "DocumentMoniker": "E:\\Sadhna Garg\\GithubCore\\SolarPortal\\SolarPortal.Web\\Areas\\User\\Controllers\\DashboardController.cs",
+              "RelativeDocumentMoniker": "SolarPortal.Web\\Areas\\User\\Controllers\\DashboardController.cs",
+              "ToolTip": "E:\\Sadhna Garg\\GithubCore\\SolarPortal\\SolarPortal.Web\\Areas\\User\\Controllers\\DashboardController.cs",
+              "RelativeToolTip": "SolarPortal.Web\\Areas\\User\\Controllers\\DashboardController.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAABsAAAABAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-05-06T10:33:37.699Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 3,
+              "Title": "DashboardController.cs",
+              "DocumentMoniker": "E:\\Sadhna Garg\\GithubCore\\SolarPortal\\SolarPortal.Web\\Areas\\Admin\\Controllers\\DashboardController.cs",
+              "RelativeDocumentMoniker": "SolarPortal.Web\\Areas\\Admin\\Controllers\\DashboardController.cs",
+              "ToolTip": "E:\\Sadhna Garg\\GithubCore\\SolarPortal\\SolarPortal.Web\\Areas\\Admin\\Controllers\\DashboardController.cs",
+              "RelativeToolTip": "SolarPortal.Web\\Areas\\Admin\\Controllers\\DashboardController.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAACMAAAABAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-05-06T10:33:10.332Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 23,
+              "Title": "AccountController.cs",
+              "DocumentMoniker": "E:\\Sadhna Garg\\GithubCore\\SolarPortal\\SolarPortal.Web\\Controllers\\AccountController.cs",
+              "RelativeDocumentMoniker": "SolarPortal.Web\\Controllers\\AccountController.cs",
+              "ToolTip": "E:\\Sadhna Garg\\GithubCore\\SolarPortal\\SolarPortal.Web\\Controllers\\AccountController.cs",
+              "RelativeToolTip": "SolarPortal.Web\\Controllers\\AccountController.cs",
+              "ViewState": "AgIAAFwAAAAAAAAAAADwv3cAAAAPAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-05-06T10:31:07.267Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 24,
+              "Title": "FileUploadService.cs",
+              "DocumentMoniker": "E:\\Sadhna Garg\\GithubCore\\SolarPortal\\SolarPortal.Application\\Services\\FileUploadService.cs",
+              "RelativeDocumentMoniker": "SolarPortal.Application\\Services\\FileUploadService.cs",
+              "ToolTip": "E:\\Sadhna Garg\\GithubCore\\SolarPortal\\SolarPortal.Application\\Services\\FileUploadService.cs",
+              "RelativeToolTip": "SolarPortal.Application\\Services\\FileUploadService.cs",
+              "ViewState": "AgIAAAEAAAAAAAAAAADwvwkAAAAdAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-05-06T10:28:23.829Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 25,
+              "Title": "ExceptionHandlingMiddleware.cs",
+              "DocumentMoniker": "E:\\Sadhna Garg\\GithubCore\\SolarPortal\\SolarPortal.Web\\Middleware\\ExceptionHandlingMiddleware.cs",
+              "RelativeDocumentMoniker": "SolarPortal.Web\\Middleware\\ExceptionHandlingMiddleware.cs",
+              "ToolTip": "E:\\Sadhna Garg\\GithubCore\\SolarPortal\\SolarPortal.Web\\Middleware\\ExceptionHandlingMiddleware.cs",
+              "RelativeToolTip": "SolarPortal.Web\\Middleware\\ExceptionHandlingMiddleware.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAACsAAAABAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-05-06T10:28:00.656Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 26,
+              "Title": "DbSeeder.cs",
+              "DocumentMoniker": "E:\\Sadhna Garg\\GithubCore\\SolarPortal\\SolarPortal.Infrastructure\\Data\\DbSeeder.cs",
+              "RelativeDocumentMoniker": "SolarPortal.Infrastructure\\Data\\DbSeeder.cs",
+              "ToolTip": "E:\\Sadhna Garg\\GithubCore\\SolarPortal\\SolarPortal.Infrastructure\\Data\\DbSeeder.cs",
+              "RelativeToolTip": "SolarPortal.Infrastructure\\Data\\DbSeeder.cs",
+              "ViewState": "AgIAABcAAAAAAAAAAAAAAFEAAAABAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-05-06T10:27:44.675Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 27,
+              "Title": "Program.cs",
+              "DocumentMoniker": "E:\\Sadhna Garg\\GithubCore\\SolarPortal\\SolarPortal.Web\\Program.cs",
+              "RelativeDocumentMoniker": "SolarPortal.Web\\Program.cs",
+              "ToolTip": "E:\\Sadhna Garg\\GithubCore\\SolarPortal\\SolarPortal.Web\\Program.cs",
+              "RelativeToolTip": "SolarPortal.Web\\Program.cs",
+              "ViewState": "AgIAAA4AAAAAAAAAAADwvzkAAAAXAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-05-06T10:23:44.035Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 28,
+              "Title": "DependencyInjection.cs",
+              "DocumentMoniker": "E:\\Sadhna Garg\\GithubCore\\SolarPortal\\SolarPortal.Infrastructure\\DependencyInjection.cs",
+              "RelativeDocumentMoniker": "SolarPortal.Infrastructure\\DependencyInjection.cs",
+              "ToolTip": "E:\\Sadhna Garg\\GithubCore\\SolarPortal\\SolarPortal.Infrastructure\\DependencyInjection.cs",
+              "RelativeToolTip": "SolarPortal.Infrastructure\\DependencyInjection.cs",
+              "ViewState": "AgIAAAUAAAAAAAAAAADwvz8AAAABAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-05-06T10:23:30.638Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 29,
+              "Title": "INotificationService.cs",
+              "DocumentMoniker": "E:\\Sadhna Garg\\GithubCore\\SolarPortal\\SolarPortal.Application\\Interfaces\\Services\\INotificationService.cs",
+              "RelativeDocumentMoniker": "SolarPortal.Application\\Interfaces\\Services\\INotificationService.cs",
+              "ToolTip": "E:\\Sadhna Garg\\GithubCore\\SolarPortal\\SolarPortal.Application\\Interfaces\\Services\\INotificationService.cs",
+              "RelativeToolTip": "SolarPortal.Application\\Interfaces\\Services\\INotificationService.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAcAAAABAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-05-06T10:22:54.554Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 30,
+              "Title": "IDashboardService.cs",
+              "DocumentMoniker": "E:\\Sadhna Garg\\GithubCore\\SolarPortal\\SolarPortal.Application\\Interfaces\\Services\\IDashboardService.cs",
+              "RelativeDocumentMoniker": "SolarPortal.Application\\Interfaces\\Services\\IDashboardService.cs",
+              "ToolTip": "E:\\Sadhna Garg\\GithubCore\\SolarPortal\\SolarPortal.Application\\Interfaces\\Services\\IDashboardService.cs",
+              "RelativeToolTip": "SolarPortal.Application\\Interfaces\\Services\\IDashboardService.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAcAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-05-06T10:22:44.401Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 31,
+              "Title": "NotificationService.cs",
+              "DocumentMoniker": "E:\\Sadhna Garg\\GithubCore\\SolarPortal\\SolarPortal.Application\\Services\\NotificationService.cs",
+              "RelativeDocumentMoniker": "SolarPortal.Application\\Services\\NotificationService.cs",
+              "ToolTip": "E:\\Sadhna Garg\\GithubCore\\SolarPortal\\SolarPortal.Application\\Services\\NotificationService.cs",
+              "RelativeToolTip": "SolarPortal.Application\\Services\\NotificationService.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAADYAAAABAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-05-06T10:22:08.629Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 32,
+              "Title": "DashboardService.cs",
+              "DocumentMoniker": "E:\\Sadhna Garg\\GithubCore\\SolarPortal\\SolarPortal.Application\\Services\\DashboardService.cs",
+              "RelativeDocumentMoniker": "SolarPortal.Application\\Services\\DashboardService.cs",
+              "ToolTip": "E:\\Sadhna Garg\\GithubCore\\SolarPortal\\SolarPortal.Application\\Services\\DashboardService.cs",
+              "RelativeToolTip": "SolarPortal.Application\\Services\\DashboardService.cs",
+              "ViewState": "AgIAAAIAAAAAAAAAAAAgwD4AAAABAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-05-06T10:21:56.416Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 33,
+              "Title": "WorkerDto.cs",
+              "DocumentMoniker": "E:\\Sadhna Garg\\GithubCore\\SolarPortal\\SolarPortal.Application\\DTOs\\WorkerDto.cs",
+              "RelativeDocumentMoniker": "SolarPortal.Application\\DTOs\\WorkerDto.cs",
+              "ToolTip": "E:\\Sadhna Garg\\GithubCore\\SolarPortal\\SolarPortal.Application\\DTOs\\WorkerDto.cs",
+              "RelativeToolTip": "SolarPortal.Application\\DTOs\\WorkerDto.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAB4AAAABAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-05-06T10:21:45.952Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 34,
+              "Title": "MappingProfile.cs",
+              "DocumentMoniker": "E:\\Sadhna Garg\\GithubCore\\SolarPortal\\SolarPortal.Application\\Mappings\\MappingProfile.cs",
+              "RelativeDocumentMoniker": "SolarPortal.Application\\Mappings\\MappingProfile.cs",
+              "ToolTip": "E:\\Sadhna Garg\\GithubCore\\SolarPortal\\SolarPortal.Application\\Mappings\\MappingProfile.cs",
+              "RelativeToolTip": "SolarPortal.Application\\Mappings\\MappingProfile.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAACQAAAABAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-05-06T10:21:35.416Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 35,
+              "Title": "SolarRequestService.cs",
+              "DocumentMoniker": "E:\\Sadhna Garg\\GithubCore\\SolarPortal\\SolarPortal.Application\\Services\\SolarRequestService.cs",
+              "RelativeDocumentMoniker": "SolarPortal.Application\\Services\\SolarRequestService.cs",
+              "ToolTip": "E:\\Sadhna Garg\\GithubCore\\SolarPortal\\SolarPortal.Application\\Services\\SolarRequestService.cs",
+              "RelativeToolTip": "SolarPortal.Application\\Services\\SolarRequestService.cs",
+              "ViewState": "AgIAAHIAAAAAAAAAAAAgwK4AAAABAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-05-06T10:21:10.937Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 36,
+              "Title": "ServiceResult.cs",
+              "DocumentMoniker": "E:\\Sadhna Garg\\GithubCore\\SolarPortal\\SolarPortal.Application\\Common\\ServiceResult.cs",
+              "RelativeDocumentMoniker": "SolarPortal.Application\\Common\\ServiceResult.cs",
+              "ToolTip": "E:\\Sadhna Garg\\GithubCore\\SolarPortal\\SolarPortal.Application\\Common\\ServiceResult.cs",
+              "RelativeToolTip": "SolarPortal.Application\\Common\\ServiceResult.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAABEAAAABAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-05-06T10:20:52.34Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 0,
+              "Title": "ISolarRequestService.cs",
+              "DocumentMoniker": "E:\\Sadhna Garg\\GithubCore\\SolarPortal\\SolarPortal.Application\\Interfaces\\Services\\ISolarRequestService.cs",
+              "RelativeDocumentMoniker": "SolarPortal.Application\\Interfaces\\Services\\ISolarRequestService.cs",
+              "ToolTip": "E:\\Sadhna Garg\\GithubCore\\SolarPortal\\SolarPortal.Application\\Interfaces\\Services\\ISolarRequestService.cs",
+              "RelativeToolTip": "SolarPortal.Application\\Interfaces\\Services\\ISolarRequestService.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAqwAsAAABRAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-05-06T10:19:37.898Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 37,
+              "Title": "DashboardDto.cs",
+              "DocumentMoniker": "E:\\Sadhna Garg\\GithubCore\\SolarPortal\\SolarPortal.Application\\DTOs\\DashboardDto.cs",
+              "RelativeDocumentMoniker": "SolarPortal.Application\\DTOs\\DashboardDto.cs",
+              "ToolTip": "E:\\Sadhna Garg\\GithubCore\\SolarPortal\\SolarPortal.Application\\DTOs\\DashboardDto.cs",
+              "RelativeToolTip": "SolarPortal.Application\\DTOs\\DashboardDto.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAACMAAAABAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-05-06T10:19:20.682Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 38,
+              "Title": "PaymentDto.cs",
+              "DocumentMoniker": "E:\\Sadhna Garg\\GithubCore\\SolarPortal\\SolarPortal.Application\\DTOs\\PaymentDto.cs",
+              "RelativeDocumentMoniker": "SolarPortal.Application\\DTOs\\PaymentDto.cs",
+              "ToolTip": "E:\\Sadhna Garg\\GithubCore\\SolarPortal\\SolarPortal.Application\\DTOs\\PaymentDto.cs",
+              "RelativeToolTip": "SolarPortal.Application\\DTOs\\PaymentDto.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAABoAAAABAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-05-06T10:19:12.234Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 39,
+              "Title": "SolarRequestDto.cs",
+              "DocumentMoniker": "E:\\Sadhna Garg\\GithubCore\\SolarPortal\\SolarPortal.Application\\DTOs\\SolarRequestDto.cs",
+              "RelativeDocumentMoniker": "SolarPortal.Application\\DTOs\\SolarRequestDto.cs",
+              "ToolTip": "E:\\Sadhna Garg\\GithubCore\\SolarPortal\\SolarPortal.Application\\DTOs\\SolarRequestDto.cs",
+              "RelativeToolTip": "SolarPortal.Application\\DTOs\\SolarRequestDto.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAADUAAAABAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-05-06T10:18:57.042Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 40,
+              "Title": "UnitOfWork.cs",
+              "DocumentMoniker": "E:\\Sadhna Garg\\GithubCore\\SolarPortal\\SolarPortal.Infrastructure\\UnitOfWork.cs",
+              "RelativeDocumentMoniker": "SolarPortal.Infrastructure\\UnitOfWork.cs",
+              "ToolTip": "E:\\Sadhna Garg\\GithubCore\\SolarPortal\\SolarPortal.Infrastructure\\UnitOfWork.cs",
+              "RelativeToolTip": "SolarPortal.Infrastructure\\UnitOfWork.cs",
+              "ViewState": "AgIAABkAAAAAAAAAAAAgwFUAAAABAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-05-06T10:16:09.489Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 41,
+              "Title": "SolarRequestRepository.cs",
+              "DocumentMoniker": "E:\\Sadhna Garg\\GithubCore\\SolarPortal\\SolarPortal.Infrastructure\\Repositories\\SolarRequestRepository.cs",
+              "RelativeDocumentMoniker": "SolarPortal.Infrastructure\\Repositories\\SolarRequestRepository.cs",
+              "ToolTip": "E:\\Sadhna Garg\\GithubCore\\SolarPortal\\SolarPortal.Infrastructure\\Repositories\\SolarRequestRepository.cs",
+              "RelativeToolTip": "SolarPortal.Infrastructure\\Repositories\\SolarRequestRepository.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAADoAAAABAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-05-06T10:15:56.125Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 42,
+              "Title": "GenericRepository.cs",
+              "DocumentMoniker": "E:\\Sadhna Garg\\GithubCore\\SolarPortal\\SolarPortal.Infrastructure\\Repositories\\GenericRepository.cs",
+              "RelativeDocumentMoniker": "SolarPortal.Infrastructure\\Repositories\\GenericRepository.cs",
+              "ToolTip": "E:\\Sadhna Garg\\GithubCore\\SolarPortal\\SolarPortal.Infrastructure\\Repositories\\GenericRepository.cs",
+              "RelativeToolTip": "SolarPortal.Infrastructure\\Repositories\\GenericRepository.cs",
+              "ViewState": "AgIAABYAAAAAAAAAAAAuwFQAAAABAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-05-06T10:15:47.663Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 44,
+              "Title": "IUnitOfWork.cs",
+              "DocumentMoniker": "E:\\Sadhna Garg\\GithubCore\\SolarPortal\\SolarPortal.Application\\Interfaces\\IUnitOfWork.cs",
+              "RelativeDocumentMoniker": "SolarPortal.Application\\Interfaces\\IUnitOfWork.cs",
+              "ToolTip": "E:\\Sadhna Garg\\GithubCore\\SolarPortal\\SolarPortal.Application\\Interfaces\\IUnitOfWork.cs",
+              "RelativeToolTip": "SolarPortal.Application\\Interfaces\\IUnitOfWork.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAABYAAAABAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-05-06T10:15:22.473Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 45,
+              "Title": "ISolarRequestRepository.cs",
+              "DocumentMoniker": "E:\\Sadhna Garg\\GithubCore\\SolarPortal\\SolarPortal.Application\\Interfaces\\Repositories\\ISolarRequestRepository.cs",
+              "RelativeDocumentMoniker": "SolarPortal.Application\\Interfaces\\Repositories\\ISolarRequestRepository.cs",
+              "ToolTip": "E:\\Sadhna Garg\\GithubCore\\SolarPortal\\SolarPortal.Application\\Interfaces\\Repositories\\ISolarRequestRepository.cs",
+              "RelativeToolTip": "SolarPortal.Application\\Interfaces\\Repositories\\ISolarRequestRepository.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAwAAAABAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-05-06T10:15:12.985Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 46,
+              "Title": "IGenericRepository.cs",
+              "DocumentMoniker": "E:\\Sadhna Garg\\GithubCore\\SolarPortal\\SolarPortal.Application\\Interfaces\\Repositories\\IGenericRepository.cs",
+              "RelativeDocumentMoniker": "SolarPortal.Application\\Interfaces\\Repositories\\IGenericRepository.cs",
+              "ToolTip": "E:\\Sadhna Garg\\GithubCore\\SolarPortal\\SolarPortal.Application\\Interfaces\\Repositories\\IGenericRepository.cs",
+              "RelativeToolTip": "SolarPortal.Application\\Interfaces\\Repositories\\IGenericRepository.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAABcAAAABAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-05-06T10:15:04.926Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 47,
+              "Title": "appsettings.json",
+              "DocumentMoniker": "E:\\Sadhna Garg\\GithubCore\\SolarPortal\\SolarPortal.Web\\appsettings.json",
+              "RelativeDocumentMoniker": "SolarPortal.Web\\appsettings.json",
+              "ToolTip": "E:\\Sadhna Garg\\GithubCore\\SolarPortal\\SolarPortal.Web\\appsettings.json",
+              "RelativeToolTip": "SolarPortal.Web\\appsettings.json",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAABYAAAABAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.001642|",
+              "WhenOpened": "2026-05-06T10:11:45.916Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 48,
+              "Title": "ApplicationDbContext.cs",
+              "DocumentMoniker": "E:\\Sadhna Garg\\GithubCore\\SolarPortal\\SolarPortal.Infrastructure\\Data\\ApplicationDbContext.cs",
+              "RelativeDocumentMoniker": "SolarPortal.Infrastructure\\Data\\ApplicationDbContext.cs",
+              "ToolTip": "E:\\Sadhna Garg\\GithubCore\\SolarPortal\\SolarPortal.Infrastructure\\Data\\ApplicationDbContext.cs",
+              "RelativeToolTip": "SolarPortal.Infrastructure\\Data\\ApplicationDbContext.cs",
+              "ViewState": "AgIAAEYAAAAAAAAAAAAmwIMAAAABAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-05-06T10:08:56.952Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 43,
+              "Title": "SolarPortal.Infrastructure",
+              "DocumentMoniker": "E:\\Sadhna Garg\\GithubCore\\SolarPortal\\SolarPortal.Infrastructure\\SolarPortal.Infrastructure.csproj",
+              "RelativeDocumentMoniker": "SolarPortal.Infrastructure\\SolarPortal.Infrastructure.csproj",
+              "ToolTip": "E:\\Sadhna Garg\\GithubCore\\SolarPortal\\SolarPortal.Infrastructure\\SolarPortal.Infrastructure.csproj",
+              "RelativeToolTip": "SolarPortal.Infrastructure\\SolarPortal.Infrastructure.csproj",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000758|",
+              "WhenOpened": "2026-05-06T10:08:16.509Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Bookmark",
+              "Name": "ST:130:0:{1fc202d4-d401-403c-9834-5b218574bb67}"
+            },
+            {
+              "$type": "Bookmark",
+              "Name": "ST:135:0:{1fc202d4-d401-403c-9834-5b218574bb67}"
+            },
+            {
+              "$type": "Bookmark",
+              "Name": "ST:132:0:{116d2292-e37d-41cd-a077-ebacac4c8cc4}"
+            },
+            {
+              "$type": "Bookmark",
+              "Name": "ST:133:0:{116d2292-e37d-41cd-a077-ebacac4c8cc4}"
+            },
+            {
+              "$type": "Bookmark",
+              "Name": "ST:134:0:{116d2292-e37d-41cd-a077-ebacac4c8cc4}"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 63,
+              "Title": "Notification.cs",
+              "DocumentMoniker": "E:\\Sadhna Garg\\GithubCore\\SolarPortal\\SolarPortal.Domain\\Entities\\Notification.cs",
+              "RelativeDocumentMoniker": "SolarPortal.Domain\\Entities\\Notification.cs",
+              "ToolTip": "E:\\Sadhna Garg\\GithubCore\\SolarPortal\\SolarPortal.Domain\\Entities\\Notification.cs",
+              "RelativeToolTip": "SolarPortal.Domain\\Entities\\Notification.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAABAAAAABAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-05-06T10:05:55.394Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 62,
+              "Title": "WorkerAssignment.cs",
+              "DocumentMoniker": "E:\\Sadhna Garg\\GithubCore\\SolarPortal\\SolarPortal.Domain\\Entities\\WorkerAssignment.cs",
+              "RelativeDocumentMoniker": "SolarPortal.Domain\\Entities\\WorkerAssignment.cs",
+              "ToolTip": "E:\\Sadhna Garg\\GithubCore\\SolarPortal\\SolarPortal.Domain\\Entities\\WorkerAssignment.cs",
+              "RelativeToolTip": "SolarPortal.Domain\\Entities\\WorkerAssignment.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAA4AAAABAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-05-06T10:05:35.509Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 61,
+              "Title": "Worker.cs",
+              "DocumentMoniker": "E:\\Sadhna Garg\\GithubCore\\SolarPortal\\SolarPortal.Domain\\Entities\\Worker.cs",
+              "RelativeDocumentMoniker": "SolarPortal.Domain\\Entities\\Worker.cs",
+              "ToolTip": "E:\\Sadhna Garg\\GithubCore\\SolarPortal\\SolarPortal.Domain\\Entities\\Worker.cs",
+              "RelativeToolTip": "SolarPortal.Domain\\Entities\\Worker.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAA8AAAABAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-05-06T10:05:19.848Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 60,
+              "Title": "Installation.cs",
+              "DocumentMoniker": "E:\\Sadhna Garg\\GithubCore\\SolarPortal\\SolarPortal.Domain\\Entities\\Installation.cs",
+              "RelativeDocumentMoniker": "SolarPortal.Domain\\Entities\\Installation.cs",
+              "ToolTip": "E:\\Sadhna Garg\\GithubCore\\SolarPortal\\SolarPortal.Domain\\Entities\\Installation.cs",
+              "RelativeToolTip": "SolarPortal.Domain\\Entities\\Installation.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAA8AAAABAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-05-06T10:04:50.715Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 59,
+              "Title": "MaterialDispatch.cs",
+              "DocumentMoniker": "E:\\Sadhna Garg\\GithubCore\\SolarPortal\\SolarPortal.Domain\\Entities\\MaterialDispatch.cs",
+              "RelativeDocumentMoniker": "SolarPortal.Domain\\Entities\\MaterialDispatch.cs",
+              "ToolTip": "E:\\Sadhna Garg\\GithubCore\\SolarPortal\\SolarPortal.Domain\\Entities\\MaterialDispatch.cs",
+              "RelativeToolTip": "SolarPortal.Domain\\Entities\\MaterialDispatch.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAA8AAAABAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-05-06T10:04:37.36Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 58,
+              "Title": "MeterDispatch.cs",
+              "DocumentMoniker": "E:\\Sadhna Garg\\GithubCore\\SolarPortal\\SolarPortal.Domain\\Entities\\MeterDispatch.cs",
+              "RelativeDocumentMoniker": "SolarPortal.Domain\\Entities\\MeterDispatch.cs",
+              "ToolTip": "E:\\Sadhna Garg\\GithubCore\\SolarPortal\\SolarPortal.Domain\\Entities\\MeterDispatch.cs",
+              "RelativeToolTip": "SolarPortal.Domain\\Entities\\MeterDispatch.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAABAAAAABAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-05-06T10:04:24.328Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 57,
+              "Title": "SiteSurvey.cs",
+              "DocumentMoniker": "E:\\Sadhna Garg\\GithubCore\\SolarPortal\\SolarPortal.Domain\\Entities\\SiteSurvey.cs",
+              "RelativeDocumentMoniker": "SolarPortal.Domain\\Entities\\SiteSurvey.cs",
+              "ToolTip": "E:\\Sadhna Garg\\GithubCore\\SolarPortal\\SolarPortal.Domain\\Entities\\SiteSurvey.cs",
+              "RelativeToolTip": "SolarPortal.Domain\\Entities\\SiteSurvey.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAABAAAAABAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-05-06T10:04:16.906Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 56,
+              "Title": "Document.cs",
+              "DocumentMoniker": "E:\\Sadhna Garg\\GithubCore\\SolarPortal\\SolarPortal.Domain\\Entities\\Document.cs",
+              "RelativeDocumentMoniker": "SolarPortal.Domain\\Entities\\Document.cs",
+              "ToolTip": "E:\\Sadhna Garg\\GithubCore\\SolarPortal\\SolarPortal.Domain\\Entities\\Document.cs",
+              "RelativeToolTip": "SolarPortal.Domain\\Entities\\Document.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAABUAAAABAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-05-06T10:04:06.256Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 55,
+              "Title": "Payment.cs",
+              "DocumentMoniker": "E:\\Sadhna Garg\\GithubCore\\SolarPortal\\SolarPortal.Domain\\Entities\\Payment.cs",
+              "RelativeDocumentMoniker": "SolarPortal.Domain\\Entities\\Payment.cs",
+              "ToolTip": "E:\\Sadhna Garg\\GithubCore\\SolarPortal\\SolarPortal.Domain\\Entities\\Payment.cs",
+              "RelativeToolTip": "SolarPortal.Domain\\Entities\\Payment.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAABUAAAABAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-05-06T10:03:57.503Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 54,
+              "Title": "SolarRequest.cs",
+              "DocumentMoniker": "E:\\Sadhna Garg\\GithubCore\\SolarPortal\\SolarPortal.Domain\\Entities\\SolarRequest.cs",
+              "RelativeDocumentMoniker": "SolarPortal.Domain\\Entities\\SolarRequest.cs",
+              "ToolTip": "E:\\Sadhna Garg\\GithubCore\\SolarPortal\\SolarPortal.Domain\\Entities\\SolarRequest.cs",
+              "RelativeToolTip": "SolarPortal.Domain\\Entities\\SolarRequest.cs",
+              "ViewState": "AgIAAAwAAAAAAAAAAAAowC4AAAABAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-05-06T10:03:37.8Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 53,
+              "Title": "ProjectStatus.cs",
+              "DocumentMoniker": "E:\\Sadhna Garg\\GithubCore\\SolarPortal\\SolarPortal.Domain\\Enums\\ProjectStatus.cs",
+              "RelativeDocumentMoniker": "SolarPortal.Domain\\Enums\\ProjectStatus.cs",
+              "ToolTip": "E:\\Sadhna Garg\\GithubCore\\SolarPortal\\SolarPortal.Domain\\Enums\\ProjectStatus.cs",
+              "RelativeToolTip": "SolarPortal.Domain\\Enums\\ProjectStatus.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAC8AAAABAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-05-06T10:02:18.217Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 52,
+              "Title": "DCRDocument.cs",
+              "DocumentMoniker": "E:\\Sadhna Garg\\GithubCore\\SolarPortal\\SolarPortal.Domain\\Entities\\DCRDocument.cs",
+              "RelativeDocumentMoniker": "SolarPortal.Domain\\Entities\\DCRDocument.cs",
+              "ToolTip": "E:\\Sadhna Garg\\GithubCore\\SolarPortal\\SolarPortal.Domain\\Entities\\DCRDocument.cs",
+              "RelativeToolTip": "SolarPortal.Domain\\Entities\\DCRDocument.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAA4AAAABAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-05-06T10:02:03.279Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 51,
+              "Title": "Commission.cs",
+              "DocumentMoniker": "E:\\Sadhna Garg\\GithubCore\\SolarPortal\\SolarPortal.Domain\\Entities\\Commission.cs",
+              "RelativeDocumentMoniker": "SolarPortal.Domain\\Entities\\Commission.cs",
+              "ToolTip": "E:\\Sadhna Garg\\GithubCore\\SolarPortal\\SolarPortal.Domain\\Entities\\Commission.cs",
+              "RelativeToolTip": "SolarPortal.Domain\\Entities\\Commission.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAABAAAAABAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-05-06T10:02:02.702Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 50,
+              "Title": "ApplicationUser.cs",
+              "DocumentMoniker": "E:\\Sadhna Garg\\GithubCore\\SolarPortal\\SolarPortal.Domain\\Entities\\ApplicationUser.cs",
+              "RelativeDocumentMoniker": "SolarPortal.Domain\\Entities\\ApplicationUser.cs",
+              "ToolTip": "E:\\Sadhna Garg\\GithubCore\\SolarPortal\\SolarPortal.Domain\\Entities\\ApplicationUser.cs",
+              "RelativeToolTip": "SolarPortal.Domain\\Entities\\ApplicationUser.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAABYAAAABAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-05-06T10:02:01.059Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 49,
+              "Title": "BaseEntity.cs",
+              "DocumentMoniker": "E:\\Sadhna Garg\\GithubCore\\SolarPortal\\SolarPortal.Domain\\Common\\BaseEntity.cs",
+              "RelativeDocumentMoniker": "SolarPortal.Domain\\Common\\BaseEntity.cs",
+              "ToolTip": "E:\\Sadhna Garg\\GithubCore\\SolarPortal\\SolarPortal.Domain\\Common\\BaseEntity.cs",
+              "RelativeToolTip": "SolarPortal.Domain\\Common\\BaseEntity.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAsAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-05-06T09:57:03.35Z",
+              "EditorCaption": ""
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
