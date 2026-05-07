@@ -1,18 +1,20 @@
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Hosting;
 using SolarPortal.Application.Interfaces.Services;
+using System.IO;
 using System.Linq;
 
 namespace SolarPortal.Application.Services;
 
 public class FileUploadService : IFileUploadService
 {
-    private readonly IWebHostEnvironment _env;
+    private readonly IHostEnvironment _env;
     private readonly IConfiguration _config;
     private readonly string[] _allowedExtensions = { ".jpg", ".jpeg", ".png", ".pdf" };
     private readonly long _maxFileSize = 10 * 1024 * 1024; // 10 MB
 
-    public FileUploadService(IWebHostEnvironment env, IConfiguration config)
+    public FileUploadService(IHostEnvironment env, IConfiguration config)
     {
         _env = env;
         _config = config;
@@ -31,7 +33,7 @@ public class FileUploadService : IFileUploadService
         if (!_allowedExtensions.Contains(ext))
             return (false, null, "Invalid file type. Allowed: JPG, PNG, PDF");
 
-        var uploadFolder = Path.Combine(_env.WebRootPath, "uploads", subfolder);
+        var uploadFolder = Path.Combine(_env.ContentRootPath, "wwwroot", "uploads", subfolder);
         Directory.CreateDirectory(uploadFolder);
 
         var uniqueName = $"{Guid.NewGuid()}{ext}";
@@ -47,7 +49,7 @@ public class FileUploadService : IFileUploadService
     public void DeleteFile(string filePath)
     {
         if (string.IsNullOrEmpty(filePath)) return;
-        var fullPath = Path.Combine(_env.WebRootPath, filePath.TrimStart('/'));
+        var fullPath = Path.Combine(_env.ContentRootPath, "wwwroot", filePath.TrimStart('/'));
         if (File.Exists(fullPath))
             File.Delete(fullPath);
     }
