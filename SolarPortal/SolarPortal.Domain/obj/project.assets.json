@@ -817,11 +817,11 @@
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "E:\\Sadhna Garg\\GithubCore\\SolarPortal\\SolarPortal.Domain\\SolarPortal.Domain.csproj",
+      "projectUniqueName": "E:\\Sadhna Garg\\GithubCore\\Solar\\SolarPortal\\SolarPortal.Domain\\SolarPortal.Domain.csproj",
       "projectName": "SolarPortal.Domain",
-      "projectPath": "E:\\Sadhna Garg\\GithubCore\\SolarPortal\\SolarPortal.Domain\\SolarPortal.Domain.csproj",
+      "projectPath": "E:\\Sadhna Garg\\GithubCore\\Solar\\SolarPortal\\SolarPortal.Domain\\SolarPortal.Domain.csproj",
       "packagesPath": "C:\\Users\\hp\\.nuget\\packages\\",
-      "outputPath": "E:\\Sadhna Garg\\GithubCore\\SolarPortal\\SolarPortal.Domain\\obj\\",
+      "outputPath": "E:\\Sadhna Garg\\GithubCore\\Solar\\SolarPortal\\SolarPortal.Domain\\obj\\",
       "projectStyle": "PackageReference",
       "fallbackFolders": [
         "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"

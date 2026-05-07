@@ -3,3 +3,9 @@ E:\Sadhna Garg\GithubCore\SolarPortal\SolarPortal.Infrastructure\obj\Debug\net8.
 E:\Sadhna Garg\GithubCore\SolarPortal\SolarPortal.Infrastructure\obj\Debug\net8.0\SolarPortal.Infrastructure.AssemblyInfoInputs.cache
 E:\Sadhna Garg\GithubCore\SolarPortal\SolarPortal.Infrastructure\obj\Debug\net8.0\SolarPortal.Infrastructure.AssemblyInfo.cs
 E:\Sadhna Garg\GithubCore\SolarPortal\SolarPortal.Infrastructure\obj\Debug\net8.0\SolarPortal.Infrastructure.csproj.CoreCompileInputs.cache
+E:\Sadhna Garg\GithubCore\Solar\SolarPortal\SolarPortal.Infrastructure\obj\Debug\net8.0\SolarPortal.Infrastructure.csproj.AssemblyReference.cache
+E:\Sadhna Garg\GithubCore\Solar\SolarPortal\SolarPortal.Infrastructure\obj\Debug\net8.0\SolarPortal.Infrastructure.GeneratedMSBuildEditorConfig.editorconfig
+E:\Sadhna Garg\GithubCore\Solar\SolarPortal\SolarPortal.Infrastructure\obj\Debug\net8.0\SolarPortal.Infrastructure.AssemblyInfoInputs.cache
+E:\Sadhna Garg\GithubCore\Solar\SolarPortal\SolarPortal.Infrastructure\obj\Debug\net8.0\SolarPortal.Infrastructure.AssemblyInfo.cs
+E:\Sadhna Garg\GithubCore\Solar\SolarPortal\SolarPortal.Infrastructure\obj\Debug\net8.0\SolarPortal.Infrastructure.csproj.CoreCompileInputs.cache
+E:\Sadhna Garg\GithubCore\Solar\SolarPortal\SolarPortal.Infrastructure\obj\Debug\net8.0\SolarPortal.Infrastructure.sourcelink.json
