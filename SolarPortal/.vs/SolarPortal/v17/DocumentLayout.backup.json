@@ -1,10 +1,10 @@
 {
   "Version": 1,
-  "WorkspaceRootPath": "E:\\Sadhna Garg\\GithubCore\\SolarPortal\\",
+  "WorkspaceRootPath": "E:\\Sadhna Garg\\GithubCore\\Solar\\SolarPortal\\",
   "Documents": [
     {
-      "AbsoluteMoniker": "D:0:0:{B2EB99EF-7A75-4BB4-9923-0A9BE96181E4}|SolarPortal.Web\\SolarPortal.Web.csproj|e:\\sadhna garg\\githubcore\\solarportal\\solarportal.web\\areas\\user\\views\\dashboard\\index.cshtml||{40D31677-CBC0-4297-A9EF-89D907823A98}",
-      "RelativeMoniker": "D:0:0:{B2EB99EF-7A75-4BB4-9923-0A9BE96181E4}|SolarPortal.Web\\SolarPortal.Web.csproj|solutionrelative:solarportal.web\\areas\\user\\views\\dashboard\\index.cshtml||{40D31677-CBC0-4297-A9EF-89D907823A98}"
+      "AbsoluteMoniker": "D:0:0:{C3BA9CC2-32C0-43F1-8432-632AA2CFB567}|SolarPortal.Application\\SolarPortal.Application.csproj|e:\\sadhna garg\\githubcore\\solar\\solarportal\\solarportal.application\\services\\fileuploadservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{C3BA9CC2-32C0-43F1-8432-632AA2CFB567}|SolarPortal.Application\\SolarPortal.Application.csproj|solutionrelative:solarportal.application\\services\\fileuploadservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     }
   ],
   "DocumentGroupContainers": [
@@ -39,14 +39,14 @@
             {
               "$type": "Document",
               "DocumentIndex": 0,
-              "Title": "Index.cshtml",
-              "DocumentMoniker": "E:\\Sadhna Garg\\GithubCore\\SolarPortal\\SolarPortal.Web\\Areas\\User\\Views\\Dashboard\\Index.cshtml",
-              "RelativeDocumentMoniker": "SolarPortal.Web\\Areas\\User\\Views\\Dashboard\\Index.cshtml",
-              "ToolTip": "E:\\Sadhna Garg\\GithubCore\\SolarPortal\\SolarPortal.Web\\Areas\\User\\Views\\Dashboard\\Index.cshtml",
-              "RelativeToolTip": "SolarPortal.Web\\Areas\\User\\Views\\Dashboard\\Index.cshtml",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000759|",
-              "WhenOpened": "2026-05-06T10:52:30.583Z",
+              "Title": "FileUploadService.cs",
+              "DocumentMoniker": "E:\\Sadhna Garg\\GithubCore\\Solar\\SolarPortal\\SolarPortal.Application\\Services\\FileUploadService.cs",
+              "RelativeDocumentMoniker": "SolarPortal.Application\\Services\\FileUploadService.cs",
+              "ToolTip": "E:\\Sadhna Garg\\GithubCore\\Solar\\SolarPortal\\SolarPortal.Application\\Services\\FileUploadService.cs",
+              "RelativeToolTip": "SolarPortal.Application\\Services\\FileUploadService.cs",
+              "ViewState": "AgIAAAMAAAAAAAAAAAAAAB4AAAAuAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-05-07T05:55:57.358Z",
               "EditorCaption": ""
             }
           ]
