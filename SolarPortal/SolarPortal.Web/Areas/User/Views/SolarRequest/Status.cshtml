@@ -1,0 +1,235 @@
+@model SolarPortal.Application.DTOs.SolarRequestDto?
+@{
+    ViewData["Title"] = "Status Tracker";
+}
+
+<div class="page active">
+    <div class="ph">
+        <div class="ph-bc">👤 User / <span>Status Tracker</span></div>
+        <div class="ph-title">📊 Solar Project Status Tracker</div>
+        <div class="ph-sub">Real-time tracking of your solar connection project</div>
+    </div>
+
+    @if (Model != null)
+    {
+        <div class="g2">
+            <!-- Status Header -->
+            <div class="card">
+                <div class="ct"><span class="ct-dot"></span>Current Status</div>
+                <div style="padding: 20px;">
+                    <div style="text-align:center;margin-bottom:20px">
+                        <div style="font-size:48px;margin-bottom:12px">
+                            @GetStageIcon(Model.CurrentStage)
+                        </div>
+                        <div style="font-size:24px;color:var(--text1);font-weight:600;margin-bottom:4px">
+                            @Model.CurrentStage.ToString().Replace("_", " ")
+                        </div>
+                        <div style="color:var(--text2)">
+                            Application <span class="sts @GetStatusClass(Model.ApprovalStatus)" style="margin-left:8px">
+                                @Model.ApprovalStatus
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Project Overview -->
+            <div class="card">
+                <div class="ct"><span class="ct-dot"></span>Project Overview</div>
+                <div class="detail-grid">
+                    <div class="detail-item">
+                        <span class="detail-label">Request Number</span>
+                        <span class="detail-value">@Model.RequestNumber</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label">Capacity</span>
+                        <span class="detail-value">@Model.KVCapacity kV</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label">Project Amount</span>
+                        <span class="detail-value gold">₹@Model.RequestedAmount.ToString("N0")</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label">Applied On</span>
+                        <span class="detail-value">@Model.CreatedAt.ToString("dd MMM yyyy")</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Status Flow Timeline -->
+        <div class="card" style="margin-top:20px">
+            <div class="ct"><span class="ct-dot"></span>Project Timeline</div>
+            <partial name="~/Views/Shared/_StatusFlow.cshtml" model="(int)Model.CurrentStage" />
+        </div>
+
+        <!-- Progress Info -->
+        <div class="card" style="margin-top:20px">
+            <div class="ct"><span class="ct-dot"></span>Next Steps</div>
+            <div style="padding:20px">
+                @switch ((int)Model.CurrentStage)
+                {
+                    case 0: // ApplicationSubmitted
+                        <div class="info-box">
+                            <div style="font-weight:600;margin-bottom:8px">📋 Application Submitted</div>
+                            <div style="color:var(--text2)">Your application has been submitted. Our team will review it shortly.</div>
+                            <div style="margin-top:12px;font-size:12px;color:var(--text3)">⏱️ Expected review: 2-3 working days</div>
+                        </div>
+                        break;
+                    case 1: // DocumentVerification
+                        <div class="info-box">
+                            <div style="font-weight:600;margin-bottom:8px">✅ Documents Being Verified</div>
+                            <div style="color:var(--text2)">Your submitted documents are being verified. You will be notified once verification is complete.</div>
+                            <div style="margin-top:12px;font-size:12px;color:var(--text3)">⏱️ Expected time: 3-5 working days</div>
+                        </div>
+                        break;
+                    case 2: // PMSurvey
+                        <div class="info-box">
+                            <div style="font-weight:600;margin-bottom:8px">🏘️ Preliminary Survey Scheduled</div>
+                            <div style="color:var(--text2)">Your preliminary (PM) survey has been scheduled. Our team will contact you with the appointment details.</div>
+                            <div style="margin-top:12px;font-size:12px;color:var(--text3)">⏱️ Expected time: 5-7 working days</div>
+                        </div>
+                        break;
+                    case 3: // SiteSurvey
+                        <div class="info-box">
+                            <div style="font-weight:600;margin-bottom:8px">📍 Site Survey In Progress</div>
+                            <div style="color:var(--text2)">Our site survey team will visit your location to assess the installation feasibility.</div>
+                            <div style="margin-top:12px;font-size:12px;color:var(--text3)">⏱️ Expected time: 2-3 working days</div>
+                        </div>
+                        break;
+                    case 4: // Approved
+                        <div class="info-box">
+                            <div style="font-weight:600;margin-bottom:8px;color:var(--succ)">✅ Project Approved!</div>
+                            <div style="color:var(--text2)">Congratulations! Your project has been approved. You can now proceed with payments.</div>
+                            <div style="margin-top:12px">
+                                <a asp-controller="SolarRequest" asp-action="Payment" asp-route-id="@Model.Id" class="btn btn-p">
+                                    💰 Make Payment
+                                </a>
+                            </div>
+                        </div>
+                        break;
+                    case 5: // MeterDispatch
+                        <div class="info-box">
+                            <div style="font-weight:600;margin-bottom:8px">📦 Meter Being Dispatched</div>
+                            <div style="color:var(--text2)">Your electricity meter is being prepared for dispatch. You will receive tracking details soon.</div>
+                        </div>
+                        break;
+                    case 6: // MaterialDispatch
+                        <div class="info-box">
+                            <div style="font-weight:600;margin-bottom:8px">📦 Materials Being Prepared</div>
+                            <div style="color:var(--text2)">Solar installation materials are being prepared and will be dispatched to your location.</div>
+                        </div>
+                        break;
+                    case 7: // Installation
+                        <div class="info-box">
+                            <div style="font-weight:600;margin-bottom:8px">🔧 Installation In Progress</div>
+                            <div style="color:var(--text2)">Our installation team is setting up your solar system. We will keep you updated on the progress.</div>
+                        </div>
+                        break;
+                    case 8: // Completed
+                        <div class="info-box">
+                            <div style="font-weight:600;margin-bottom:8px;color:var(--succ)">🎉 Installation Completed!</div>
+                            <div style="color:var(--text2)">Your solar system has been successfully installed and activated. Thank you for choosing us!</div>
+                        </div>
+                        break;
+                    case 9: // Rejected
+                        <div class="info-box" style="background-color:rgba(255,0,0,0.05)">
+                            <div style="font-weight:600;margin-bottom:8px;color:var(--danger)">❌ Application Rejected</div>
+                            <div style="color:var(--text2)">Your application could not be processed. Please contact our support team for more details.</div>
+                        </div>
+                        break;
+                }
+            </div>
+        </div>
+
+        <!-- Support Contact -->
+        <div class="card" style="margin-top:20px">
+            <div class="ct"><span class="ct-dot"></span>Need Help?</div>
+            <div style="padding:20px;text-align:center;color:var(--text2)">
+                <div style="margin-bottom:12px">Contact our support team for any queries about your project status</div>
+                <div style="display:flex;gap:16px;justify-content:center;flex-wrap:wrap">
+                    <a href="tel:+919876543210" class="btn btn-s">📞 Call Support</a>
+                    <a href="mailto:support@solarportal.com" class="btn btn-s">📧 Email Support</a>
+                </div>
+            </div>
+        </div>
+    }
+    else
+    {
+        <div class="card">
+            <div class="ct"><span class="ct-dot"></span>No Active Projects</div>
+            <div style="text-align:center;padding:40px;color:var(--text3)">
+                <div style="font-size:48px;margin-bottom:16px">📊</div>
+                <div style="font-size:18px;margin-bottom:8px">No projects to track</div>
+                <div>
+                    <a asp-controller="SolarRequest" asp-action="Create" class="btn btn-p" style="margin-top:16px">
+                        ➕ Create New Request
+                    </a>
+                </div>
+            </div>
+        </div>
+    }
+</div>
+
+<style>
+.detail-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 16px;
+}
+
+.detail-item {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.detail-label {
+    font-size: 11px;
+    color: var(--text2);
+    text-transform: uppercase;
+    font-weight: 600;
+}
+
+.detail-value {
+    font-size: 16px;
+    color: var(--text1);
+    font-weight: 500;
+}
+
+.detail-value.gold {
+    color: var(--sun);
+}
+
+.info-box {
+    padding: 16px;
+    background-color: var(--bg2);
+    border-left: 4px solid var(--sun);
+    border-radius: 4px;
+}
+</style>
+
+@functions {
+    string GetStatusClass(Domain.Enums.ApprovalStatus status) => status switch
+    {
+        Domain.Enums.ApprovalStatus.Pending => "sts-pend",
+        Domain.Enums.ApprovalStatus.Approved => "sts-act",
+        Domain.Enums.ApprovalStatus.Rejected => "sts-rej",
+        _ => "sts-pend"
+    };
+
+    string GetStageIcon(Domain.Enums.ProjectStatus stage) => stage switch
+    {
+        Domain.Enums.ProjectStatus.Registration => "📋",
+        Domain.Enums.ProjectStatus.ProductSelection => "📦",
+        Domain.Enums.ProjectStatus.Payment => "💰",
+        Domain.Enums.ProjectStatus.PMSurvey => "🏘️",
+        Domain.Enums.ProjectStatus.MeterDispatch => "📦",
+        Domain.Enums.ProjectStatus.SiteSurvey => "📍",
+        Domain.Enums.ProjectStatus.MaterialDispatch => "📦",
+        Domain.Enums.ProjectStatus.Installation => "🔧",
+        Domain.Enums.ProjectStatus.DCRUpdate => "📄",
+        Domain.Enums.ProjectStatus.Completed => "🎉",
+        _ => "📊"
+    };
+}

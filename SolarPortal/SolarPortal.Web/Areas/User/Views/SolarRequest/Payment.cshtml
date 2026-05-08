@@ -1,0 +1,293 @@
+@model SolarPortal.Application.DTOs.SolarRequestDto
+@{
+    ViewData["Title"] = "Payment";
+}
+
+<div class="page active">
+    <div class="ph">
+        <div class="ph-bc">👤 User / <a asp-controller="SolarRequest" asp-action="Index" style="color:var(--sun)">Projects</a> / <span>Payment</span></div>
+        <div class="ph-title">💰 Make Payment</div>
+        <div class="ph-sub">Request @Model?.RequestNumber — Complete your solar project payment</div>
+    </div>
+
+    @if (Model != null)
+    {
+        <div class="g2">
+            <!-- Project Summary -->
+            <div class="card">
+                <div class="ct"><span class="ct-dot"></span>Project Summary</div>
+                <div class="summary-grid">
+                    <div class="summary-item">
+                        <span class="label">Request Number</span>
+                        <span class="value">@Model.RequestNumber</span>
+                    </div>
+                    <div class="summary-item">
+                        <span class="label">Capacity</span>
+                        <span class="value">@Model.KVCapacity kV</span>
+                    </div>
+                    <div class="summary-item">
+                        <span class="label">Connection Type</span>
+                        <span class="value">@Model.ConnectionType</span>
+                    </div>
+                    <div class="summary-item">
+                        <span class="label">Approved Amount</span>
+                        <span class="value gold">₹@Model.ApprovedAmount.ToString("N0")</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Payment Form -->
+            <div class="card">
+                <div class="ct"><span class="ct-dot"></span>Add Payment</div>
+                <form id="paymentForm">
+                    <input type="hidden" name="solarRequestId" value="@Model.Id" />
+                    @Html.AntiForgeryToken()
+
+                    <div class="fr">
+                        <div class="fg">
+                            <label>Payment Method <span class="req">*</span></label>
+                            <select name="paymentMethod" required>
+                                <option value="">Select method</option>
+                                <option value="Bank Transfer">Bank Transfer</option>
+                                <option value="Cheque">Cheque</option>
+                                <option value="DD">Demand Draft (DD)</option>
+                                <option value="Card">Card Payment</option>
+                                <option value="Cash">Cash</option>
+                            </select>
+                        </div>
+                        <div class="fg">
+                            <label>Payment Date <span class="req">*</span></label>
+                            <input type="date" name="paymentDate" required />
+                        </div>
+                    </div>
+
+                    <div class="fr">
+                        <div class="fg">
+                            <label>Amount (₹) <span class="req">*</span></label>
+                            <input type="number" name="amount" placeholder="0.00" step="0.01" min="1" required />
+                        </div>
+                        <div class="fg">
+                            <label>Reference Number <span class="req">*</span></label>
+                            <input type="text" name="referenceNumber" placeholder="e.g., CHQ123456" required />
+                        </div>
+                    </div>
+
+                    <div class="fg">
+                        <label>Payment Receipt / Proof (Image/PDF)</label>
+                        <div class="upload-area" onclick="document.getElementById('receiptImage').click()">
+                            <input type="file" id="receiptImage" name="receiptImage" accept="image/*,.pdf" 
+                                   onchange="displayFilename(this)" style="display:none" />
+                            <div class="upload-icon">📸</div>
+                            <div class="upload-txt">Upload Payment Receipt</div>
+                            <div class="upload-hint">Upload a photo or scan of your payment proof</div>
+                        </div>
+                        <div id="receiptPreview"></div>
+                    </div>
+
+                    <div class="fg">
+                        <label>Notes (Optional)</label>
+                        <textarea name="notes" placeholder="Any additional information about this payment..." rows="3"></textarea>
+                    </div>
+
+                    <div class="btn-row">
+                        <button type="submit" class="btn btn-p" onclick="submitPayment(event)">
+                            ✓ Submit Payment
+                        </button>
+                        <a asp-controller="SolarRequest" asp-action="Details" asp-route-id="@Model.Id"
+                           class="btn btn-d">← Cancel</a>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Payment History -->
+            @if (ViewBag.Payments != null && ((IEnumerable<SolarPortal.Application.DTOs.PaymentDto>)ViewBag.Payments).Any())
+            {
+                <div class="card">
+                    <div class="ct"><span class="ct-dot"></span>Payment History</div>
+                    <div style="max-height:300px;overflow-y:auto">
+                        <table style="width:100%">
+                            <thead>
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Method</th>
+                                    <th>Amount</th>
+                                    <th>Reference</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var payment in (IEnumerable<SolarPortal.Application.DTOs.PaymentDto>)ViewBag.Payments)
+                                {
+                                    <tr style="border-bottom:1px solid var(--border)">
+                                        <td>@payment.PaymentDate.ToString("dd/MM/yyyy")</td>
+                                        <td>@payment.PaymentMethod</td>
+                                        <td style="text-align:right;color:var(--sun)">₹@payment.Amount.ToString("N0")</td>
+                                        <td>@payment.ReferenceNumber</td>
+                                        <td>
+                                            <span class="sts @GetPaymentStatusClass(payment.Status.ToString())">
+                                                @payment.Status
+                                            </span>
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            }
+        </div>
+
+        <!-- Payment Instructions -->
+        <div class="card" style="margin-top:20px">
+            <div class="ct"><span class="ct-dot"></span>Payment Instructions</div>
+            <div style="padding:20px">
+                <div style="background-color:var(--bg2);padding:16px;border-left:4px solid var(--sun);border-radius:4px;margin-bottom:16px">
+                    <div style="font-weight:600;margin-bottom:8px">📋 How to Make Payment</div>
+                    <ol style="color:var(--text2);margin:0;padding-left:20px">
+                        <li>Choose your preferred payment method from the form above</li>
+                        <li>Enter the payment amount and reference number</li>
+                        <li>Upload a copy of your payment receipt</li>
+                        <li>Click "Submit Payment" to complete</li>
+                        <li>Our team will verify and confirm within 1-2 business days</li>
+                    </ol>
+                </div>
+
+                <div style="background-color:var(--bg2);padding:16px;border-left:4px solid var(--sun);border-radius:4px">
+                    <div style="font-weight:600;margin-bottom:8px">🏦 Bank Account Details</div>
+                    <div style="color:var(--text2)">
+                        <div><strong>Account Name:</strong> Solar Portal Solutions</div>
+                        <div><strong>Account Number:</strong> 123456789012</div>
+                        <div><strong>IFSC Code:</strong> SBIN0001234</div>
+                        <div><strong>Bank:</strong> State Bank of India</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+</div>
+
+<style>
+.summary-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 16px;
+    padding: 0;
+}
+
+.summary-item {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 12px;
+    background-color: var(--bg2);
+    border-radius: 4px;
+}
+
+.summary-item .label {
+    font-size: 11px;
+    color: var(--text2);
+    text-transform: uppercase;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+}
+
+.summary-item .value {
+    font-size: 18px;
+    color: var(--text1);
+    font-weight: 600;
+}
+
+.summary-item .value.gold {
+    color: var(--sun);
+}
+
+.upload-area {
+    border: 2px dashed var(--border);
+    border-radius: 8px;
+    padding: 40px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.upload-area:hover {
+    border-color: var(--sun);
+    background-color: rgba(255, 165, 0, 0.05);
+}
+
+.upload-icon {
+    font-size: 48px;
+    margin-bottom: 12px;
+}
+
+.upload-txt {
+    font-weight: 600;
+    color: var(--text1);
+    margin-bottom: 4px;
+}
+
+.upload-hint {
+    font-size: 12px;
+    color: var(--text2);
+}
+</style>
+
+@functions {
+    string GetPaymentStatusClass(string? status) => status?.ToLower() switch
+    {
+        "pending" => "sts-pend",
+        "verified" => "sts-act",
+        "rejected" => "sts-rej",
+        _ => "sts-pend"
+    };
+}
+
+@section Scripts {
+    <script>
+        function displayFilename(input) {
+            if (input.files && input.files[0]) {
+                const file = input.files[0];
+                const preview = document.getElementById('receiptPreview');
+                const preview_txt = document.createElement('div');
+                preview_txt.style.marginTop = '8px';
+                preview_txt.style.fontSize = '12px';
+                preview_txt.style.color = 'var(--text2)';
+                preview_txt.textContent = '📎 ' + file.name + ' (' + (file.size / 1024).toFixed(2) + ' KB)';
+                preview.innerHTML = '';
+                preview.appendChild(preview_txt);
+            }
+        }
+
+        async function submitPayment(e) {
+            e.preventDefault();
+            const form = document.getElementById('paymentForm');
+            const formData = new FormData(form);
+
+            try {
+                const response = await fetch('/User/SolarRequest/AddPayment', {
+                    method: 'POST',
+                    body: formData,
+                    headers: {
+                        'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]').value
+                    }
+                });
+
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+
+                const result = await response.json();
+                if (result.success) {
+                    Swal.fire('Success', 'Payment submitted successfully. Our team will verify it soon.', 'success').then(() => {
+                        location.reload();
+                    });
+                } else {
+                    Swal.fire('Error', result.message || 'Failed to submit payment', 'error');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                Swal.fire('Error', 'An error occurred while submitting payment', 'error');
+            }
+        }
+    </script>
+}

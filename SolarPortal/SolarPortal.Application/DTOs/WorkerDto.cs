@@ -9,6 +9,7 @@ public class WorkerDto
     public bool IsAvailable { get; set; }
     public string? City { get; set; }
     public string? State { get; set; }
+    public int AssignmentsCount { get; set; }
 }
 
 public class CreateWorkerDto
@@ -19,6 +20,7 @@ public class CreateWorkerDto
     public string Specialization { get; set; } = string.Empty;
     public string? City { get; set; }
     public string? State { get; set; }
+    public bool IsAvailable { get; set; } = true;
 }
 
 public class CreateNotificationDto

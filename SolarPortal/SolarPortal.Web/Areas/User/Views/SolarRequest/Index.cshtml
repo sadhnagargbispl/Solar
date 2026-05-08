@@ -1,0 +1,122 @@
+@model IEnumerable<SolarPortal.Application.DTOs.SolarRequestDto>
+@{
+    ViewData["Title"] = "My Projects";
+}
+
+<div class="page active">
+    <div class="ph">
+        <div class="ph-bc">👤 User / <span>Projects</span></div>
+        <div class="ph-title">🏗️ My Solar Projects</div>
+        <div class="ph-sub">Track all your solar connection applications</div>
+    </div>
+
+    <div class="btn-row" style="margin-bottom:20px">
+        <a asp-controller="SolarRequest" asp-action="Create" class="btn btn-p">
+            ➕ New Request
+        </a>
+    </div>
+
+    @if (Model.Any())
+    {
+        <div class="card">
+            <div class="ct"><span class="ct-dot"></span>My Applications (@Model.Count())</div>
+            <div class="tbl-wrap">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Request</th>
+                            <th>Type</th>
+                            <th>Capacity</th>
+                            <th>Amount</th>
+                            <th>Stage</th>
+                            <th>Status</th>
+                            <th>Applied</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var project in Model.OrderByDescending(p => p.CreatedAt))
+                        {
+                            <tr>
+                                <td class="td-b">
+                                    <a asp-controller="SolarRequest" asp-action="Details" asp-route-id="@project.Id"
+                                       style="color:var(--sun)">@project.RequestNumber</a>
+                                </td>
+                                <td>@project.ConnectionType</td>
+                                <td>@project.KVCapacity kV</td>
+                                <td style="text-align:right;color:var(--sun)">₹@project.RequestedAmount.ToString("N0")</td>
+                                <td>
+                                    <span class="sts @GetStageClass(project.CurrentStage)">
+                                        @project.CurrentStage.ToString().Replace("_", " ")
+                                    </span>
+                                </td>
+                                <td>
+                                    <span class="sts @GetStatusClass(project.ApprovalStatus)">
+                                        @project.ApprovalStatus
+                                    </span>
+                                </td>
+                                <td style="font-size:12px;color:var(--text2)">@project.CreatedAt.ToString("dd/MMM")</td>
+                                <td>
+                                    <a asp-controller="SolarRequest" asp-action="Details" asp-route-id="@project.Id"
+                                       class="btn btn-s btn-sm">View</a>
+                                    @if (project.ApprovalStatus.ToString() == "Approved" && 
+                                         project.CurrentStage.ToString() != "Completed")
+                                    {
+                                        <a asp-controller="SolarRequest" asp-action="Payment" asp-route-id="@project.Id"
+                                           class="btn btn-p btn-sm" style="margin-left:4px">Pay</a>
+                                    }
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+            
+            <div class="btn-row">
+                <a asp-controller="SolarRequest" asp-action="Status" class="btn btn-s">
+                    📊 Status Tracker
+                </a>
+            </div>
+        </div>
+    }
+    else
+    {
+        <div class="card">
+            <div class="ct"><span class="ct-dot"></span>No Applications</div>
+            <div style="text-align:center;padding:40px;color:var(--text3)">
+                <div style="font-size:48px;margin-bottom:16px">📋</div>
+                <div style="font-size:18px;margin-bottom:8px">No solar applications yet</div>
+                <div>
+                    <a asp-controller="SolarRequest" asp-action="Create" class="btn btn-p" style="margin-top:16px">
+                        ➕ Create First Application
+                    </a>
+                </div>
+            </div>
+        </div>
+    }
+</div>
+
+@functions {
+    string GetStageClass(Domain.Enums.ProjectStatus stage) => stage switch
+    {
+        Domain.Enums.ProjectStatus.ApplicationSubmitted => "sts-pend",
+        Domain.Enums.ProjectStatus.DocumentVerification => "sts-pend",
+        Domain.Enums.ProjectStatus.PMSurvey => "sts-pend",
+        Domain.Enums.ProjectStatus.SiteSurvey => "sts-pend",
+        Domain.Enums.ProjectStatus.Approved => "sts-act",
+        Domain.Enums.ProjectStatus.MeterDispatch => "sts-act",
+        Domain.Enums.ProjectStatus.MaterialDispatch => "sts-act",
+        Domain.Enums.ProjectStatus.Installation => "sts-act",
+        Domain.Enums.ProjectStatus.Completed => "sts-succ",
+        Domain.Enums.ProjectStatus.Rejected => "sts-rej",
+        _ => "sts-pend"
+    };
+
+    string GetStatusClass(Domain.Enums.ApprovalStatus status) => status switch
+    {
+        Domain.Enums.ApprovalStatus.Pending => "sts-pend",
+        Domain.Enums.ApprovalStatus.Approved => "sts-act",
+        Domain.Enums.ApprovalStatus.Rejected => "sts-rej",
+        _ => "sts-pend"
+    };
+}

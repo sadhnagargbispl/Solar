@@ -9,6 +9,8 @@ public class PaymentDto
     public string RequestNumber { get; set; } = string.Empty;
     public decimal Amount { get; set; }
     public string UTRNumber { get; set; } = string.Empty;
+    public string? ReferenceNumber { get; set; }
+    public string PaymentMethod { get; set; } = string.Empty;
     public DateTime PaymentDate { get; set; }
     public string? ReceiptImagePath { get; set; }
     public string? ReceiptNumber { get; set; }

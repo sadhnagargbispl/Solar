@@ -1,38 +1,10 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
-  <ItemGroup>
-    <Compile Include="obj\Debug\net8.0\.NETCoreApp,Version=v8.0.AssemblyAttributes.cs" />
-    <Compile Include="obj\Debug\net8.0\SolarPortal.Application.AssemblyInfo.cs" />
-    <Compile Include="obj\Debug\net8.0\SolarPortal.Application.GlobalUsings.g.cs" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Content Include="bin\Debug\net8.0\SolarPortal.Application.deps.json" />
-    <Content Include="obj\Debug\net8.0\SolarPortal.Application.csproj.FileListAbsolute.txt" />
-    <Content Include="obj\project.assets.json" />
-    <Content Include="obj\SolarPortal.Application.csproj.nuget.dgspec.json" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <None Include="bin\Debug\net8.0\SolarPortal.Application.dll" />
-    <None Include="bin\Debug\net8.0\SolarPortal.Application.pdb" />
-    <None Include="bin\Debug\net8.0\SolarPortal.Domain.dll" />
-    <None Include="bin\Debug\net8.0\SolarPortal.Domain.pdb" />
-    <None Include="obj\Debug\net8.0\refint\SolarPortal.Application.dll" />
-    <None Include="obj\Debug\net8.0\ref\SolarPortal.Application.dll" />
-    <None Include="obj\Debug\net8.0\SolarPor.3DFCCB24.Up2Date" />
-    <None Include="obj\Debug\net8.0\SolarPortal.Application.AssemblyInfoInputs.cache" />
-    <None Include="obj\Debug\net8.0\SolarPortal.Application.assets.cache" />
-    <None Include="obj\Debug\net8.0\SolarPortal.Application.csproj.AssemblyReference.cache" />
-    <None Include="obj\Debug\net8.0\SolarPortal.Application.csproj.BuildWithSkipAnalyzers" />
-    <None Include="obj\Debug\net8.0\SolarPortal.Application.csproj.CoreCompileInputs.cache" />
-    <None Include="obj\Debug\net8.0\SolarPortal.Application.dll" />
-    <None Include="obj\Debug\net8.0\SolarPortal.Application.GeneratedMSBuildEditorConfig.editorconfig" />
-    <None Include="obj\Debug\net8.0\SolarPortal.Application.pdb" />
-    <None Include="obj\project.nuget.cache" />
-    <None Include="obj\SolarPortal.Application.csproj.nuget.g.props" />
-    <None Include="obj\SolarPortal.Application.csproj.nuget.g.targets" />
-  </ItemGroup>
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\SolarPortal.Domain\SolarPortal.Domain.csproj" />
@@ -42,7 +14,10 @@
     <PackageReference Include="AutoMapper" Version="13.0.1" />
     <PackageReference Include="FluentValidation" Version="11.9.0" />
     <PackageReference Include="FluentValidation.DependencyInjectionExtensions" Version="11.9.0" />
-    <PackageReference Include="Microsoft.AspNetCore.Http" Version="2.3.9" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
   </ItemGroup>
 
   <ItemGroup>
@@ -50,11 +25,5 @@
     <Folder Include="Mappings\" />
     <Folder Include="Validators\" />
   </ItemGroup>
-
-  <PropertyGroup>
-    <TargetFramework>net8.0</TargetFramework>
-    <ImplicitUsings>enable</ImplicitUsings>
-    <Nullable>enable</Nullable>
-  </PropertyGroup>
 
 </Project>

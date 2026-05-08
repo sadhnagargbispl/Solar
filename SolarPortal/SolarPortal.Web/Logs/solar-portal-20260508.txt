@@ -1,0 +1,88 @@
+2026-05-08 13:02:26.037 +05:30 [INF] User profile is available. Using 'C:\Users\Claude\AppData\Local\ASP.NET\DataProtection-Keys' as key repository and Windows DPAPI to encrypt keys at rest.
+2026-05-08 13:02:29.361 +05:30 [WRN] Entity 'SolarRequest' has a global query filter defined and is the required end of a relationship with the entity 'DCRDocument'. This may lead to unexpected results when the required entity is filtered out. Either configure the navigation as optional, or define matching query filters for both entities in the navigation. See https://go.microsoft.com/fwlink/?linkid=2131316 for more information.
+2026-05-08 13:02:29.365 +05:30 [WRN] Entity 'SolarRequest' has a global query filter defined and is the required end of a relationship with the entity 'Installation'. This may lead to unexpected results when the required entity is filtered out. Either configure the navigation as optional, or define matching query filters for both entities in the navigation. See https://go.microsoft.com/fwlink/?linkid=2131316 for more information.
+2026-05-08 13:02:29.369 +05:30 [WRN] Entity 'SolarRequest' has a global query filter defined and is the required end of a relationship with the entity 'MaterialDispatch'. This may lead to unexpected results when the required entity is filtered out. Either configure the navigation as optional, or define matching query filters for both entities in the navigation. See https://go.microsoft.com/fwlink/?linkid=2131316 for more information.
+2026-05-08 13:02:29.373 +05:30 [WRN] Entity 'SolarRequest' has a global query filter defined and is the required end of a relationship with the entity 'MeterDispatch'. This may lead to unexpected results when the required entity is filtered out. Either configure the navigation as optional, or define matching query filters for both entities in the navigation. See https://go.microsoft.com/fwlink/?linkid=2131316 for more information.
+2026-05-08 13:02:29.375 +05:30 [WRN] Entity 'SolarRequest' has a global query filter defined and is the required end of a relationship with the entity 'SiteSurvey'. This may lead to unexpected results when the required entity is filtered out. Either configure the navigation as optional, or define matching query filters for both entities in the navigation. See https://go.microsoft.com/fwlink/?linkid=2131316 for more information.
+2026-05-08 13:02:29.574 +05:30 [WRN] No store type was specified for the decimal property 'KVCapacity' on entity type 'SolarRequest'. This will cause values to be silently truncated if they do not fit in the default precision and scale. Explicitly specify the SQL server column type that can accommodate all the values in 'OnModelCreating' using 'HasColumnType', specify precision and scale using 'HasPrecision', or configure a value converter using 'HasConversion'.
+2026-05-08 13:02:42.007 +05:30 [INF] Executed DbCommand (103ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+SELECT 1
+2026-05-08 13:02:42.367 +05:30 [INF] Executed DbCommand (312ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+
+IF EXISTS
+    (SELECT *
+     FROM [sys].[objects] o
+     WHERE [o].[type] = 'U'
+     AND [o].[is_ms_shipped] = 0
+     AND NOT EXISTS (SELECT *
+         FROM [sys].[extended_properties] AS [ep]
+         WHERE [ep].[major_id] = [o].[object_id]
+             AND [ep].[minor_id] = 0
+             AND [ep].[class] = 1
+             AND [ep].[name] = N'microsoft_database_tools_support'
+    )
+)
+SELECT 1 ELSE SELECT 0
+2026-05-08 13:02:43.387 +05:30 [INF] Executed DbCommand (332ms) [Parameters=[@__normalizedName_0='?' (Size = 256)], CommandType='"Text"', CommandTimeout='30']
+SELECT TOP(1) [r].[Id], [r].[ConcurrencyStamp], [r].[Name], [r].[NormalizedName]
+FROM [Roles] AS [r]
+WHERE [r].[NormalizedName] = @__normalizedName_0
+2026-05-08 13:02:43.530 +05:30 [INF] Executed DbCommand (7ms) [Parameters=[@__normalizedName_0='?' (Size = 256)], CommandType='"Text"', CommandTimeout='30']
+SELECT TOP(1) [r].[Id], [r].[ConcurrencyStamp], [r].[Name], [r].[NormalizedName]
+FROM [Roles] AS [r]
+WHERE [r].[NormalizedName] = @__normalizedName_0
+2026-05-08 13:02:43.599 +05:30 [INF] Executed DbCommand (30ms) [Parameters=[@__normalizedEmail_0='?' (Size = 256)], CommandType='"Text"', CommandTimeout='30']
+SELECT TOP(2) [u].[Id], [u].[AadharNumber], [u].[AccessFailedCount], [u].[Address], [u].[City], [u].[ConcurrencyStamp], [u].[CreatedAt], [u].[Email], [u].[EmailConfirmed], [u].[FullName], [u].[IsActive], [u].[LockoutEnabled], [u].[LockoutEnd], [u].[MobileNumber], [u].[NormalizedEmail], [u].[NormalizedUserName], [u].[PANNumber], [u].[PasswordHash], [u].[PhoneNumber], [u].[PhoneNumberConfirmed], [u].[PinCode], [u].[SecurityStamp], [u].[State], [u].[TwoFactorEnabled], [u].[UpdatedAt], [u].[UserName]
+FROM [Users] AS [u]
+WHERE [u].[NormalizedEmail] = @__normalizedEmail_0
+2026-05-08 13:02:43.814 +05:30 [INF] Executed DbCommand (7ms) [Parameters=[@__normalizedEmail_0='?' (Size = 256)], CommandType='"Text"', CommandTimeout='30']
+SELECT TOP(2) [u].[Id], [u].[AadharNumber], [u].[AccessFailedCount], [u].[Address], [u].[City], [u].[ConcurrencyStamp], [u].[CreatedAt], [u].[Email], [u].[EmailConfirmed], [u].[FullName], [u].[IsActive], [u].[LockoutEnabled], [u].[LockoutEnd], [u].[MobileNumber], [u].[NormalizedEmail], [u].[NormalizedUserName], [u].[PANNumber], [u].[PasswordHash], [u].[PhoneNumber], [u].[PhoneNumberConfirmed], [u].[PinCode], [u].[SecurityStamp], [u].[State], [u].[TwoFactorEnabled], [u].[UpdatedAt], [u].[UserName]
+FROM [Users] AS [u]
+WHERE [u].[NormalizedEmail] = @__normalizedEmail_0
+2026-05-08 13:02:43.873 +05:30 [INF] Executed DbCommand (25ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+SELECT CASE
+    WHEN EXISTS (
+        SELECT 1
+        FROM [Workers] AS [w]) THEN CAST(1 AS bit)
+    ELSE CAST(0 AS bit)
+END
+2026-05-08 13:02:44.475 +05:30 [INF] Now listening on: https://localhost:7050
+2026-05-08 13:02:44.476 +05:30 [INF] Now listening on: http://localhost:5038
+2026-05-08 13:02:44.559 +05:30 [INF] Application started. Press Ctrl+C to shut down.
+2026-05-08 13:02:44.562 +05:30 [INF] Hosting environment: Development
+2026-05-08 13:02:44.566 +05:30 [INF] Content root path: \\localhost\Dimpal\Github\Solar\SolarPortal\SolarPortal.Web
+2026-05-08 13:02:48.674 +05:30 [INF] Request starting HTTP/2 GET https://localhost:7050/ - null null
+2026-05-08 13:02:49.527 +05:30 [INF] Executing endpoint 'SolarPortal.Web.Controllers.HomeController.Index (SolarPortal.Web)'
+2026-05-08 13:02:49.591 +05:30 [INF] Route matched with {action = "Index", controller = "Home", area = ""}. Executing controller action with signature Microsoft.AspNetCore.Mvc.IActionResult Index() on controller SolarPortal.Web.Controllers.HomeController (SolarPortal.Web).
+2026-05-08 13:02:49.644 +05:30 [INF] Authorization failed. These requirements were not met:
+DenyAnonymousAuthorizationRequirement: Requires an authenticated user.
+2026-05-08 13:02:49.655 +05:30 [INF] Authorization failed for the request at filter 'Microsoft.AspNetCore.Mvc.Authorization.AuthorizeFilter'.
+2026-05-08 13:02:49.661 +05:30 [INF] Executing ChallengeResult with authentication schemes ([]).
+2026-05-08 13:02:49.694 +05:30 [INF] AuthenticationScheme: Identity.Application was challenged.
+2026-05-08 13:02:49.702 +05:30 [INF] Executed action SolarPortal.Web.Controllers.HomeController.Index (SolarPortal.Web) in 67.786ms
+2026-05-08 13:02:49.706 +05:30 [INF] Executed endpoint 'SolarPortal.Web.Controllers.HomeController.Index (SolarPortal.Web)'
+2026-05-08 13:02:49.729 +05:30 [INF] Request finished HTTP/2 GET https://localhost:7050/ - 302 null null 1071.1372ms
+2026-05-08 13:02:49.766 +05:30 [INF] Request starting HTTP/2 GET https://localhost:7050/Account/Login?ReturnUrl=%2F - null null
+2026-05-08 13:02:49.788 +05:30 [INF] Executing endpoint 'SolarPortal.Web.Controllers.AccountController.Login (SolarPortal.Web)'
+2026-05-08 13:02:49.813 +05:30 [INF] Route matched with {action = "Login", controller = "Account", area = ""}. Executing controller action with signature Microsoft.AspNetCore.Mvc.IActionResult Login(System.String) on controller SolarPortal.Web.Controllers.AccountController (SolarPortal.Web).
+2026-05-08 13:02:49.895 +05:30 [INF] Executing ViewResult, running view Login.
+2026-05-08 13:02:50.423 +05:30 [INF] Executed ViewResult - view Login executed in 545.8468ms.
+2026-05-08 13:02:50.494 +05:30 [INF] Request starting HTTP/2 GET https://localhost:7050/lib/jquery-validation-unobtrusive/jquery.validate.unobtrusive.min.js - null null
+2026-05-08 13:02:50.481 +05:30 [INF] Request starting HTTP/2 GET https://localhost:7050/css/solar-theme.css?v=cQYrEW0Dm47v8qpcjhlh777OfSXMtyzADBjkF2YC-7I - null null
+2026-05-08 13:02:50.487 +05:30 [INF] Request starting HTTP/2 GET https://localhost:7050/_vs/browserLink - null null
+2026-05-08 13:02:50.485 +05:30 [INF] Request starting HTTP/2 GET https://localhost:7050/lib/jquery-validation/dist/jquery.validate.min.js - null null
+2026-05-08 13:02:50.637 +05:30 [INF] Sending file. Request path: '/lib/jquery-validation-unobtrusive/jquery.validate.unobtrusive.min.js'. Physical path: '\\localhost\Dimpal\Github\Solar\SolarPortal\SolarPortal.Web\wwwroot\lib\jquery-validation-unobtrusive\jquery.validate.unobtrusive.min.js'
+2026-05-08 13:02:50.532 +05:30 [INF] Executed action SolarPortal.Web.Controllers.AccountController.Login (SolarPortal.Web) in 712.8854ms
+2026-05-08 13:02:50.512 +05:30 [INF] Request starting HTTP/2 GET https://localhost:7050/_framework/aspnetcore-browser-refresh.js - null null
+2026-05-08 13:02:50.670 +05:30 [INF] Sending file. Request path: '/css/solar-theme.css'. Physical path: '\\localhost\Dimpal\Github\Solar\SolarPortal\SolarPortal.Web\wwwroot\css\solar-theme.css'
+2026-05-08 13:02:50.678 +05:30 [INF] Request finished HTTP/2 GET https://localhost:7050/lib/jquery-validation-unobtrusive/jquery.validate.unobtrusive.min.js - 200 5831 text/javascript 185.8204ms
+2026-05-08 13:02:50.712 +05:30 [INF] Request finished HTTP/2 GET https://localhost:7050/css/solar-theme.css?v=cQYrEW0Dm47v8qpcjhlh777OfSXMtyzADBjkF2YC-7I - 200 18822 text/css 231.0021ms
+2026-05-08 13:02:50.740 +05:30 [INF] Request finished HTTP/2 GET https://localhost:7050/_framework/aspnetcore-browser-refresh.js - 200 14935 application/javascript; charset=utf-8 227.8578ms
+2026-05-08 13:02:50.681 +05:30 [INF] Executed endpoint 'SolarPortal.Web.Controllers.AccountController.Login (SolarPortal.Web)'
+2026-05-08 13:02:51.046 +05:30 [INF] Sending file. Request path: '/lib/jquery-validation/dist/jquery.validate.min.js'. Physical path: '\\localhost\Dimpal\Github\Solar\SolarPortal\SolarPortal.Web\wwwroot\lib\jquery-validation\dist\jquery.validate.min.js'
+2026-05-08 13:02:51.048 +05:30 [INF] Request finished HTTP/2 GET https://localhost:7050/Account/Login?ReturnUrl=%2F - 200 null text/html; charset=utf-8 1281.676ms
+2026-05-08 13:02:51.049 +05:30 [INF] Request finished HTTP/2 GET https://localhost:7050/lib/jquery-validation/dist/jquery.validate.min.js - 200 24604 text/javascript 564.3187ms
+2026-05-08 13:02:51.061 +05:30 [INF] Request finished HTTP/2 GET https://localhost:7050/_vs/browserLink - 200 null text/javascript; charset=UTF-8 574.0496ms
+2026-05-08 13:02:51.310 +05:30 [INF] Request starting HTTP/2 GET https://localhost:7050/favicon.ico - null null
+2026-05-08 13:02:51.381 +05:30 [INF] Sending file. Request path: '/favicon.ico'. Physical path: '\\localhost\Dimpal\Github\Solar\SolarPortal\SolarPortal.Web\wwwroot\favicon.ico'
+2026-05-08 13:02:51.395 +05:30 [INF] Request finished HTTP/2 GET https://localhost:7050/favicon.ico - 200 5430 image/x-icon 85.0698ms

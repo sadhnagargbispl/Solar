@@ -1,0 +1,104 @@
+@model IEnumerable<SolarPortal.Application.DTOs.SolarRequestDto>
+@{
+    ViewData["Title"] = "All Projects";
+}
+
+<div class="page active">
+    <div class="ph">
+        <div class="ph-bc">🛡️ Admin / <span>Projects</span></div>
+        <div class="ph-title">📊 All Solar Projects</div>
+        <div class="ph-sub">Manage all solar connection requests and their status</div>
+    </div>
+
+    @if (Model.Any())
+    {
+        <div class="card">
+            <div class="ct"><span class="ct-dot"></span>Projects List</div>
+            <div class="tbl-wrap">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Applicant</th>
+                            <th>Type</th>
+                            <th style="width:80px">Capacity</th>
+                            <th>Stage</th>
+                            <th>Approval</th>
+                            <th>Amount</th>
+                            <th>Date</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var project in Model.OrderByDescending(p => p.CreatedAt))
+                        {
+                            <tr>
+                                <td class="td-b">
+                                    <a asp-controller="Projects" asp-action="Details" asp-route-id="@project.Id"
+                                       style="color:var(--sun)">@project.RequestNumber</a>
+                                </td>
+                                <td>@project.ApplicantName</td>
+                                <td>@project.ConnectionType</td>
+                                <td>@project.KVCapacity kV</td>
+                                <td>
+                                    <span class="sts @GetStageClass(project.CurrentStage)">
+                                        @project.CurrentStage.ToString().Replace("_", " ")
+                                    </span>
+                                </td>
+                                <td>
+                                    <span class="sts @GetStatusClass(project.ApprovalStatus)">
+                                        @project.ApprovalStatus
+                                    </span>
+                                </td>
+                                <td style="text-align:right">₹@project.RequestedAmount.ToString("N0")</td>
+                                <td style="font-size:12px;color:var(--text2)">@project.CreatedAt.ToString("dd/MM/yyyy")</td>
+                                <td>
+                                    <a asp-controller="Projects" asp-action="Details" asp-route-id="@project.Id"
+                                       class="btn btn-s btn-sm">
+                                        View
+                                    </a>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    }
+    else
+    {
+        <div class="card">
+            <div class="ct"><span class="ct-dot"></span>No Projects</div>
+            <div style="text-align:center;padding:40px;color:var(--text3)">
+                <div style="font-size:48px;margin-bottom:16px">📋</div>
+                <div style="font-size:18px;margin-bottom:8px">No projects registered</div>
+                <div>Projects will appear here once users submit their applications.</div>
+            </div>
+        </div>
+    }
+</div>
+
+@functions {
+    string GetStageClass(Domain.Enums.ProjectStatus stage) => stage switch
+    {
+        Domain.Enums.ProjectStatus.Registration => "sts-pend",
+        Domain.Enums.ProjectStatus.ProductSelection => "sts-pend",
+        Domain.Enums.ProjectStatus.Payment => "sts-pend",
+        Domain.Enums.ProjectStatus.PMSurvey => "sts-pend",
+        Domain.Enums.ProjectStatus.MeterDispatch => "sts-act",
+        Domain.Enums.ProjectStatus.SiteSurvey => "sts-act",
+        Domain.Enums.ProjectStatus.MaterialDispatch => "sts-act",
+        Domain.Enums.ProjectStatus.Installation => "sts-act",
+        Domain.Enums.ProjectStatus.DCRUpdate => "sts-act",
+        Domain.Enums.ProjectStatus.Completed => "sts-succ",
+        _ => "sts-pend"
+    };
+
+    string GetStatusClass(Domain.Enums.ApprovalStatus status) => status switch
+    {
+        Domain.Enums.ApprovalStatus.Pending => "sts-pend",
+        Domain.Enums.ApprovalStatus.Approved => "sts-act",
+        Domain.Enums.ApprovalStatus.Rejected => "sts-rej",
+        _ => "sts-pend"
+    };
+}

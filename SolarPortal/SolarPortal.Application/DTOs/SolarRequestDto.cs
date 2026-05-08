@@ -18,12 +18,15 @@ public class SolarRequestDto
     public decimal KVCapacity { get; set; }
     public string? SelectedPlan { get; set; }
     public decimal PlanAmount { get; set; }
+    public decimal RequestedAmount { get; set; }
+    public decimal ApprovedAmount { get; set; }
     public ProjectStatus CurrentStage { get; set; }
     public ApprovalStatus ApprovalStatus { get; set; }
     public DateTime CreatedAt { get; set; }
     public string? UserFullName { get; set; }
     public decimal TotalPaid { get; set; }
     public decimal TotalDue { get; set; }
+    public List<DocumentDto> Documents { get; set; } = new();
 }
 
 public class CreateSolarRequestDto

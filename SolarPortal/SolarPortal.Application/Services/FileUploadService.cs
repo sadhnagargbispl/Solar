@@ -1,7 +1,7 @@
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Configuration;
 using SolarPortal.Application.Interfaces.Services;
-using System.Linq;
 
 namespace SolarPortal.Application.Services;
 
@@ -51,11 +51,4 @@ public class FileUploadService : IFileUploadService
         if (File.Exists(fullPath))
             File.Delete(fullPath);
     }
-}
-
-// Interface
-public interface IFileUploadService
-{
-    Task<(bool Success, string? FilePath, string? Error)> UploadAsync(IFormFile file, string subfolder);
-    void DeleteFile(string filePath);
 }

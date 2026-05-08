@@ -1,42 +1,10 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
-  <ItemGroup>
-    <Compile Include="obj\Debug\net8.0\.NETCoreApp,Version=v8.0.AssemblyAttributes.cs" />
-    <Compile Include="obj\Debug\net8.0\SolarPortal.Infrastructure.AssemblyInfo.cs" />
-    <Compile Include="obj\Debug\net8.0\SolarPortal.Infrastructure.GlobalUsings.g.cs" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Content Include="bin\Debug\net8.0\SolarPortal.Infrastructure.deps.json" />
-    <Content Include="bin\Debug\net8.0\SolarPortal.Infrastructure.runtimeconfig.json" />
-    <Content Include="obj\Debug\net8.0\SolarPortal.Infrastructure.csproj.FileListAbsolute.txt" />
-    <Content Include="obj\project.assets.json" />
-    <Content Include="obj\SolarPortal.Infrastructure.csproj.nuget.dgspec.json" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <None Include="bin\Debug\net8.0\SolarPortal.Application.dll" />
-    <None Include="bin\Debug\net8.0\SolarPortal.Application.pdb" />
-    <None Include="bin\Debug\net8.0\SolarPortal.Domain.dll" />
-    <None Include="bin\Debug\net8.0\SolarPortal.Domain.pdb" />
-    <None Include="bin\Debug\net8.0\SolarPortal.Infrastructure.dll" />
-    <None Include="bin\Debug\net8.0\SolarPortal.Infrastructure.pdb" />
-    <None Include="obj\Debug\net8.0\refint\SolarPortal.Infrastructure.dll" />
-    <None Include="obj\Debug\net8.0\ref\SolarPortal.Infrastructure.dll" />
-    <None Include="obj\Debug\net8.0\SolarPor.49D41F00.Up2Date" />
-    <None Include="obj\Debug\net8.0\SolarPortal.Infrastructure.AssemblyInfoInputs.cache" />
-    <None Include="obj\Debug\net8.0\SolarPortal.Infrastructure.assets.cache" />
-    <None Include="obj\Debug\net8.0\SolarPortal.Infrastructure.csproj.AssemblyReference.cache" />
-    <None Include="obj\Debug\net8.0\SolarPortal.Infrastructure.csproj.BuildWithSkipAnalyzers" />
-    <None Include="obj\Debug\net8.0\SolarPortal.Infrastructure.csproj.CoreCompileInputs.cache" />
-    <None Include="obj\Debug\net8.0\SolarPortal.Infrastructure.dll" />
-    <None Include="obj\Debug\net8.0\SolarPortal.Infrastructure.GeneratedMSBuildEditorConfig.editorconfig" />
-    <None Include="obj\Debug\net8.0\SolarPortal.Infrastructure.genruntimeconfig.cache" />
-    <None Include="obj\Debug\net8.0\SolarPortal.Infrastructure.pdb" />
-    <None Include="obj\project.nuget.cache" />
-    <None Include="obj\SolarPortal.Infrastructure.csproj.nuget.g.props" />
-    <None Include="obj\SolarPortal.Infrastructure.csproj.nuget.g.targets" />
-  </ItemGroup>
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\SolarPortal.Application\SolarPortal.Application.csproj" />
@@ -44,7 +12,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Microsoft.AspNetCore.Http" Version="2.3.9" />
     <PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="8.0.0" />
     <PackageReference Include="Microsoft.EntityFrameworkCore" Version="8.0.0" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="8.0.0" />
@@ -55,15 +22,13 @@
   </ItemGroup>
 
   <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+  </ItemGroup>
+
+  <ItemGroup>
     <Folder Include="Data\Configurations\" />
     <Folder Include="Data\Migrations\" />
     <Folder Include="Repositories\" />
   </ItemGroup>
-
-  <PropertyGroup>
-    <TargetFramework>net8.0</TargetFramework>
-    <ImplicitUsings>enable</ImplicitUsings>
-    <Nullable>enable</Nullable>
-  </PropertyGroup>
 
 </Project>

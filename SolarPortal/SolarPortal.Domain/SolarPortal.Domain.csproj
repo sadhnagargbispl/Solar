@@ -7,42 +7,11 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Compile Include="obj\Debug\net8.0\.NETCoreApp,Version=v8.0.AssemblyAttributes.cs" />
-    <Compile Include="obj\Debug\net8.0\SolarPortal.Domain.AssemblyInfo.cs" />
-    <Compile Include="obj\Debug\net8.0\SolarPortal.Domain.GlobalUsings.g.cs" />
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
   </ItemGroup>
 
   <ItemGroup>
-    <Content Include="bin\Debug\net8.0\SolarPortal.Domain.deps.json" />
-    <Content Include="obj\Debug\net8.0\SolarPortal.Domain.csproj.FileListAbsolute.txt" />
-    <Content Include="obj\project.assets.json" />
-    <Content Include="obj\SolarPortal.Domain.csproj.nuget.dgspec.json" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <None Include="bin\Debug\net8.0\SolarPortal.Domain.dll" />
-    <None Include="bin\Debug\net8.0\SolarPortal.Domain.pdb" />
-    <None Include="obj\Debug\net8.0\refint\SolarPortal.Domain.dll" />
-    <None Include="obj\Debug\net8.0\ref\SolarPortal.Domain.dll" />
-    <None Include="obj\Debug\net8.0\SolarPortal.Domain.AssemblyInfoInputs.cache" />
-    <None Include="obj\Debug\net8.0\SolarPortal.Domain.assets.cache" />
-    <None Include="obj\Debug\net8.0\SolarPortal.Domain.csproj.AssemblyReference.cache" />
-    <None Include="obj\Debug\net8.0\SolarPortal.Domain.csproj.BuildWithSkipAnalyzers" />
-    <None Include="obj\Debug\net8.0\SolarPortal.Domain.csproj.CoreCompileInputs.cache" />
-    <None Include="obj\Debug\net8.0\SolarPortal.Domain.dll" />
-    <None Include="obj\Debug\net8.0\SolarPortal.Domain.GeneratedMSBuildEditorConfig.editorconfig" />
-    <None Include="obj\Debug\net8.0\SolarPortal.Domain.pdb" />
-    <None Include="obj\project.nuget.cache" />
-    <None Include="obj\SolarPortal.Domain.csproj.nuget.g.props" />
-    <None Include="obj\SolarPortal.Domain.csproj.nuget.g.targets" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <PackageReference Include="Microsoft.AspNetCore.Http" Version="2.3.9" />
-    <PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="8.0.0" />
-  </ItemGroup>
-
-  <ItemGroup>
+    <Folder Include="Common\" />
     <Folder Include="Entities\" />
     <Folder Include="Enums\" />
   </ItemGroup>

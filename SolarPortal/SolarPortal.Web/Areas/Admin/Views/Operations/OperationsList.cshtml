@@ -1,0 +1,205 @@
+@model IEnumerable<SolarPortal.Domain.Entities.SolarRequest>
+@{
+    ViewData["Title"] = ViewBag.Title ?? "Operations";
+}
+
+<div class="page active">
+    <div class="ph">
+        <div class="ph-bc">🛡️ Admin / <span>@ViewBag.Title</span></div>
+        <div class="ph-title">@ViewBag.Title</div>
+        <div class="ph-sub">Manage @ViewBag.Title.ToLower() operations</div>
+    </div>
+
+    @if (Model.Any())
+    {
+        <div class="card">
+            <div class="ct"><span class="ct-dot"></span>@ViewBag.Title Requests</div>
+            <div class="tbl-wrap">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Applicant</th>
+                            <th>Type</th>
+                            <th>Capacity</th>
+                            <th>Status</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var request in Model)
+                        {
+                            <tr>
+                                <td class="td-b">
+                                    <a asp-area="Admin" asp-controller="Projects" asp-action="Details"
+                                       asp-route-id="@request.Id" style="color:var(--sun)">@request.RequestNumber</a>
+                                </td>
+                                <td>@request.ApplicantName</td>
+                                <td>@request.ConnectionType</td>
+                                <td>@request.KVCapacity kV</td>
+                                <td>
+                                    <span class="sts sts-act">@request.ApprovalStatus</span>
+                                </td>
+                                <td>
+                                    @if (ViewBag.Title == "Meter Dispatch")
+                                    {
+                                        <button class="btn btn-p btn-sm" onclick="openMeterDispatchModal(@request.Id)">
+                                            📦 Dispatch Meter
+                                        </button>
+                                    }
+                                    else if (ViewBag.Title == "Site Survey")
+                                    {
+                                        <button class="btn btn-p btn-sm" onclick="openSiteSurveyModal(@request.Id)">
+                                            📍 Start Survey
+                                        </button>
+                                    }
+                                    else if (ViewBag.Title == "Material Dispatch")
+                                    {
+                                        <button class="btn btn-p btn-sm" onclick="openMaterialDispatchModal(@request.Id)">
+                                            📦 Dispatch Materials
+                                        </button>
+                                    }
+                                    else if (ViewBag.Title == "Installation")
+                                    {
+                                        <button class="btn btn-p btn-sm" onclick="openInstallationModal(@request.Id)">
+                                            🔧 Start Installation
+                                        </button>
+                                    }
+                                    else if (ViewBag.Title == "DCR Update")
+                                    {
+                                        <button class="btn btn-p btn-sm" onclick="openDCRModal(@request.Id)">
+                                            📄 Update DCR
+                                        </button>
+                                    }
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    }
+    else
+    {
+        <div class="card">
+            <div class="ct"><span class="ct-dot"></span>No @ViewBag.Title Requests</div>
+            <div style="text-align:center;padding:40px;color:var(--text3)">
+                <div style="font-size:48px;margin-bottom:16px">@GetEmptyIcon(ViewBag.Title)</div>
+                <div style="font-size:18px;margin-bottom:8px">No requests for @ViewBag.Title.ToLower()</div>
+                <div>All eligible requests have been processed.</div>
+            </div>
+        </div>
+    }
+</div>
+
+<!-- Modals -->
+@await Html.PartialAsync("_OperationModal")
+
+@functions {
+    string GetEmptyIcon(string title) => title switch
+    {
+        "Meter Dispatch" => "📦",
+        "Site Survey" => "📍",
+        "Material Dispatch" => "📦",
+        "Installation" => "🔧",
+        "DCR Update" => "📄",
+        _ => "📋"
+    };
+}
+
+@section Scripts {
+    <script>
+        function openMeterDispatchModal(requestId) {
+            // Implementation for meter dispatch modal
+            Swal.fire({
+                title: 'Meter Dispatch',
+                html: `
+                    <form id="meterForm">
+                        <input type="hidden" name="requestId" value="${requestId}">
+                        <div style="margin-bottom:16px">
+                            <label>Meter Number</label>
+                            <input type="text" name="meterNumber" class="swal2-input" required>
+                        </div>
+                        <div style="margin-bottom:16px">
+                            <label>Meter Type</label>
+                            <select name="meterType" class="swal2-input" required>
+                                <option value="Single Phase">Single Phase</option>
+                                <option value="Three Phase">Three Phase</option>
+                            </select>
+                        </div>
+                        <div style="margin-bottom:16px">
+                            <label>Dispatch Document (optional)</label>
+                            <input type="file" name="dispatchDoc" accept=".pdf,.jpg,.png">
+                        </div>
+                    </form>
+                `,
+                showCancelButton: true,
+                confirmButtonText: 'Dispatch',
+                preConfirm: () => {
+                    const form = document.getElementById('meterForm');
+                    const formData = new FormData(form);
+                    return fetch('/Admin/Operations/SubmitMeterDispatch', {
+                        method: 'POST',
+                        body: formData,
+                        headers: {
+                            'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]').value
+                        }
+                    }).then(response => response.json());
+                }
+            }).then(result => {
+                if (result.isConfirmed && result.value.success) {
+                    Swal.fire('Success', result.value.message, 'success').then(() => location.reload());
+                }
+            });
+        }
+
+        function openSiteSurveyModal(requestId) {
+            Swal.fire('Site Survey', 'Site survey functionality will be implemented here', 'info');
+        }
+
+        function openMaterialDispatchModal(requestId) {
+            Swal.fire('Material Dispatch', 'Material dispatch functionality will be implemented here', 'info');
+        }
+
+        function openInstallationModal(requestId) {
+            Swal.fire('Installation', 'Installation functionality will be implemented here', 'info');
+        }
+
+        function openDCRModal(requestId) {
+            // Implementation for DCR modal
+            Swal.fire({
+                title: 'DCR Update',
+                html: `
+                    <form id="dcrForm">
+                        <input type="hidden" name="requestId" value="${requestId}">
+                        <div style="margin-bottom:16px">
+                            <label>DCR Number</label>
+                            <input type="text" name="dcrNumber" class="swal2-input" required>
+                        </div>
+                        <div style="margin-bottom:16px">
+                            <label>DCR Document (optional)</label>
+                            <input type="file" name="dcrDoc" accept=".pdf,.jpg,.png">
+                        </div>
+                    </form>
+                `,
+                showCancelButton: true,
+                confirmButtonText: 'Submit DCR',
+                preConfirm: () => {
+                    const form = document.getElementById('dcrForm');
+                    const formData = new FormData(form);
+                    return fetch('/Admin/Operations/SubmitDCR', {
+                        method: 'POST',
+                        body: formData,
+                        headers: {
+                            'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]').value
+                        }
+                    }).then(response => response.json());
+                }
+            }).then(result => {
+                if (result.isConfirmed && result.value.success) {
+                    Swal.fire('Success', result.value.message, 'success').then(() => location.reload());
+                }
+            });
+        }
+    </script>
+}
