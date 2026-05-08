@@ -648,3 +648,110 @@ OUTPUT INSERTED.[Id], i._Position;
 2026-05-08 15:10:57.197 +05:30 [INF] Application started. Press Ctrl+C to shut down.
 2026-05-08 15:10:57.198 +05:30 [INF] Hosting environment: Development
 2026-05-08 15:10:57.198 +05:30 [INF] Content root path: \\localhost\Sadhna\GitHub\Solar\SolarPortal\SolarPortal.Web
+2026-05-08 15:22:22.619 +05:30 [INF] Request starting HTTP/1.1 GET http://localhost:5038/ - null null
+2026-05-08 15:22:22.718 +05:30 [WRN] Failed to determine the https port for redirect.
+2026-05-08 15:22:23.129 +05:30 [INF] Executing endpoint 'SolarPortal.Web.Controllers.HomeController.Index (SolarPortal.Web)'
+2026-05-08 15:22:23.236 +05:30 [INF] Route matched with {action = "Index", controller = "Home", area = ""}. Executing controller action with signature Microsoft.AspNetCore.Mvc.IActionResult Index() on controller SolarPortal.Web.Controllers.HomeController (SolarPortal.Web).
+2026-05-08 15:22:23.260 +05:30 [INF] Authorization failed. These requirements were not met:
+DenyAnonymousAuthorizationRequirement: Requires an authenticated user.
+2026-05-08 15:22:23.265 +05:30 [INF] Authorization failed for the request at filter 'Microsoft.AspNetCore.Mvc.Authorization.AuthorizeFilter'.
+2026-05-08 15:22:23.270 +05:30 [INF] Executing ChallengeResult with authentication schemes ([]).
+2026-05-08 15:22:23.288 +05:30 [INF] AuthenticationScheme: Identity.Application was challenged.
+2026-05-08 15:22:23.298 +05:30 [INF] Executed action SolarPortal.Web.Controllers.HomeController.Index (SolarPortal.Web) in 51.1243ms
+2026-05-08 15:22:23.304 +05:30 [INF] Executed endpoint 'SolarPortal.Web.Controllers.HomeController.Index (SolarPortal.Web)'
+2026-05-08 15:22:23.316 +05:30 [INF] Request finished HTTP/1.1 GET http://localhost:5038/ - 302 0 null 748.9931ms
+2026-05-08 15:22:23.324 +05:30 [INF] Request starting HTTP/1.1 GET http://localhost:5038/Account/Login?ReturnUrl=%2F - null null
+2026-05-08 15:22:23.336 +05:30 [INF] Executing endpoint 'SolarPortal.Web.Controllers.AccountController.Login (SolarPortal.Web)'
+2026-05-08 15:22:23.360 +05:30 [INF] Route matched with {action = "Login", controller = "Account", area = ""}. Executing controller action with signature Microsoft.AspNetCore.Mvc.IActionResult Login(System.String) on controller SolarPortal.Web.Controllers.AccountController (SolarPortal.Web).
+2026-05-08 15:22:23.499 +05:30 [INF] Executing ViewResult, running view Login.
+2026-05-08 15:22:23.940 +05:30 [INF] Executed ViewResult - view Login executed in 468.6502ms.
+2026-05-08 15:22:23.940 +05:30 [INF] Executed action SolarPortal.Web.Controllers.AccountController.Login (SolarPortal.Web) in 580.2679ms
+2026-05-08 15:22:23.941 +05:30 [INF] Executed endpoint 'SolarPortal.Web.Controllers.AccountController.Login (SolarPortal.Web)'
+2026-05-08 15:22:23.952 +05:30 [INF] Request finished HTTP/1.1 GET http://localhost:5038/Account/Login?ReturnUrl=%2F - 200 null text/html; charset=utf-8 627.8474ms
+2026-05-08 15:22:24.037 +05:30 [INF] Request starting HTTP/1.1 GET http://localhost:5038/css/solar-theme.css?v=cQYrEW0Dm47v8qpcjhlh777OfSXMtyzADBjkF2YC-7I - null null
+2026-05-08 15:22:24.037 +05:30 [INF] Request starting HTTP/1.1 GET http://localhost:5038/lib/jquery-validation/dist/jquery.validate.min.js - null null
+2026-05-08 15:22:24.044 +05:30 [INF] Request starting HTTP/1.1 GET http://localhost:5038/lib/jquery-validation-unobtrusive/jquery.validate.unobtrusive.min.js - null null
+2026-05-08 15:22:24.110 +05:30 [INF] Sending file. Request path: '/css/solar-theme.css'. Physical path: '\\localhost\Sadhna\GitHub\Solar\SolarPortal\SolarPortal.Web\wwwroot\css\solar-theme.css'
+2026-05-08 15:22:24.111 +05:30 [INF] Request finished HTTP/1.1 GET http://localhost:5038/css/solar-theme.css?v=cQYrEW0Dm47v8qpcjhlh777OfSXMtyzADBjkF2YC-7I - 200 18822 text/css 73.6759ms
+2026-05-08 15:22:24.408 +05:30 [INF] Sending file. Request path: '/lib/jquery-validation-unobtrusive/jquery.validate.unobtrusive.min.js'. Physical path: '\\localhost\Sadhna\GitHub\Solar\SolarPortal\SolarPortal.Web\wwwroot\lib\jquery-validation-unobtrusive\jquery.validate.unobtrusive.min.js'
+2026-05-08 15:22:24.409 +05:30 [INF] Request finished HTTP/1.1 GET http://localhost:5038/lib/jquery-validation-unobtrusive/jquery.validate.unobtrusive.min.js - 200 5831 text/javascript 364.9914ms
+2026-05-08 15:22:24.416 +05:30 [INF] Sending file. Request path: '/lib/jquery-validation/dist/jquery.validate.min.js'. Physical path: '\\localhost\Sadhna\GitHub\Solar\SolarPortal\SolarPortal.Web\wwwroot\lib\jquery-validation\dist\jquery.validate.min.js'
+2026-05-08 15:22:24.416 +05:30 [INF] Request finished HTTP/1.1 GET http://localhost:5038/lib/jquery-validation/dist/jquery.validate.min.js - 200 24604 text/javascript 378.4595ms
+2026-05-08 15:22:24.659 +05:30 [INF] Request starting HTTP/1.1 GET http://localhost:5038/favicon.ico - null null
+2026-05-08 15:22:24.751 +05:30 [INF] Sending file. Request path: '/favicon.ico'. Physical path: '\\localhost\Sadhna\GitHub\Solar\SolarPortal\SolarPortal.Web\wwwroot\favicon.ico'
+2026-05-08 15:22:24.752 +05:30 [INF] Request finished HTTP/1.1 GET http://localhost:5038/favicon.ico - 200 5430 image/x-icon 92.7145ms
+2026-05-08 15:22:44.590 +05:30 [INF] Request starting HTTP/1.1 POST http://localhost:5038/Account/Login - application/x-www-form-urlencoded 263
+2026-05-08 15:22:44.602 +05:30 [INF] Executing endpoint 'SolarPortal.Web.Controllers.AccountController.Login (SolarPortal.Web)'
+2026-05-08 15:22:44.619 +05:30 [INF] Route matched with {action = "Login", controller = "Account", area = ""}. Executing controller action with signature System.Threading.Tasks.Task`1[Microsoft.AspNetCore.Mvc.IActionResult] Login(SolarPortal.Web.ViewModels.LoginViewModel, System.String) on controller SolarPortal.Web.Controllers.AccountController (SolarPortal.Web).
+2026-05-08 15:22:44.870 +05:30 [INF] Executed DbCommand (27ms) [Parameters=[@__normalizedEmail_0='?' (Size = 256)], CommandType='"Text"', CommandTimeout='30']
+SELECT TOP(2) [u].[Id], [u].[AadharNumber], [u].[AccessFailedCount], [u].[Address], [u].[City], [u].[ConcurrencyStamp], [u].[CreatedAt], [u].[Email], [u].[EmailConfirmed], [u].[FullName], [u].[IsActive], [u].[LockoutEnabled], [u].[LockoutEnd], [u].[MobileNumber], [u].[NormalizedEmail], [u].[NormalizedUserName], [u].[PANNumber], [u].[PasswordHash], [u].[PhoneNumber], [u].[PhoneNumberConfirmed], [u].[PinCode], [u].[SecurityStamp], [u].[State], [u].[TwoFactorEnabled], [u].[UpdatedAt], [u].[UserName]
+FROM [Users] AS [u]
+WHERE [u].[NormalizedEmail] = @__normalizedEmail_0
+2026-05-08 15:22:44.896 +05:30 [INF] Executed DbCommand (6ms) [Parameters=[@__normalizedUserName_0='?' (Size = 256)], CommandType='"Text"', CommandTimeout='30']
+SELECT TOP(1) [u].[Id], [u].[AadharNumber], [u].[AccessFailedCount], [u].[Address], [u].[City], [u].[ConcurrencyStamp], [u].[CreatedAt], [u].[Email], [u].[EmailConfirmed], [u].[FullName], [u].[IsActive], [u].[LockoutEnabled], [u].[LockoutEnd], [u].[MobileNumber], [u].[NormalizedEmail], [u].[NormalizedUserName], [u].[PANNumber], [u].[PasswordHash], [u].[PhoneNumber], [u].[PhoneNumberConfirmed], [u].[PinCode], [u].[SecurityStamp], [u].[State], [u].[TwoFactorEnabled], [u].[UpdatedAt], [u].[UserName]
+FROM [Users] AS [u]
+WHERE [u].[NormalizedUserName] = @__normalizedUserName_0
+2026-05-08 15:22:45.156 +05:30 [INF] Executed DbCommand (10ms) [Parameters=[@__user_Id_0='?' (Size = 450)], CommandType='"Text"', CommandTimeout='30']
+SELECT [u].[Id], [u].[ClaimType], [u].[ClaimValue], [u].[UserId]
+FROM [UserClaims] AS [u]
+WHERE [u].[UserId] = @__user_Id_0
+2026-05-08 15:22:45.259 +05:30 [INF] Executed DbCommand (46ms) [Parameters=[@__userId_0='?' (Size = 450)], CommandType='"Text"', CommandTimeout='30']
+SELECT [r].[Name]
+FROM [UserRoles] AS [u]
+INNER JOIN [Roles] AS [r] ON [u].[RoleId] = [r].[Id]
+WHERE [u].[UserId] = @__userId_0
+2026-05-08 15:22:45.268 +05:30 [INF] Executed DbCommand (7ms) [Parameters=[@__normalizedName_0='?' (Size = 256)], CommandType='"Text"', CommandTimeout='30']
+SELECT TOP(1) [r].[Id], [r].[ConcurrencyStamp], [r].[Name], [r].[NormalizedName]
+FROM [Roles] AS [r]
+WHERE [r].[NormalizedName] = @__normalizedName_0
+2026-05-08 15:22:45.283 +05:30 [INF] Executed DbCommand (5ms) [Parameters=[@__role_Id_0='?' (Size = 450)], CommandType='"Text"', CommandTimeout='30']
+SELECT [r].[ClaimType], [r].[ClaimValue]
+FROM [RoleClaims] AS [r]
+WHERE [r].[RoleId] = @__role_Id_0
+2026-05-08 15:22:45.289 +05:30 [INF] AuthenticationScheme: Identity.Application signed in.
+2026-05-08 15:22:45.290 +05:30 [INF] User user@solarportal.com logged in.
+2026-05-08 15:22:45.299 +05:30 [INF] Executed DbCommand (7ms) [Parameters=[@__userId_0='?' (Size = 450)], CommandType='"Text"', CommandTimeout='30']
+SELECT [r].[Name]
+FROM [UserRoles] AS [u]
+INNER JOIN [Roles] AS [r] ON [u].[RoleId] = [r].[Id]
+WHERE [u].[UserId] = @__userId_0
+2026-05-08 15:22:45.305 +05:30 [INF] Executing RedirectResult, redirecting to /User.
+2026-05-08 15:22:45.306 +05:30 [INF] Executed action SolarPortal.Web.Controllers.AccountController.Login (SolarPortal.Web) in 686.9393ms
+2026-05-08 15:22:45.307 +05:30 [INF] Executed endpoint 'SolarPortal.Web.Controllers.AccountController.Login (SolarPortal.Web)'
+2026-05-08 15:22:45.309 +05:30 [INF] Request finished HTTP/1.1 POST http://localhost:5038/Account/Login - 302 0 null 718.292ms
+2026-05-08 15:22:45.313 +05:30 [INF] Request starting HTTP/1.1 GET http://localhost:5038/User - null null
+2026-05-08 15:22:45.320 +05:30 [INF] Executing endpoint 'SolarPortal.Web.Areas.User.Controllers.DashboardController.Index (SolarPortal.Web)'
+2026-05-08 15:22:45.325 +05:30 [INF] Route matched with {area = "User", action = "Index", controller = "Dashboard"}. Executing controller action with signature System.Threading.Tasks.Task`1[Microsoft.AspNetCore.Mvc.IActionResult] Index() on controller SolarPortal.Web.Areas.User.Controllers.DashboardController (SolarPortal.Web).
+2026-05-08 15:22:46.034 +05:30 [WRN] Compiling a query which loads related collections for more than one collection navigation, either via 'Include' or through projection, but no 'QuerySplittingBehavior' has been configured. By default, Entity Framework will use 'QuerySplittingBehavior.SingleQuery', which can potentially result in slow query performance. See https://go.microsoft.com/fwlink/?linkid=2134277 for more information. To identify the query that's triggering this warning call 'ConfigureWarnings(w => w.Throw(RelationalEventId.MultipleCollectionIncludeWarning))'.
+2026-05-08 15:22:46.144 +05:30 [INF] Executed DbCommand (98ms) [Parameters=[@__userId_0='?' (Size = 450)], CommandType='"Text"', CommandTimeout='30']
+SELECT [s].[Id], [s].[AadharNumber], [s].[Address], [s].[AdminNotes], [s].[AlternateMobile], [s].[ApplicantName], [s].[ApprovalStatus], [s].[City], [s].[ConnectionType], [s].[CreatedAt], [s].[CreatedBy], [s].[CurrentStage], [s].[Email], [s].[IsDeleted], [s].[KVCapacity], [s].[MobileNumber], [s].[PANNumber], [s].[PinCode], [s].[PlanAmount], [s].[RejectionReason], [s].[RequestNumber], [s].[SelectedPlan], [s].[State], [s].[UpdatedAt], [s].[UpdatedBy], [s].[UserId], [t].[Id], [t].[Amount], [t].[CreatedAt], [t].[CreatedBy], [t].[IsDeleted], [t].[IsVerified], [t].[Notes], [t].[PaymentDate], [t].[PaymentMethod], [t].[ReceiptImagePath], [t].[ReceiptNumber], [t].[ReferenceNumber], [t].[SolarRequestId], [t].[Status], [t].[UTRNumber], [t].[UpdatedAt], [t].[UpdatedBy], [t].[UserId], [t].[VerifiedAt], [t].[VerifiedBy], [t0].[Id], [t0].[ContentType], [t0].[CreatedAt], [t0].[CreatedBy], [t0].[DocumentType], [t0].[FileName], [t0].[FilePath], [t0].[FileSizeBytes], [t0].[IsDeleted], [t0].[IsVerified], [t0].[OCRExtractedData], [t0].[OriginalFileName], [t0].[SolarRequestId], [t0].[UpdatedAt], [t0].[UpdatedBy], [t0].[UserId]
+FROM [SolarRequests] AS [s]
+LEFT JOIN (
+    SELECT [p].[Id], [p].[Amount], [p].[CreatedAt], [p].[CreatedBy], [p].[IsDeleted], [p].[IsVerified], [p].[Notes], [p].[PaymentDate], [p].[PaymentMethod], [p].[ReceiptImagePath], [p].[ReceiptNumber], [p].[ReferenceNumber], [p].[SolarRequestId], [p].[Status], [p].[UTRNumber], [p].[UpdatedAt], [p].[UpdatedBy], [p].[UserId], [p].[VerifiedAt], [p].[VerifiedBy]
+    FROM [Payments] AS [p]
+    WHERE [p].[IsDeleted] = CAST(0 AS bit)
+) AS [t] ON [s].[Id] = [t].[SolarRequestId]
+LEFT JOIN (
+    SELECT [d].[Id], [d].[ContentType], [d].[CreatedAt], [d].[CreatedBy], [d].[DocumentType], [d].[FileName], [d].[FilePath], [d].[FileSizeBytes], [d].[IsDeleted], [d].[IsVerified], [d].[OCRExtractedData], [d].[OriginalFileName], [d].[SolarRequestId], [d].[UpdatedAt], [d].[UpdatedBy], [d].[UserId]
+    FROM [Documents] AS [d]
+    WHERE [d].[IsDeleted] = CAST(0 AS bit)
+) AS [t0] ON [s].[Id] = [t0].[SolarRequestId]
+WHERE [s].[IsDeleted] = CAST(0 AS bit) AND [s].[UserId] = @__userId_0
+ORDER BY [s].[CreatedAt] DESC, [s].[Id], [t].[Id]
+2026-05-08 15:22:46.164 +05:30 [INF] Executed DbCommand (8ms) [Parameters=[@__userId_0='?' (Size = 450)], CommandType='"Text"', CommandTimeout='30']
+SELECT [n].[Id], [n].[CreatedAt], [n].[CreatedBy], [n].[IsDeleted], [n].[IsRead], [n].[Message], [n].[NotificationType], [n].[ReadAt], [n].[SolarRequestId], [n].[Title], [n].[UpdatedAt], [n].[UpdatedBy], [n].[UserId]
+FROM [Notifications] AS [n]
+WHERE [n].[UserId] = @__userId_0 AND [n].[IsRead] = CAST(0 AS bit)
+2026-05-08 15:22:46.206 +05:30 [INF] Executing ViewResult, running view Index.
+2026-05-08 15:22:46.218 +05:30 [INF] Executed ViewResult - view Index executed in 21.6735ms.
+2026-05-08 15:22:46.219 +05:30 [INF] Executed action SolarPortal.Web.Areas.User.Controllers.DashboardController.Index (SolarPortal.Web) in 893.6837ms
+2026-05-08 15:22:46.219 +05:30 [INF] Executed endpoint 'SolarPortal.Web.Areas.User.Controllers.DashboardController.Index (SolarPortal.Web)'
+2026-05-08 15:22:46.219 +05:30 [INF] Request finished HTTP/1.1 GET http://localhost:5038/User - 200 null text/html; charset=utf-8 906.7056ms
+2026-05-08 15:22:58.589 +05:30 [INF] Request starting HTTP/1.1 GET http://localhost:5038/User/SolarRequest/Create - null null
+2026-05-08 15:22:58.591 +05:30 [INF] Executing endpoint 'SolarPortal.Web.Areas.User.Controllers.SolarRequestController.Create (SolarPortal.Web)'
+2026-05-08 15:22:58.595 +05:30 [INF] Route matched with {area = "User", action = "Create", controller = "SolarRequest"}. Executing controller action with signature Microsoft.AspNetCore.Mvc.IActionResult Create() on controller SolarPortal.Web.Areas.User.Controllers.SolarRequestController (SolarPortal.Web).
+2026-05-08 15:22:58.625 +05:30 [INF] Executing ViewResult, running view Create.
+2026-05-08 15:22:58.735 +05:30 [INF] Executed ViewResult - view Create executed in 138.0231ms.
+2026-05-08 15:22:58.735 +05:30 [INF] Executed action SolarPortal.Web.Areas.User.Controllers.SolarRequestController.Create (SolarPortal.Web) in 140.6722ms
+2026-05-08 15:22:58.735 +05:30 [INF] Executed endpoint 'SolarPortal.Web.Areas.User.Controllers.SolarRequestController.Create (SolarPortal.Web)'
+2026-05-08 15:22:58.736 +05:30 [INF] Request finished HTTP/1.1 GET http://localhost:5038/User/SolarRequest/Create - 200 null text/html; charset=utf-8 146.915ms

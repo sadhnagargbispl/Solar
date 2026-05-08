@@ -66,6 +66,10 @@ build_metadata.AdditionalFiles.CssScope =
 build_metadata.AdditionalFiles.TargetPath = QXJlYXNcQWRtaW5cVmlld3NcX1ZpZXdJbXBvcnRzLmNzaHRtbA==
 build_metadata.AdditionalFiles.CssScope = 
 
+[//localhost/Sadhna/GitHub/Solar/SolarPortal/SolarPortal.Web/Areas/Admin/Views/_ViewStart.cshtml]
+build_metadata.AdditionalFiles.TargetPath = QXJlYXNcQWRtaW5cVmlld3NcX1ZpZXdTdGFydC5jc2h0bWw=
+build_metadata.AdditionalFiles.CssScope = 
+
 [//localhost/Sadhna/GitHub/Solar/SolarPortal/SolarPortal.Web/Areas/User/Views/Account/SolarAccount.cshtml]
 build_metadata.AdditionalFiles.TargetPath = QXJlYXNcVXNlclxWaWV3c1xBY2NvdW50XFNvbGFyQWNjb3VudC5jc2h0bWw=
 build_metadata.AdditionalFiles.CssScope = 
@@ -104,6 +108,10 @@ build_metadata.AdditionalFiles.CssScope =
 
 [//localhost/Sadhna/GitHub/Solar/SolarPortal/SolarPortal.Web/Areas/User/Views/_ViewImports.cshtml]
 build_metadata.AdditionalFiles.TargetPath = QXJlYXNcVXNlclxWaWV3c1xfVmlld0ltcG9ydHMuY3NodG1s
+build_metadata.AdditionalFiles.CssScope = 
+
+[//localhost/Sadhna/GitHub/Solar/SolarPortal/SolarPortal.Web/Areas/User/Views/_ViewStart.cshtml]
+build_metadata.AdditionalFiles.TargetPath = QXJlYXNcVXNlclxWaWV3c1xfVmlld1N0YXJ0LmNzaHRtbA==
 build_metadata.AdditionalFiles.CssScope = 
 
 [//localhost/Sadhna/GitHub/Solar/SolarPortal/SolarPortal.Web/Views/Account/AccessDenied.cshtml]
