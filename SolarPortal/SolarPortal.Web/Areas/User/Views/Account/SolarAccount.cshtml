@@ -1,0 +1,121 @@
+@{
+    ViewData["Title"] = "Solar A/c";
+    var projects = (IEnumerable<SolarPortal.Application.DTOs.SolarRequestDto>)ViewBag.Projects;
+    var payments = (IEnumerable<SolarPortal.Application.DTOs.PaymentDto>)ViewBag.Payments;
+    var totalProjectAmount = (decimal)ViewBag.TotalProjectAmount;
+    var totalPaid = (decimal)ViewBag.TotalPaid;
+    var totalDue = (decimal)ViewBag.TotalDue;
+}
+
+<div class="page active">
+    <div class="ph">
+        <div class="ph-bc">👤 User / <span>Solar A/c</span></div>
+        <div class="ph-title">💰 Solar Account</div>
+        <div class="ph-sub">Your projects, payments and balance summary</div>
+    </div>
+
+    <div class="g4" style="margin-bottom:18px">
+        <div class="sc">
+            <div class="sc-label">Total Projects</div>
+            <div class="sc-val gold">@projects.Count()</div>
+            <div class="sc-sub">All applications</div>
+        </div>
+        <div class="sc">
+            <div class="sc-label">Project Amount</div>
+            <div class="sc-val blue">₹@totalProjectAmount.ToString("N0")</div>
+            <div class="sc-sub">Requested total</div>
+        </div>
+        <div class="sc">
+            <div class="sc-label">Total Paid</div>
+            <div class="sc-val green">₹@totalPaid.ToString("N0")</div>
+            <div class="sc-sub">Verified payments</div>
+        </div>
+        <div class="sc">
+            <div class="sc-label">Due Amount</div>
+            <div class="sc-val red">₹@totalDue.ToString("N0")</div>
+            <div class="sc-sub">Balance remaining</div>
+        </div>
+    </div>
+
+    <div class="g2">
+        <div class="card">
+            <div class="ct"><span class="ct-dot"></span>My Projects</div>
+            @if (projects.Any())
+            {
+                <div class="tbl-wrap">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Request</th>
+                                <th>Type</th>
+                                <th>Amount</th>
+                                <th>Stage</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var p in projects)
+                            {
+                                <tr>
+                                    <td class="td-b">
+                                        <a asp-area="User" asp-controller="SolarRequest" asp-action="Details"
+                                           asp-route-id="@p.Id" style="color:var(--sun)">@p.RequestNumber</a>
+                                    </td>
+                                    <td>@p.ConnectionType</td>
+                                    <td style="text-align:right;color:var(--sun)">₹@p.RequestedAmount.ToString("N0")</td>
+                                    <td>@p.CurrentStage.ToString().Replace("_", " ")</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+            else
+            {
+                <div style="text-align:center;padding:30px;color:var(--text3)">No projects yet.</div>
+            }
+        </div>
+
+        <div class="card">
+            <div class="ct"><span class="ct-dot"></span>Payment History</div>
+            @if (payments.Any())
+            {
+                <div class="tbl-wrap">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Receipt</th>
+                                <th>Amount</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var pay in payments.OrderByDescending(p => p.PaymentDate))
+                            {
+                                <tr>
+                                    <td>@pay.PaymentDate.ToString("dd/MM/yyyy")</td>
+                                    <td class="td-b">@(pay.ReceiptNumber ?? "—")</td>
+                                    <td style="text-align:right;color:var(--sun)">₹@pay.Amount.ToString("N0")</td>
+                                    <td>
+                                        @if (pay.IsVerified)
+                                        {
+                                            <span class="sts sts-act">Verified</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="sts sts-pend">Pending</span>
+                                        }
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+            else
+            {
+                <div style="text-align:center;padding:30px;color:var(--text3)">No payments yet.</div>
+            }
+        </div>
+    </div>
+</div>

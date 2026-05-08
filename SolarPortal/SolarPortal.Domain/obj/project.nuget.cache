@@ -1,12 +1,12 @@
 {
   "version": 2,
-  "dgSpecHash": "+T9RkNQH+3s=",
+  "dgSpecHash": "jQXkmNdk7os=",
   "success": true,
-  "projectFilePath": "\\\\localhost\\Dimpal\\Github\\Solar\\SolarPortal\\SolarPortal.Domain\\SolarPortal.Domain.csproj",
+  "projectFilePath": "\\\\localhost\\Sadhna\\GitHub\\Solar\\SolarPortal\\SolarPortal.Domain\\SolarPortal.Domain.csproj",
   "expectedPackageFiles": [
-    "C:\\Users\\Claude\\.nuget\\packages\\microsoft.netcore.app.ref\\8.0.25\\microsoft.netcore.app.ref.8.0.25.nupkg.sha512",
-    "C:\\Users\\Claude\\.nuget\\packages\\microsoft.windowsdesktop.app.ref\\8.0.25\\microsoft.windowsdesktop.app.ref.8.0.25.nupkg.sha512",
-    "C:\\Users\\Claude\\.nuget\\packages\\microsoft.aspnetcore.app.ref\\8.0.25\\microsoft.aspnetcore.app.ref.8.0.25.nupkg.sha512"
+    "C:\\Users\\Claude1\\.nuget\\packages\\microsoft.netcore.app.ref\\8.0.25\\microsoft.netcore.app.ref.8.0.25.nupkg.sha512",
+    "C:\\Users\\Claude1\\.nuget\\packages\\microsoft.windowsdesktop.app.ref\\8.0.25\\microsoft.windowsdesktop.app.ref.8.0.25.nupkg.sha512",
+    "C:\\Users\\Claude1\\.nuget\\packages\\microsoft.aspnetcore.app.ref\\8.0.25\\microsoft.aspnetcore.app.ref.8.0.25.nupkg.sha512"
   ],
   "logs": []
 }

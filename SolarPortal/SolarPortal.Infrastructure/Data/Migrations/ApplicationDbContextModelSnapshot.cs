@@ -661,10 +661,16 @@ namespace SolarPortal.Infrastructure.Data.Migrations
                     b.Property<DateTime>("PaymentDate")
                         .HasColumnType("datetime2");
 
+                    b.Property<string>("PaymentMethod")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<string>("ReceiptImagePath")
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("ReceiptNumber")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("ReferenceNumber")
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<int>("SolarRequestId")

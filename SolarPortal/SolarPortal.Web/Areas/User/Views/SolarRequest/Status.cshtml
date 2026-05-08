@@ -67,40 +67,25 @@
         <div class="card" style="margin-top:20px">
             <div class="ct"><span class="ct-dot"></span>Next Steps</div>
             <div style="padding:20px">
-                @switch ((int)Model.CurrentStage)
+                @switch (Model.CurrentStage)
                 {
-                    case 0: // ApplicationSubmitted
+                    case Domain.Enums.ProjectStatus.Registration:
                         <div class="info-box">
-                            <div style="font-weight:600;margin-bottom:8px">📋 Application Submitted</div>
+                            <div style="font-weight:600;margin-bottom:8px">📋 Application Registered</div>
                             <div style="color:var(--text2)">Your application has been submitted. Our team will review it shortly.</div>
                             <div style="margin-top:12px;font-size:12px;color:var(--text3)">⏱️ Expected review: 2-3 working days</div>
                         </div>
                         break;
-                    case 1: // DocumentVerification
+                    case Domain.Enums.ProjectStatus.ProductSelection:
                         <div class="info-box">
-                            <div style="font-weight:600;margin-bottom:8px">✅ Documents Being Verified</div>
-                            <div style="color:var(--text2)">Your submitted documents are being verified. You will be notified once verification is complete.</div>
-                            <div style="margin-top:12px;font-size:12px;color:var(--text3)">⏱️ Expected time: 3-5 working days</div>
+                            <div style="font-weight:600;margin-bottom:8px">📦 Product Selection</div>
+                            <div style="color:var(--text2)">Choose your preferred solar plan to continue.</div>
                         </div>
                         break;
-                    case 2: // PMSurvey
+                    case Domain.Enums.ProjectStatus.Payment:
                         <div class="info-box">
-                            <div style="font-weight:600;margin-bottom:8px">🏘️ Preliminary Survey Scheduled</div>
-                            <div style="color:var(--text2)">Your preliminary (PM) survey has been scheduled. Our team will contact you with the appointment details.</div>
-                            <div style="margin-top:12px;font-size:12px;color:var(--text3)">⏱️ Expected time: 5-7 working days</div>
-                        </div>
-                        break;
-                    case 3: // SiteSurvey
-                        <div class="info-box">
-                            <div style="font-weight:600;margin-bottom:8px">📍 Site Survey In Progress</div>
-                            <div style="color:var(--text2)">Our site survey team will visit your location to assess the installation feasibility.</div>
-                            <div style="margin-top:12px;font-size:12px;color:var(--text3)">⏱️ Expected time: 2-3 working days</div>
-                        </div>
-                        break;
-                    case 4: // Approved
-                        <div class="info-box">
-                            <div style="font-weight:600;margin-bottom:8px;color:var(--succ)">✅ Project Approved!</div>
-                            <div style="color:var(--text2)">Congratulations! Your project has been approved. You can now proceed with payments.</div>
+                            <div style="font-weight:600;margin-bottom:8px;color:var(--green)">💰 Payment Required</div>
+                            <div style="color:var(--text2)">Please complete the advance payment to proceed.</div>
                             <div style="margin-top:12px">
                                 <a asp-controller="SolarRequest" asp-action="Payment" asp-route-id="@Model.Id" class="btn btn-p">
                                     💰 Make Payment
@@ -108,36 +93,58 @@
                             </div>
                         </div>
                         break;
-                    case 5: // MeterDispatch
+                    case Domain.Enums.ProjectStatus.PMSurvey:
+                        <div class="info-box">
+                            <div style="font-weight:600;margin-bottom:8px">🏘️ Preliminary Survey Scheduled</div>
+                            <div style="color:var(--text2)">Your preliminary (PM) survey has been scheduled. Our team will contact you with the appointment details.</div>
+                            <div style="margin-top:12px;font-size:12px;color:var(--text3)">⏱️ Expected time: 5-7 working days</div>
+                        </div>
+                        break;
+                    case Domain.Enums.ProjectStatus.MeterDispatch:
                         <div class="info-box">
                             <div style="font-weight:600;margin-bottom:8px">📦 Meter Being Dispatched</div>
                             <div style="color:var(--text2)">Your electricity meter is being prepared for dispatch. You will receive tracking details soon.</div>
                         </div>
                         break;
-                    case 6: // MaterialDispatch
+                    case Domain.Enums.ProjectStatus.SiteSurvey:
+                        <div class="info-box">
+                            <div style="font-weight:600;margin-bottom:8px">📍 Site Survey In Progress</div>
+                            <div style="color:var(--text2)">Our site survey team will visit your location to assess the installation feasibility.</div>
+                            <div style="margin-top:12px;font-size:12px;color:var(--text3)">⏱️ Expected time: 2-3 working days</div>
+                        </div>
+                        break;
+                    case Domain.Enums.ProjectStatus.MaterialDispatch:
                         <div class="info-box">
                             <div style="font-weight:600;margin-bottom:8px">📦 Materials Being Prepared</div>
                             <div style="color:var(--text2)">Solar installation materials are being prepared and will be dispatched to your location.</div>
                         </div>
                         break;
-                    case 7: // Installation
+                    case Domain.Enums.ProjectStatus.Installation:
                         <div class="info-box">
                             <div style="font-weight:600;margin-bottom:8px">🔧 Installation In Progress</div>
                             <div style="color:var(--text2)">Our installation team is setting up your solar system. We will keep you updated on the progress.</div>
                         </div>
                         break;
-                    case 8: // Completed
+                    case Domain.Enums.ProjectStatus.DCRUpdate:
                         <div class="info-box">
-                            <div style="font-weight:600;margin-bottom:8px;color:var(--succ)">🎉 Installation Completed!</div>
+                            <div style="font-weight:600;margin-bottom:8px">📄 DCR Documentation</div>
+                            <div style="color:var(--text2)">Final DCR documentation is being processed.</div>
+                        </div>
+                        break;
+                    case Domain.Enums.ProjectStatus.Completed:
+                        <div class="info-box">
+                            <div style="font-weight:600;margin-bottom:8px;color:var(--green)">🎉 Installation Completed!</div>
                             <div style="color:var(--text2)">Your solar system has been successfully installed and activated. Thank you for choosing us!</div>
                         </div>
                         break;
-                    case 9: // Rejected
-                        <div class="info-box" style="background-color:rgba(255,0,0,0.05)">
-                            <div style="font-weight:600;margin-bottom:8px;color:var(--danger)">❌ Application Rejected</div>
-                            <div style="color:var(--text2)">Your application could not be processed. Please contact our support team for more details.</div>
-                        </div>
-                        break;
+                }
+
+                @if (Model.ApprovalStatus == Domain.Enums.ApprovalStatus.Rejected)
+                {
+                    <div class="info-box" style="background-color:rgba(239,68,68,0.05);border-left-color:var(--danger);margin-top:12px">
+                        <div style="font-weight:600;margin-bottom:8px;color:var(--danger)">❌ Application Rejected</div>
+                        <div style="color:var(--text2)">Your application could not be processed. Please contact our support team for more details.</div>
+                    </div>
                 }
             </div>
         </div>

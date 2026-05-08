@@ -4919,23 +4919,23 @@
     ]
   },
   "packageFolders": {
-    "C:\\Users\\Claude\\.nuget\\packages\\": {},
+    "C:\\Users\\Claude1\\.nuget\\packages\\": {},
     "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages": {}
   },
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "\\\\localhost\\Dimpal\\Github\\Solar\\SolarPortal\\SolarPortal.Web\\SolarPortal.Web.csproj",
+      "projectUniqueName": "\\\\localhost\\Sadhna\\GitHub\\Solar\\SolarPortal\\SolarPortal.Web\\SolarPortal.Web.csproj",
       "projectName": "SolarPortal.Web",
-      "projectPath": "\\\\localhost\\Dimpal\\Github\\Solar\\SolarPortal\\SolarPortal.Web\\SolarPortal.Web.csproj",
-      "packagesPath": "C:\\Users\\Claude\\.nuget\\packages\\",
-      "outputPath": "\\\\localhost\\Dimpal\\Github\\Solar\\SolarPortal\\SolarPortal.Web\\obj\\",
+      "projectPath": "\\\\localhost\\Sadhna\\GitHub\\Solar\\SolarPortal\\SolarPortal.Web\\SolarPortal.Web.csproj",
+      "packagesPath": "C:\\Users\\Claude1\\.nuget\\packages\\",
+      "outputPath": "\\\\localhost\\Sadhna\\GitHub\\Solar\\SolarPortal\\SolarPortal.Web\\obj\\",
       "projectStyle": "PackageReference",
       "fallbackFolders": [
         "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
       ],
       "configFilePaths": [
-        "C:\\Users\\Claude\\AppData\\Roaming\\NuGet\\NuGet.Config",
+        "C:\\Users\\Claude1\\AppData\\Roaming\\NuGet\\NuGet.Config",
         "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.FallbackLocation.config",
         "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
       ],
@@ -4951,11 +4951,11 @@
         "net8.0": {
           "targetAlias": "net8.0",
           "projectReferences": {
-            "\\\\localhost\\Dimpal\\Github\\Solar\\SolarPortal\\SolarPortal.Application\\SolarPortal.Application.csproj": {
-              "projectPath": "\\\\localhost\\Dimpal\\Github\\Solar\\SolarPortal\\SolarPortal.Application\\SolarPortal.Application.csproj"
+            "\\\\localhost\\Sadhna\\GitHub\\Solar\\SolarPortal\\SolarPortal.Application\\SolarPortal.Application.csproj": {
+              "projectPath": "\\\\localhost\\Sadhna\\GitHub\\Solar\\SolarPortal\\SolarPortal.Application\\SolarPortal.Application.csproj"
             },
-            "\\\\localhost\\Dimpal\\Github\\Solar\\SolarPortal\\SolarPortal.Infrastructure\\SolarPortal.Infrastructure.csproj": {
-              "projectPath": "\\\\localhost\\Dimpal\\Github\\Solar\\SolarPortal\\SolarPortal.Infrastructure\\SolarPortal.Infrastructure.csproj"
+            "\\\\localhost\\Sadhna\\GitHub\\Solar\\SolarPortal\\SolarPortal.Infrastructure\\SolarPortal.Infrastructure.csproj": {
+              "projectPath": "\\\\localhost\\Sadhna\\GitHub\\Solar\\SolarPortal\\SolarPortal.Infrastructure\\SolarPortal.Infrastructure.csproj"
             }
           }
         }

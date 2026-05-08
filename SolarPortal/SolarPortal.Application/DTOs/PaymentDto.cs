@@ -10,31 +10,25 @@ public class PaymentDto
     public decimal Amount { get; set; }
     public string UTRNumber { get; set; } = string.Empty;
     public string? ReferenceNumber { get; set; }
-    public string PaymentMethod { get; set; } = string.Empty;
+    public string? PaymentMethod { get; set; }
     public DateTime PaymentDate { get; set; }
     public string? ReceiptImagePath { get; set; }
     public string? ReceiptNumber { get; set; }
+    public string? Notes { get; set; }
     public PaymentStatus Status { get; set; }
     public bool IsVerified { get; set; }
     public DateTime CreatedAt { get; set; }
 }
 
-//public class CreatePaymentDto
-//{
-//    public int SolarRequestId { get; set; }
-//    public decimal Amount { get; set; }
-//    public string UTRNumber { get; set; } = string.Empty;
-//    public DateTime PaymentDate { get; set; }
-//    public IFormFile? ReceiptImage { get; set; }
-//}
 public class CreatePaymentDto
 {
     public int SolarRequestId { get; set; }
-    public string? UserId { get; set; }          // <-- ADD THIS
+    public string? UserId { get; set; }
     public decimal Amount { get; set; }
-    public string UTRNumber { get; set; } = string.Empty;
+    public string? UTRNumber { get; set; }
+    public string? ReferenceNumber { get; set; }
+    public string? PaymentMethod { get; set; }
+    public string? Notes { get; set; }
     public DateTime PaymentDate { get; set; }
-    //public IFormFile? ReceiptImage { get; set; }
-    public string ReceiptImage { get; set; }
-    public string? ReceiptImagePath { get; set; } // <-- ADD THIS (set after upload)
+    public string? ReceiptImagePath { get; set; }
 }

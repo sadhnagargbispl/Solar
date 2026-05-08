@@ -9,6 +9,8 @@ public class Payment : BaseEntity
     public string UserId { get; set; } = string.Empty;
     public decimal Amount { get; set; }
     public string UTRNumber { get; set; } = string.Empty;
+    public string? ReferenceNumber { get; set; }
+    public string? PaymentMethod { get; set; }
     public DateTime PaymentDate { get; set; }
     public string? ReceiptImagePath { get; set; }
     public string? ReceiptNumber { get; set; } // SCR-2024-001

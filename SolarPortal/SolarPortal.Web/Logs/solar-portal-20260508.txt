@@ -86,3 +86,565 @@ DenyAnonymousAuthorizationRequirement: Requires an authenticated user.
 2026-05-08 13:02:51.310 +05:30 [INF] Request starting HTTP/2 GET https://localhost:7050/favicon.ico - null null
 2026-05-08 13:02:51.381 +05:30 [INF] Sending file. Request path: '/favicon.ico'. Physical path: '\\localhost\Dimpal\Github\Solar\SolarPortal\SolarPortal.Web\wwwroot\favicon.ico'
 2026-05-08 13:02:51.395 +05:30 [INF] Request finished HTTP/2 GET https://localhost:7050/favicon.ico - 200 5430 image/x-icon 85.0698ms
+2026-05-08 14:21:00.148 +05:30 [WRN] Entity 'SolarRequest' has a global query filter defined and is the required end of a relationship with the entity 'DCRDocument'. This may lead to unexpected results when the required entity is filtered out. Either configure the navigation as optional, or define matching query filters for both entities in the navigation. See https://go.microsoft.com/fwlink/?linkid=2131316 for more information.
+2026-05-08 14:21:00.221 +05:30 [WRN] Entity 'SolarRequest' has a global query filter defined and is the required end of a relationship with the entity 'Installation'. This may lead to unexpected results when the required entity is filtered out. Either configure the navigation as optional, or define matching query filters for both entities in the navigation. See https://go.microsoft.com/fwlink/?linkid=2131316 for more information.
+2026-05-08 14:21:00.221 +05:30 [WRN] Entity 'SolarRequest' has a global query filter defined and is the required end of a relationship with the entity 'MaterialDispatch'. This may lead to unexpected results when the required entity is filtered out. Either configure the navigation as optional, or define matching query filters for both entities in the navigation. See https://go.microsoft.com/fwlink/?linkid=2131316 for more information.
+2026-05-08 14:21:00.221 +05:30 [WRN] Entity 'SolarRequest' has a global query filter defined and is the required end of a relationship with the entity 'MeterDispatch'. This may lead to unexpected results when the required entity is filtered out. Either configure the navigation as optional, or define matching query filters for both entities in the navigation. See https://go.microsoft.com/fwlink/?linkid=2131316 for more information.
+2026-05-08 14:21:00.221 +05:30 [WRN] Entity 'SolarRequest' has a global query filter defined and is the required end of a relationship with the entity 'SiteSurvey'. This may lead to unexpected results when the required entity is filtered out. Either configure the navigation as optional, or define matching query filters for both entities in the navigation. See https://go.microsoft.com/fwlink/?linkid=2131316 for more information.
+2026-05-08 14:21:00.319 +05:30 [WRN] No store type was specified for the decimal property 'KVCapacity' on entity type 'SolarRequest'. This will cause values to be silently truncated if they do not fit in the default precision and scale. Explicitly specify the SQL server column type that can accommodate all the values in 'OnModelCreating' using 'HasColumnType', specify precision and scale using 'HasPrecision', or configure a value converter using 'HasConversion'.
+2026-05-08 14:21:00.854 +05:30 [WRN] Entity 'SolarRequest' has a global query filter defined and is the required end of a relationship with the entity 'DCRDocument'. This may lead to unexpected results when the required entity is filtered out. Either configure the navigation as optional, or define matching query filters for both entities in the navigation. See https://go.microsoft.com/fwlink/?linkid=2131316 for more information.
+2026-05-08 14:21:00.854 +05:30 [WRN] Entity 'SolarRequest' has a global query filter defined and is the required end of a relationship with the entity 'Installation'. This may lead to unexpected results when the required entity is filtered out. Either configure the navigation as optional, or define matching query filters for both entities in the navigation. See https://go.microsoft.com/fwlink/?linkid=2131316 for more information.
+2026-05-08 14:21:00.854 +05:30 [WRN] Entity 'SolarRequest' has a global query filter defined and is the required end of a relationship with the entity 'MaterialDispatch'. This may lead to unexpected results when the required entity is filtered out. Either configure the navigation as optional, or define matching query filters for both entities in the navigation. See https://go.microsoft.com/fwlink/?linkid=2131316 for more information.
+2026-05-08 14:21:00.854 +05:30 [WRN] Entity 'SolarRequest' has a global query filter defined and is the required end of a relationship with the entity 'MeterDispatch'. This may lead to unexpected results when the required entity is filtered out. Either configure the navigation as optional, or define matching query filters for both entities in the navigation. See https://go.microsoft.com/fwlink/?linkid=2131316 for more information.
+2026-05-08 14:21:00.854 +05:30 [WRN] Entity 'SolarRequest' has a global query filter defined and is the required end of a relationship with the entity 'SiteSurvey'. This may lead to unexpected results when the required entity is filtered out. Either configure the navigation as optional, or define matching query filters for both entities in the navigation. See https://go.microsoft.com/fwlink/?linkid=2131316 for more information.
+2026-05-08 14:21:00.876 +05:30 [WRN] No store type was specified for the decimal property 'KVCapacity' on entity type 'SolarRequest'. This will cause values to be silently truncated if they do not fit in the default precision and scale. Explicitly specify the SQL server column type that can accommodate all the values in 'OnModelCreating' using 'HasColumnType', specify precision and scale using 'HasPrecision', or configure a value converter using 'HasConversion'.
+2026-05-08 15:10:43.647 +05:30 [INF] User profile is available. Using 'C:\Users\Claude1\AppData\Local\ASP.NET\DataProtection-Keys' as key repository and Windows DPAPI to encrypt keys at rest.
+2026-05-08 15:10:44.701 +05:30 [WRN] Entity 'SolarRequest' has a global query filter defined and is the required end of a relationship with the entity 'DCRDocument'. This may lead to unexpected results when the required entity is filtered out. Either configure the navigation as optional, or define matching query filters for both entities in the navigation. See https://go.microsoft.com/fwlink/?linkid=2131316 for more information.
+2026-05-08 15:10:44.701 +05:30 [WRN] Entity 'SolarRequest' has a global query filter defined and is the required end of a relationship with the entity 'Installation'. This may lead to unexpected results when the required entity is filtered out. Either configure the navigation as optional, or define matching query filters for both entities in the navigation. See https://go.microsoft.com/fwlink/?linkid=2131316 for more information.
+2026-05-08 15:10:44.701 +05:30 [WRN] Entity 'SolarRequest' has a global query filter defined and is the required end of a relationship with the entity 'MaterialDispatch'. This may lead to unexpected results when the required entity is filtered out. Either configure the navigation as optional, or define matching query filters for both entities in the navigation. See https://go.microsoft.com/fwlink/?linkid=2131316 for more information.
+2026-05-08 15:10:44.702 +05:30 [WRN] Entity 'SolarRequest' has a global query filter defined and is the required end of a relationship with the entity 'MeterDispatch'. This may lead to unexpected results when the required entity is filtered out. Either configure the navigation as optional, or define matching query filters for both entities in the navigation. See https://go.microsoft.com/fwlink/?linkid=2131316 for more information.
+2026-05-08 15:10:44.702 +05:30 [WRN] Entity 'SolarRequest' has a global query filter defined and is the required end of a relationship with the entity 'SiteSurvey'. This may lead to unexpected results when the required entity is filtered out. Either configure the navigation as optional, or define matching query filters for both entities in the navigation. See https://go.microsoft.com/fwlink/?linkid=2131316 for more information.
+2026-05-08 15:10:44.778 +05:30 [WRN] No store type was specified for the decimal property 'KVCapacity' on entity type 'SolarRequest'. This will cause values to be silently truncated if they do not fit in the default precision and scale. Explicitly specify the SQL server column type that can accommodate all the values in 'OnModelCreating' using 'HasColumnType', specify precision and scale using 'HasPrecision', or configure a value converter using 'HasConversion'.
+2026-05-08 15:10:52.765 +05:30 [WRN] Entity 'SolarRequest' has a global query filter defined and is the required end of a relationship with the entity 'DCRDocument'. This may lead to unexpected results when the required entity is filtered out. Either configure the navigation as optional, or define matching query filters for both entities in the navigation. See https://go.microsoft.com/fwlink/?linkid=2131316 for more information.
+2026-05-08 15:10:52.766 +05:30 [WRN] Entity 'SolarRequest' has a global query filter defined and is the required end of a relationship with the entity 'Installation'. This may lead to unexpected results when the required entity is filtered out. Either configure the navigation as optional, or define matching query filters for both entities in the navigation. See https://go.microsoft.com/fwlink/?linkid=2131316 for more information.
+2026-05-08 15:10:52.781 +05:30 [WRN] Entity 'SolarRequest' has a global query filter defined and is the required end of a relationship with the entity 'MaterialDispatch'. This may lead to unexpected results when the required entity is filtered out. Either configure the navigation as optional, or define matching query filters for both entities in the navigation. See https://go.microsoft.com/fwlink/?linkid=2131316 for more information.
+2026-05-08 15:10:52.781 +05:30 [WRN] Entity 'SolarRequest' has a global query filter defined and is the required end of a relationship with the entity 'MeterDispatch'. This may lead to unexpected results when the required entity is filtered out. Either configure the navigation as optional, or define matching query filters for both entities in the navigation. See https://go.microsoft.com/fwlink/?linkid=2131316 for more information.
+2026-05-08 15:10:52.781 +05:30 [WRN] Entity 'SolarRequest' has a global query filter defined and is the required end of a relationship with the entity 'SiteSurvey'. This may lead to unexpected results when the required entity is filtered out. Either configure the navigation as optional, or define matching query filters for both entities in the navigation. See https://go.microsoft.com/fwlink/?linkid=2131316 for more information.
+2026-05-08 15:10:52.800 +05:30 [WRN] No store type was specified for the decimal property 'KVCapacity' on entity type 'SolarRequest'. This will cause values to be silently truncated if they do not fit in the default precision and scale. Explicitly specify the SQL server column type that can accommodate all the values in 'OnModelCreating' using 'HasColumnType', specify precision and scale using 'HasPrecision', or configure a value converter using 'HasConversion'.
+2026-05-08 15:10:53.407 +05:30 [INF] Executed DbCommand (442ms) [Parameters=[], CommandType='"Text"', CommandTimeout='60']
+CREATE DATABASE [SolarPortalDb];
+2026-05-08 15:10:53.509 +05:30 [INF] Executed DbCommand (94ms) [Parameters=[], CommandType='"Text"', CommandTimeout='60']
+IF SERVERPROPERTY('EngineEdition') <> 5
+BEGIN
+    ALTER DATABASE [SolarPortalDb] SET READ_COMMITTED_SNAPSHOT ON;
+END;
+2026-05-08 15:10:53.542 +05:30 [INF] Executed DbCommand (9ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+SELECT 1
+2026-05-08 15:10:53.626 +05:30 [INF] Executed DbCommand (11ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+CREATE TABLE [__EFMigrationsHistory] (
+    [MigrationId] nvarchar(150) NOT NULL,
+    [ProductVersion] nvarchar(32) NOT NULL,
+    CONSTRAINT [PK___EFMigrationsHistory] PRIMARY KEY ([MigrationId])
+);
+2026-05-08 15:10:53.632 +05:30 [INF] Executed DbCommand (3ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+SELECT 1
+2026-05-08 15:10:53.667 +05:30 [INF] Executed DbCommand (29ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+SELECT OBJECT_ID(N'[__EFMigrationsHistory]');
+2026-05-08 15:10:53.686 +05:30 [INF] Executed DbCommand (14ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+SELECT [MigrationId], [ProductVersion]
+FROM [__EFMigrationsHistory]
+ORDER BY [MigrationId];
+2026-05-08 15:10:53.708 +05:30 [INF] Applying migration '20260507120710_InitialCreate'.
+2026-05-08 15:10:53.877 +05:30 [INF] Executed DbCommand (2ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+CREATE TABLE [Roles] (
+    [Id] nvarchar(450) NOT NULL,
+    [Name] nvarchar(256) NULL,
+    [NormalizedName] nvarchar(256) NULL,
+    [ConcurrencyStamp] nvarchar(max) NULL,
+    CONSTRAINT [PK_Roles] PRIMARY KEY ([Id])
+);
+2026-05-08 15:10:54.286 +05:30 [INF] Executed DbCommand (409ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+CREATE TABLE [Users] (
+    [Id] nvarchar(450) NOT NULL,
+    [FullName] nvarchar(max) NOT NULL,
+    [MobileNumber] nvarchar(max) NULL,
+    [Address] nvarchar(max) NULL,
+    [City] nvarchar(max) NULL,
+    [State] nvarchar(max) NULL,
+    [PinCode] nvarchar(max) NULL,
+    [AadharNumber] nvarchar(max) NULL,
+    [PANNumber] nvarchar(max) NULL,
+    [IsActive] bit NOT NULL,
+    [CreatedAt] datetime2 NOT NULL,
+    [UpdatedAt] datetime2 NULL,
+    [UserName] nvarchar(256) NULL,
+    [NormalizedUserName] nvarchar(256) NULL,
+    [Email] nvarchar(256) NULL,
+    [NormalizedEmail] nvarchar(256) NULL,
+    [EmailConfirmed] bit NOT NULL,
+    [PasswordHash] nvarchar(max) NULL,
+    [SecurityStamp] nvarchar(max) NULL,
+    [ConcurrencyStamp] nvarchar(max) NULL,
+    [PhoneNumber] nvarchar(max) NULL,
+    [PhoneNumberConfirmed] bit NOT NULL,
+    [TwoFactorEnabled] bit NOT NULL,
+    [LockoutEnd] datetimeoffset NULL,
+    [LockoutEnabled] bit NOT NULL,
+    [AccessFailedCount] int NOT NULL,
+    CONSTRAINT [PK_Users] PRIMARY KEY ([Id])
+);
+2026-05-08 15:10:54.294 +05:30 [INF] Executed DbCommand (7ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+CREATE TABLE [Workers] (
+    [Id] int NOT NULL IDENTITY,
+    [Name] nvarchar(max) NOT NULL,
+    [MobileNumber] nvarchar(max) NOT NULL,
+    [Email] nvarchar(max) NULL,
+    [Specialization] nvarchar(max) NOT NULL,
+    [IsAvailable] bit NOT NULL,
+    [City] nvarchar(max) NULL,
+    [State] nvarchar(max) NULL,
+    [CreatedAt] datetime2 NOT NULL,
+    [UpdatedAt] datetime2 NULL,
+    [CreatedBy] nvarchar(max) NULL,
+    [UpdatedBy] nvarchar(max) NULL,
+    [IsDeleted] bit NOT NULL,
+    CONSTRAINT [PK_Workers] PRIMARY KEY ([Id])
+);
+2026-05-08 15:10:54.313 +05:30 [INF] Executed DbCommand (18ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+CREATE TABLE [RoleClaims] (
+    [Id] int NOT NULL IDENTITY,
+    [RoleId] nvarchar(450) NOT NULL,
+    [ClaimType] nvarchar(max) NULL,
+    [ClaimValue] nvarchar(max) NULL,
+    CONSTRAINT [PK_RoleClaims] PRIMARY KEY ([Id]),
+    CONSTRAINT [FK_RoleClaims_Roles_RoleId] FOREIGN KEY ([RoleId]) REFERENCES [Roles] ([Id]) ON DELETE CASCADE
+);
+2026-05-08 15:10:54.317 +05:30 [INF] Executed DbCommand (4ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+CREATE TABLE [SolarRequests] (
+    [Id] int NOT NULL IDENTITY,
+    [RequestNumber] nvarchar(20) NOT NULL,
+    [UserId] nvarchar(450) NOT NULL,
+    [ApplicantName] nvarchar(max) NOT NULL,
+    [MobileNumber] nvarchar(max) NOT NULL,
+    [AlternateMobile] nvarchar(max) NULL,
+    [Email] nvarchar(max) NOT NULL,
+    [Address] nvarchar(max) NOT NULL,
+    [City] nvarchar(max) NOT NULL,
+    [State] nvarchar(max) NOT NULL,
+    [PinCode] nvarchar(max) NOT NULL,
+    [AadharNumber] nvarchar(max) NULL,
+    [PANNumber] nvarchar(max) NULL,
+    [ConnectionType] int NOT NULL,
+    [KVCapacity] decimal(18,2) NOT NULL,
+    [SelectedPlan] nvarchar(max) NULL,
+    [PlanAmount] decimal(18,2) NOT NULL,
+    [CurrentStage] int NOT NULL,
+    [ApprovalStatus] int NOT NULL,
+    [RejectionReason] nvarchar(max) NULL,
+    [AdminNotes] nvarchar(max) NULL,
+    [CreatedAt] datetime2 NOT NULL,
+    [UpdatedAt] datetime2 NULL,
+    [CreatedBy] nvarchar(max) NULL,
+    [UpdatedBy] nvarchar(max) NULL,
+    [IsDeleted] bit NOT NULL,
+    CONSTRAINT [PK_SolarRequests] PRIMARY KEY ([Id]),
+    CONSTRAINT [FK_SolarRequests_Users_UserId] FOREIGN KEY ([UserId]) REFERENCES [Users] ([Id]) ON DELETE NO ACTION
+);
+2026-05-08 15:10:54.319 +05:30 [INF] Executed DbCommand (2ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+CREATE TABLE [UserClaims] (
+    [Id] int NOT NULL IDENTITY,
+    [UserId] nvarchar(450) NOT NULL,
+    [ClaimType] nvarchar(max) NULL,
+    [ClaimValue] nvarchar(max) NULL,
+    CONSTRAINT [PK_UserClaims] PRIMARY KEY ([Id]),
+    CONSTRAINT [FK_UserClaims_Users_UserId] FOREIGN KEY ([UserId]) REFERENCES [Users] ([Id]) ON DELETE CASCADE
+);
+2026-05-08 15:10:54.323 +05:30 [INF] Executed DbCommand (3ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+CREATE TABLE [UserLogins] (
+    [LoginProvider] nvarchar(450) NOT NULL,
+    [ProviderKey] nvarchar(450) NOT NULL,
+    [ProviderDisplayName] nvarchar(max) NULL,
+    [UserId] nvarchar(450) NOT NULL,
+    CONSTRAINT [PK_UserLogins] PRIMARY KEY ([LoginProvider], [ProviderKey]),
+    CONSTRAINT [FK_UserLogins_Users_UserId] FOREIGN KEY ([UserId]) REFERENCES [Users] ([Id]) ON DELETE CASCADE
+);
+2026-05-08 15:10:54.325 +05:30 [INF] Executed DbCommand (2ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+CREATE TABLE [UserRoles] (
+    [UserId] nvarchar(450) NOT NULL,
+    [RoleId] nvarchar(450) NOT NULL,
+    CONSTRAINT [PK_UserRoles] PRIMARY KEY ([UserId], [RoleId]),
+    CONSTRAINT [FK_UserRoles_Roles_RoleId] FOREIGN KEY ([RoleId]) REFERENCES [Roles] ([Id]) ON DELETE CASCADE,
+    CONSTRAINT [FK_UserRoles_Users_UserId] FOREIGN KEY ([UserId]) REFERENCES [Users] ([Id]) ON DELETE CASCADE
+);
+2026-05-08 15:10:54.328 +05:30 [INF] Executed DbCommand (3ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+CREATE TABLE [UserTokens] (
+    [UserId] nvarchar(450) NOT NULL,
+    [LoginProvider] nvarchar(450) NOT NULL,
+    [Name] nvarchar(450) NOT NULL,
+    [Value] nvarchar(max) NULL,
+    CONSTRAINT [PK_UserTokens] PRIMARY KEY ([UserId], [LoginProvider], [Name]),
+    CONSTRAINT [FK_UserTokens_Users_UserId] FOREIGN KEY ([UserId]) REFERENCES [Users] ([Id]) ON DELETE CASCADE
+);
+2026-05-08 15:10:54.331 +05:30 [INF] Executed DbCommand (3ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+CREATE TABLE [Commissions] (
+    [Id] int NOT NULL IDENTITY,
+    [SolarRequestId] int NOT NULL,
+    [UserId] nvarchar(max) NOT NULL,
+    [ProjectAmount] decimal(18,2) NOT NULL,
+    [CommissionPercentage] decimal(5,2) NOT NULL,
+    [CommissionAmount] decimal(18,2) NOT NULL,
+    [IsPaid] bit NOT NULL,
+    [PaidAt] datetime2 NULL,
+    [Notes] nvarchar(max) NULL,
+    [CreatedAt] datetime2 NOT NULL,
+    [UpdatedAt] datetime2 NULL,
+    [CreatedBy] nvarchar(max) NULL,
+    [UpdatedBy] nvarchar(max) NULL,
+    [IsDeleted] bit NOT NULL,
+    CONSTRAINT [PK_Commissions] PRIMARY KEY ([Id]),
+    CONSTRAINT [FK_Commissions_SolarRequests_SolarRequestId] FOREIGN KEY ([SolarRequestId]) REFERENCES [SolarRequests] ([Id]) ON DELETE CASCADE
+);
+2026-05-08 15:10:54.334 +05:30 [INF] Executed DbCommand (3ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+CREATE TABLE [DCRDocuments] (
+    [Id] int NOT NULL IDENTITY,
+    [SolarRequestId] int NOT NULL,
+    [DCRNumber] nvarchar(max) NULL,
+    [DCRDate] datetime2 NULL,
+    [DocumentPath] nvarchar(max) NULL,
+    [ExtractedData] nvarchar(max) NULL,
+    [IsVerified] bit NOT NULL,
+    [CreatedAt] datetime2 NOT NULL,
+    [UpdatedAt] datetime2 NULL,
+    [CreatedBy] nvarchar(max) NULL,
+    [UpdatedBy] nvarchar(max) NULL,
+    [IsDeleted] bit NOT NULL,
+    CONSTRAINT [PK_DCRDocuments] PRIMARY KEY ([Id]),
+    CONSTRAINT [FK_DCRDocuments_SolarRequests_SolarRequestId] FOREIGN KEY ([SolarRequestId]) REFERENCES [SolarRequests] ([Id]) ON DELETE CASCADE
+);
+2026-05-08 15:10:54.338 +05:30 [INF] Executed DbCommand (3ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+CREATE TABLE [Documents] (
+    [Id] int NOT NULL IDENTITY,
+    [SolarRequestId] int NOT NULL,
+    [UserId] nvarchar(max) NOT NULL,
+    [DocumentType] int NOT NULL,
+    [FileName] nvarchar(max) NOT NULL,
+    [FilePath] nvarchar(max) NOT NULL,
+    [OriginalFileName] nvarchar(max) NULL,
+    [FileSizeBytes] bigint NOT NULL,
+    [ContentType] nvarchar(max) NOT NULL,
+    [IsVerified] bit NOT NULL,
+    [OCRExtractedData] nvarchar(max) NULL,
+    [CreatedAt] datetime2 NOT NULL,
+    [UpdatedAt] datetime2 NULL,
+    [CreatedBy] nvarchar(max) NULL,
+    [UpdatedBy] nvarchar(max) NULL,
+    [IsDeleted] bit NOT NULL,
+    CONSTRAINT [PK_Documents] PRIMARY KEY ([Id]),
+    CONSTRAINT [FK_Documents_SolarRequests_SolarRequestId] FOREIGN KEY ([SolarRequestId]) REFERENCES [SolarRequests] ([Id]) ON DELETE CASCADE
+);
+2026-05-08 15:10:54.341 +05:30 [INF] Executed DbCommand (3ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+CREATE TABLE [Installations] (
+    [Id] int NOT NULL IDENTITY,
+    [SolarRequestId] int NOT NULL,
+    [InstallationDate] datetime2 NULL,
+    [Notes] nvarchar(max) NULL,
+    [IsCompleted] bit NOT NULL,
+    [CompletedAt] datetime2 NULL,
+    [CompletionPhotoPath] nvarchar(max) NULL,
+    [CreatedAt] datetime2 NOT NULL,
+    [UpdatedAt] datetime2 NULL,
+    [CreatedBy] nvarchar(max) NULL,
+    [UpdatedBy] nvarchar(max) NULL,
+    [IsDeleted] bit NOT NULL,
+    CONSTRAINT [PK_Installations] PRIMARY KEY ([Id]),
+    CONSTRAINT [FK_Installations_SolarRequests_SolarRequestId] FOREIGN KEY ([SolarRequestId]) REFERENCES [SolarRequests] ([Id]) ON DELETE CASCADE
+);
+2026-05-08 15:10:54.347 +05:30 [INF] Executed DbCommand (5ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+CREATE TABLE [MaterialDispatches] (
+    [Id] int NOT NULL IDENTITY,
+    [SolarRequestId] int NOT NULL,
+    [MaterialDetails] nvarchar(max) NULL,
+    [DispatchDate] datetime2 NULL,
+    [DispatchDocumentPath] nvarchar(max) NULL,
+    [VehicleDetails] nvarchar(max) NULL,
+    [IsDispatched] bit NOT NULL,
+    [DispatchedBy] nvarchar(max) NULL,
+    [CreatedAt] datetime2 NOT NULL,
+    [UpdatedAt] datetime2 NULL,
+    [CreatedBy] nvarchar(max) NULL,
+    [UpdatedBy] nvarchar(max) NULL,
+    [IsDeleted] bit NOT NULL,
+    CONSTRAINT [PK_MaterialDispatches] PRIMARY KEY ([Id]),
+    CONSTRAINT [FK_MaterialDispatches_SolarRequests_SolarRequestId] FOREIGN KEY ([SolarRequestId]) REFERENCES [SolarRequests] ([Id]) ON DELETE CASCADE
+);
+2026-05-08 15:10:54.350 +05:30 [INF] Executed DbCommand (2ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+CREATE TABLE [MeterDispatches] (
+    [Id] int NOT NULL IDENTITY,
+    [SolarRequestId] int NOT NULL,
+    [MeterNumber] nvarchar(max) NOT NULL,
+    [MeterType] nvarchar(max) NULL,
+    [DispatchDate] datetime2 NULL,
+    [DispatchDocumentPath] nvarchar(max) NULL,
+    [CourierDetails] nvarchar(max) NULL,
+    [IsDispatched] bit NOT NULL,
+    [DispatchedBy] nvarchar(max) NULL,
+    [CreatedAt] datetime2 NOT NULL,
+    [UpdatedAt] datetime2 NULL,
+    [CreatedBy] nvarchar(max) NULL,
+    [UpdatedBy] nvarchar(max) NULL,
+    [IsDeleted] bit NOT NULL,
+    CONSTRAINT [PK_MeterDispatches] PRIMARY KEY ([Id]),
+    CONSTRAINT [FK_MeterDispatches_SolarRequests_SolarRequestId] FOREIGN KEY ([SolarRequestId]) REFERENCES [SolarRequests] ([Id]) ON DELETE CASCADE
+);
+2026-05-08 15:10:54.354 +05:30 [INF] Executed DbCommand (3ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+CREATE TABLE [Notifications] (
+    [Id] int NOT NULL IDENTITY,
+    [UserId] nvarchar(450) NOT NULL,
+    [SolarRequestId] int NULL,
+    [Title] nvarchar(max) NOT NULL,
+    [Message] nvarchar(max) NOT NULL,
+    [IsRead] bit NOT NULL,
+    [ReadAt] datetime2 NULL,
+    [NotificationType] nvarchar(max) NULL,
+    [CreatedAt] datetime2 NOT NULL,
+    [UpdatedAt] datetime2 NULL,
+    [CreatedBy] nvarchar(max) NULL,
+    [UpdatedBy] nvarchar(max) NULL,
+    [IsDeleted] bit NOT NULL,
+    CONSTRAINT [PK_Notifications] PRIMARY KEY ([Id]),
+    CONSTRAINT [FK_Notifications_SolarRequests_SolarRequestId] FOREIGN KEY ([SolarRequestId]) REFERENCES [SolarRequests] ([Id]),
+    CONSTRAINT [FK_Notifications_Users_UserId] FOREIGN KEY ([UserId]) REFERENCES [Users] ([Id]) ON DELETE CASCADE
+);
+2026-05-08 15:10:54.358 +05:30 [INF] Executed DbCommand (4ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+CREATE TABLE [Payments] (
+    [Id] int NOT NULL IDENTITY,
+    [SolarRequestId] int NOT NULL,
+    [UserId] nvarchar(max) NOT NULL,
+    [Amount] decimal(18,2) NOT NULL,
+    [UTRNumber] nvarchar(max) NOT NULL,
+    [PaymentDate] datetime2 NOT NULL,
+    [ReceiptImagePath] nvarchar(max) NULL,
+    [ReceiptNumber] nvarchar(max) NULL,
+    [Status] int NOT NULL,
+    [IsVerified] bit NOT NULL,
+    [VerifiedBy] nvarchar(max) NULL,
+    [VerifiedAt] datetime2 NULL,
+    [Notes] nvarchar(max) NULL,
+    [CreatedAt] datetime2 NOT NULL,
+    [UpdatedAt] datetime2 NULL,
+    [CreatedBy] nvarchar(max) NULL,
+    [UpdatedBy] nvarchar(max) NULL,
+    [IsDeleted] bit NOT NULL,
+    CONSTRAINT [PK_Payments] PRIMARY KEY ([Id]),
+    CONSTRAINT [FK_Payments_SolarRequests_SolarRequestId] FOREIGN KEY ([SolarRequestId]) REFERENCES [SolarRequests] ([Id]) ON DELETE CASCADE
+);
+2026-05-08 15:10:54.362 +05:30 [INF] Executed DbCommand (4ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+CREATE TABLE [SiteSurveys] (
+    [Id] int NOT NULL IDENTITY,
+    [SolarRequestId] int NOT NULL,
+    [AssignedToUserId] nvarchar(max) NULL,
+    [SurveyDate] datetime2 NULL,
+    [SurveyNotes] nvarchar(max) NULL,
+    [SurveyPhotoPath] nvarchar(max) NULL,
+    [IsCompleted] bit NOT NULL,
+    [CompletedAt] datetime2 NULL,
+    [AssignedToId] nvarchar(450) NULL,
+    [CreatedAt] datetime2 NOT NULL,
+    [UpdatedAt] datetime2 NULL,
+    [CreatedBy] nvarchar(max) NULL,
+    [UpdatedBy] nvarchar(max) NULL,
+    [IsDeleted] bit NOT NULL,
+    CONSTRAINT [PK_SiteSurveys] PRIMARY KEY ([Id]),
+    CONSTRAINT [FK_SiteSurveys_SolarRequests_SolarRequestId] FOREIGN KEY ([SolarRequestId]) REFERENCES [SolarRequests] ([Id]) ON DELETE CASCADE,
+    CONSTRAINT [FK_SiteSurveys_Users_AssignedToId] FOREIGN KEY ([AssignedToId]) REFERENCES [Users] ([Id])
+);
+2026-05-08 15:10:54.365 +05:30 [INF] Executed DbCommand (3ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+CREATE TABLE [WorkerAssignments] (
+    [Id] int NOT NULL IDENTITY,
+    [InstallationId] int NOT NULL,
+    [WorkerId] int NOT NULL,
+    [AssignedByUserId] nvarchar(max) NOT NULL,
+    [AssignedDate] datetime2 NOT NULL,
+    [Notes] nvarchar(max) NULL,
+    [CreatedAt] datetime2 NOT NULL,
+    [UpdatedAt] datetime2 NULL,
+    [CreatedBy] nvarchar(max) NULL,
+    [UpdatedBy] nvarchar(max) NULL,
+    [IsDeleted] bit NOT NULL,
+    CONSTRAINT [PK_WorkerAssignments] PRIMARY KEY ([Id]),
+    CONSTRAINT [FK_WorkerAssignments_Installations_InstallationId] FOREIGN KEY ([InstallationId]) REFERENCES [Installations] ([Id]) ON DELETE CASCADE,
+    CONSTRAINT [FK_WorkerAssignments_Workers_WorkerId] FOREIGN KEY ([WorkerId]) REFERENCES [Workers] ([Id]) ON DELETE NO ACTION
+);
+2026-05-08 15:10:54.367 +05:30 [INF] Executed DbCommand (1ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+CREATE UNIQUE INDEX [IX_Commissions_SolarRequestId] ON [Commissions] ([SolarRequestId]);
+2026-05-08 15:10:54.368 +05:30 [INF] Executed DbCommand (1ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+CREATE INDEX [IX_DCRDocuments_SolarRequestId] ON [DCRDocuments] ([SolarRequestId]);
+2026-05-08 15:10:54.370 +05:30 [INF] Executed DbCommand (1ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+CREATE INDEX [IX_Documents_SolarRequestId] ON [Documents] ([SolarRequestId]);
+2026-05-08 15:10:54.371 +05:30 [INF] Executed DbCommand (1ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+CREATE INDEX [IX_Installations_SolarRequestId] ON [Installations] ([SolarRequestId]);
+2026-05-08 15:10:54.374 +05:30 [INF] Executed DbCommand (3ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+CREATE INDEX [IX_MaterialDispatches_SolarRequestId] ON [MaterialDispatches] ([SolarRequestId]);
+2026-05-08 15:10:54.376 +05:30 [INF] Executed DbCommand (2ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+CREATE INDEX [IX_MeterDispatches_SolarRequestId] ON [MeterDispatches] ([SolarRequestId]);
+2026-05-08 15:10:54.377 +05:30 [INF] Executed DbCommand (1ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+CREATE INDEX [IX_Notifications_SolarRequestId] ON [Notifications] ([SolarRequestId]);
+2026-05-08 15:10:54.378 +05:30 [INF] Executed DbCommand (1ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+CREATE INDEX [IX_Notifications_UserId] ON [Notifications] ([UserId]);
+2026-05-08 15:10:54.379 +05:30 [INF] Executed DbCommand (1ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+CREATE INDEX [IX_Payments_SolarRequestId] ON [Payments] ([SolarRequestId]);
+2026-05-08 15:10:54.381 +05:30 [INF] Executed DbCommand (1ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+CREATE INDEX [IX_RoleClaims_RoleId] ON [RoleClaims] ([RoleId]);
+2026-05-08 15:10:54.383 +05:30 [INF] Executed DbCommand (2ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+CREATE UNIQUE INDEX [RoleNameIndex] ON [Roles] ([NormalizedName]) WHERE [NormalizedName] IS NOT NULL;
+2026-05-08 15:10:54.384 +05:30 [INF] Executed DbCommand (1ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+CREATE INDEX [IX_SiteSurveys_AssignedToId] ON [SiteSurveys] ([AssignedToId]);
+2026-05-08 15:10:54.386 +05:30 [INF] Executed DbCommand (1ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+CREATE INDEX [IX_SiteSurveys_SolarRequestId] ON [SiteSurveys] ([SolarRequestId]);
+2026-05-08 15:10:54.387 +05:30 [INF] Executed DbCommand (1ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+CREATE UNIQUE INDEX [IX_SolarRequests_RequestNumber] ON [SolarRequests] ([RequestNumber]);
+2026-05-08 15:10:54.389 +05:30 [INF] Executed DbCommand (1ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+CREATE INDEX [IX_SolarRequests_UserId] ON [SolarRequests] ([UserId]);
+2026-05-08 15:10:54.392 +05:30 [INF] Executed DbCommand (3ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+CREATE INDEX [IX_UserClaims_UserId] ON [UserClaims] ([UserId]);
+2026-05-08 15:10:54.394 +05:30 [INF] Executed DbCommand (2ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+CREATE INDEX [IX_UserLogins_UserId] ON [UserLogins] ([UserId]);
+2026-05-08 15:10:54.396 +05:30 [INF] Executed DbCommand (1ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+CREATE INDEX [IX_UserRoles_RoleId] ON [UserRoles] ([RoleId]);
+2026-05-08 15:10:54.397 +05:30 [INF] Executed DbCommand (1ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+CREATE INDEX [EmailIndex] ON [Users] ([NormalizedEmail]);
+2026-05-08 15:10:54.400 +05:30 [INF] Executed DbCommand (2ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+CREATE UNIQUE INDEX [UserNameIndex] ON [Users] ([NormalizedUserName]) WHERE [NormalizedUserName] IS NOT NULL;
+2026-05-08 15:10:54.402 +05:30 [INF] Executed DbCommand (2ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+CREATE INDEX [IX_WorkerAssignments_InstallationId] ON [WorkerAssignments] ([InstallationId]);
+2026-05-08 15:10:54.405 +05:30 [INF] Executed DbCommand (2ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+CREATE INDEX [IX_WorkerAssignments_WorkerId] ON [WorkerAssignments] ([WorkerId]);
+2026-05-08 15:10:54.412 +05:30 [INF] Executed DbCommand (7ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+INSERT INTO [__EFMigrationsHistory] ([MigrationId], [ProductVersion])
+VALUES (N'20260507120710_InitialCreate', N'8.0.0');
+2026-05-08 15:10:54.424 +05:30 [INF] Applying migration '20260508085106_AddPaymentRefAndMethod'.
+2026-05-08 15:10:54.497 +05:30 [INF] Executed DbCommand (3ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+ALTER TABLE [Payments] ADD [PaymentMethod] nvarchar(max) NULL;
+2026-05-08 15:10:54.498 +05:30 [INF] Executed DbCommand (1ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+ALTER TABLE [Payments] ADD [ReferenceNumber] nvarchar(max) NULL;
+2026-05-08 15:10:54.499 +05:30 [INF] Executed DbCommand (1ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+INSERT INTO [__EFMigrationsHistory] ([MigrationId], [ProductVersion])
+VALUES (N'20260508085106_AddPaymentRefAndMethod', N'8.0.0');
+2026-05-08 15:10:55.595 +05:30 [INF] Executed DbCommand (395ms) [Parameters=[@__normalizedName_0='?' (Size = 256)], CommandType='"Text"', CommandTimeout='30']
+SELECT TOP(1) [r].[Id], [r].[ConcurrencyStamp], [r].[Name], [r].[NormalizedName]
+FROM [Roles] AS [r]
+WHERE [r].[NormalizedName] = @__normalizedName_0
+2026-05-08 15:10:55.619 +05:30 [INF] Executed DbCommand (7ms) [Parameters=[@__normalizedName_0='?' (Size = 256)], CommandType='"Text"', CommandTimeout='30']
+SELECT TOP(1) [r].[Id], [r].[ConcurrencyStamp], [r].[Name], [r].[NormalizedName]
+FROM [Roles] AS [r]
+WHERE [r].[NormalizedName] = @__normalizedName_0
+2026-05-08 15:10:55.826 +05:30 [INF] Executed DbCommand (18ms) [Parameters=[@p0='?' (Size = 450), @p1='?' (Size = 4000), @p2='?' (Size = 256), @p3='?' (Size = 256)], CommandType='"Text"', CommandTimeout='30']
+SET IMPLICIT_TRANSACTIONS OFF;
+SET NOCOUNT ON;
+INSERT INTO [Roles] ([Id], [ConcurrencyStamp], [Name], [NormalizedName])
+VALUES (@p0, @p1, @p2, @p3);
+2026-05-08 15:10:55.849 +05:30 [INF] Executed DbCommand (9ms) [Parameters=[@__normalizedName_0='?' (Size = 256)], CommandType='"Text"', CommandTimeout='30']
+SELECT TOP(1) [r].[Id], [r].[ConcurrencyStamp], [r].[Name], [r].[NormalizedName]
+FROM [Roles] AS [r]
+WHERE [r].[NormalizedName] = @__normalizedName_0
+2026-05-08 15:10:55.851 +05:30 [INF] Executed DbCommand (1ms) [Parameters=[@__normalizedName_0='?' (Size = 256)], CommandType='"Text"', CommandTimeout='30']
+SELECT TOP(1) [r].[Id], [r].[ConcurrencyStamp], [r].[Name], [r].[NormalizedName]
+FROM [Roles] AS [r]
+WHERE [r].[NormalizedName] = @__normalizedName_0
+2026-05-08 15:10:55.856 +05:30 [INF] Executed DbCommand (1ms) [Parameters=[@p0='?' (Size = 450), @p1='?' (Size = 4000), @p2='?' (Size = 256), @p3='?' (Size = 256)], CommandType='"Text"', CommandTimeout='30']
+SET IMPLICIT_TRANSACTIONS OFF;
+SET NOCOUNT ON;
+INSERT INTO [Roles] ([Id], [ConcurrencyStamp], [Name], [NormalizedName])
+VALUES (@p0, @p1, @p2, @p3);
+2026-05-08 15:10:55.880 +05:30 [INF] Executed DbCommand (4ms) [Parameters=[@__normalizedEmail_0='?' (Size = 256)], CommandType='"Text"', CommandTimeout='30']
+SELECT TOP(2) [u].[Id], [u].[AadharNumber], [u].[AccessFailedCount], [u].[Address], [u].[City], [u].[ConcurrencyStamp], [u].[CreatedAt], [u].[Email], [u].[EmailConfirmed], [u].[FullName], [u].[IsActive], [u].[LockoutEnabled], [u].[LockoutEnd], [u].[MobileNumber], [u].[NormalizedEmail], [u].[NormalizedUserName], [u].[PANNumber], [u].[PasswordHash], [u].[PhoneNumber], [u].[PhoneNumberConfirmed], [u].[PinCode], [u].[SecurityStamp], [u].[State], [u].[TwoFactorEnabled], [u].[UpdatedAt], [u].[UserName]
+FROM [Users] AS [u]
+WHERE [u].[NormalizedEmail] = @__normalizedEmail_0
+2026-05-08 15:10:56.060 +05:30 [INF] Executed DbCommand (4ms) [Parameters=[@__normalizedUserName_0='?' (Size = 256)], CommandType='"Text"', CommandTimeout='30']
+SELECT TOP(1) [u].[Id], [u].[AadharNumber], [u].[AccessFailedCount], [u].[Address], [u].[City], [u].[ConcurrencyStamp], [u].[CreatedAt], [u].[Email], [u].[EmailConfirmed], [u].[FullName], [u].[IsActive], [u].[LockoutEnabled], [u].[LockoutEnd], [u].[MobileNumber], [u].[NormalizedEmail], [u].[NormalizedUserName], [u].[PANNumber], [u].[PasswordHash], [u].[PhoneNumber], [u].[PhoneNumberConfirmed], [u].[PinCode], [u].[SecurityStamp], [u].[State], [u].[TwoFactorEnabled], [u].[UpdatedAt], [u].[UserName]
+FROM [Users] AS [u]
+WHERE [u].[NormalizedUserName] = @__normalizedUserName_0
+2026-05-08 15:10:56.065 +05:30 [INF] Executed DbCommand (1ms) [Parameters=[@__normalizedEmail_0='?' (Size = 256)], CommandType='"Text"', CommandTimeout='30']
+SELECT TOP(2) [u].[Id], [u].[AadharNumber], [u].[AccessFailedCount], [u].[Address], [u].[City], [u].[ConcurrencyStamp], [u].[CreatedAt], [u].[Email], [u].[EmailConfirmed], [u].[FullName], [u].[IsActive], [u].[LockoutEnabled], [u].[LockoutEnd], [u].[MobileNumber], [u].[NormalizedEmail], [u].[NormalizedUserName], [u].[PANNumber], [u].[PasswordHash], [u].[PhoneNumber], [u].[PhoneNumberConfirmed], [u].[PinCode], [u].[SecurityStamp], [u].[State], [u].[TwoFactorEnabled], [u].[UpdatedAt], [u].[UserName]
+FROM [Users] AS [u]
+WHERE [u].[NormalizedEmail] = @__normalizedEmail_0
+2026-05-08 15:10:56.324 +05:30 [INF] Executed DbCommand (131ms) [Parameters=[@p0='?' (Size = 450), @p1='?' (Size = 4000), @p2='?' (DbType = Int32), @p3='?' (Size = 4000), @p4='?' (Size = 4000), @p5='?' (Size = 4000), @p6='?' (DbType = DateTime2), @p7='?' (Size = 256), @p8='?' (DbType = Boolean), @p9='?' (Size = 4000), @p10='?' (DbType = Boolean), @p11='?' (DbType = Boolean), @p12='?' (DbType = DateTimeOffset), @p13='?' (Size = 4000), @p14='?' (Size = 256), @p15='?' (Size = 256), @p16='?' (Size = 4000), @p17='?' (Size = 4000), @p18='?' (Size = 4000), @p19='?' (DbType = Boolean), @p20='?' (Size = 4000), @p21='?' (Size = 4000), @p22='?' (Size = 4000), @p23='?' (DbType = Boolean), @p24='?' (DbType = DateTime2), @p25='?' (Size = 256)], CommandType='"Text"', CommandTimeout='30']
+SET IMPLICIT_TRANSACTIONS OFF;
+SET NOCOUNT ON;
+INSERT INTO [Users] ([Id], [AadharNumber], [AccessFailedCount], [Address], [City], [ConcurrencyStamp], [CreatedAt], [Email], [EmailConfirmed], [FullName], [IsActive], [LockoutEnabled], [LockoutEnd], [MobileNumber], [NormalizedEmail], [NormalizedUserName], [PANNumber], [PasswordHash], [PhoneNumber], [PhoneNumberConfirmed], [PinCode], [SecurityStamp], [State], [TwoFactorEnabled], [UpdatedAt], [UserName])
+VALUES (@p0, @p1, @p2, @p3, @p4, @p5, @p6, @p7, @p8, @p9, @p10, @p11, @p12, @p13, @p14, @p15, @p16, @p17, @p18, @p19, @p20, @p21, @p22, @p23, @p24, @p25);
+2026-05-08 15:10:56.347 +05:30 [INF] Executed DbCommand (6ms) [Parameters=[@__normalizedRoleName_0='?' (Size = 256)], CommandType='"Text"', CommandTimeout='30']
+SELECT TOP(2) [r].[Id], [r].[ConcurrencyStamp], [r].[Name], [r].[NormalizedName]
+FROM [Roles] AS [r]
+WHERE [r].[NormalizedName] = @__normalizedRoleName_0
+2026-05-08 15:10:56.389 +05:30 [INF] Executed DbCommand (3ms) [Parameters=[@__p_0='?' (Size = 450), @__p_1='?' (Size = 450)], CommandType='"Text"', CommandTimeout='30']
+SELECT TOP(1) [u].[UserId], [u].[RoleId]
+FROM [UserRoles] AS [u]
+WHERE [u].[UserId] = @__p_0 AND [u].[RoleId] = @__p_1
+2026-05-08 15:10:56.394 +05:30 [INF] Executed DbCommand (1ms) [Parameters=[@__normalizedRoleName_0='?' (Size = 256)], CommandType='"Text"', CommandTimeout='30']
+SELECT TOP(2) [r].[Id], [r].[ConcurrencyStamp], [r].[Name], [r].[NormalizedName]
+FROM [Roles] AS [r]
+WHERE [r].[NormalizedName] = @__normalizedRoleName_0
+2026-05-08 15:10:56.418 +05:30 [INF] Executed DbCommand (10ms) [Parameters=[@__normalizedUserName_0='?' (Size = 256)], CommandType='"Text"', CommandTimeout='30']
+SELECT TOP(1) [u].[Id], [u].[AadharNumber], [u].[AccessFailedCount], [u].[Address], [u].[City], [u].[ConcurrencyStamp], [u].[CreatedAt], [u].[Email], [u].[EmailConfirmed], [u].[FullName], [u].[IsActive], [u].[LockoutEnabled], [u].[LockoutEnd], [u].[MobileNumber], [u].[NormalizedEmail], [u].[NormalizedUserName], [u].[PANNumber], [u].[PasswordHash], [u].[PhoneNumber], [u].[PhoneNumberConfirmed], [u].[PinCode], [u].[SecurityStamp], [u].[State], [u].[TwoFactorEnabled], [u].[UpdatedAt], [u].[UserName]
+FROM [Users] AS [u]
+WHERE [u].[NormalizedUserName] = @__normalizedUserName_0
+2026-05-08 15:10:56.428 +05:30 [INF] Executed DbCommand (5ms) [Parameters=[@__normalizedEmail_0='?' (Size = 256)], CommandType='"Text"', CommandTimeout='30']
+SELECT TOP(2) [u].[Id], [u].[AadharNumber], [u].[AccessFailedCount], [u].[Address], [u].[City], [u].[ConcurrencyStamp], [u].[CreatedAt], [u].[Email], [u].[EmailConfirmed], [u].[FullName], [u].[IsActive], [u].[LockoutEnabled], [u].[LockoutEnd], [u].[MobileNumber], [u].[NormalizedEmail], [u].[NormalizedUserName], [u].[PANNumber], [u].[PasswordHash], [u].[PhoneNumber], [u].[PhoneNumberConfirmed], [u].[PinCode], [u].[SecurityStamp], [u].[State], [u].[TwoFactorEnabled], [u].[UpdatedAt], [u].[UserName]
+FROM [Users] AS [u]
+WHERE [u].[NormalizedEmail] = @__normalizedEmail_0
+2026-05-08 15:10:56.466 +05:30 [INF] Executed DbCommand (19ms) [Parameters=[@p0='?' (Size = 450), @p1='?' (Size = 450), @p27='?' (Size = 450), @p2='?' (Size = 4000), @p3='?' (DbType = Int32), @p4='?' (Size = 4000), @p5='?' (Size = 4000), @p6='?' (Size = 4000), @p28='?' (Size = 4000), @p7='?' (DbType = DateTime2), @p8='?' (Size = 256), @p9='?' (DbType = Boolean), @p10='?' (Size = 4000), @p11='?' (DbType = Boolean), @p12='?' (DbType = Boolean), @p13='?' (DbType = DateTimeOffset), @p14='?' (Size = 4000), @p15='?' (Size = 256), @p16='?' (Size = 256), @p17='?' (Size = 4000), @p18='?' (Size = 4000), @p19='?' (Size = 4000), @p20='?' (DbType = Boolean), @p21='?' (Size = 4000), @p22='?' (Size = 4000), @p23='?' (Size = 4000), @p24='?' (DbType = Boolean), @p25='?' (DbType = DateTime2), @p26='?' (Size = 256)], CommandType='"Text"', CommandTimeout='30']
+SET NOCOUNT ON;
+INSERT INTO [UserRoles] ([RoleId], [UserId])
+VALUES (@p0, @p1);
+UPDATE [Users] SET [AadharNumber] = @p2, [AccessFailedCount] = @p3, [Address] = @p4, [City] = @p5, [ConcurrencyStamp] = @p6, [CreatedAt] = @p7, [Email] = @p8, [EmailConfirmed] = @p9, [FullName] = @p10, [IsActive] = @p11, [LockoutEnabled] = @p12, [LockoutEnd] = @p13, [MobileNumber] = @p14, [NormalizedEmail] = @p15, [NormalizedUserName] = @p16, [PANNumber] = @p17, [PasswordHash] = @p18, [PhoneNumber] = @p19, [PhoneNumberConfirmed] = @p20, [PinCode] = @p21, [SecurityStamp] = @p22, [State] = @p23, [TwoFactorEnabled] = @p24, [UpdatedAt] = @p25, [UserName] = @p26
+OUTPUT 1
+WHERE [Id] = @p27 AND [ConcurrencyStamp] = @p28;
+2026-05-08 15:10:56.472 +05:30 [INF] Executed DbCommand (1ms) [Parameters=[@__normalizedEmail_0='?' (Size = 256)], CommandType='"Text"', CommandTimeout='30']
+SELECT TOP(2) [u].[Id], [u].[AadharNumber], [u].[AccessFailedCount], [u].[Address], [u].[City], [u].[ConcurrencyStamp], [u].[CreatedAt], [u].[Email], [u].[EmailConfirmed], [u].[FullName], [u].[IsActive], [u].[LockoutEnabled], [u].[LockoutEnd], [u].[MobileNumber], [u].[NormalizedEmail], [u].[NormalizedUserName], [u].[PANNumber], [u].[PasswordHash], [u].[PhoneNumber], [u].[PhoneNumberConfirmed], [u].[PinCode], [u].[SecurityStamp], [u].[State], [u].[TwoFactorEnabled], [u].[UpdatedAt], [u].[UserName]
+FROM [Users] AS [u]
+WHERE [u].[NormalizedEmail] = @__normalizedEmail_0
+2026-05-08 15:10:56.595 +05:30 [INF] Executed DbCommand (1ms) [Parameters=[@__normalizedUserName_0='?' (Size = 256)], CommandType='"Text"', CommandTimeout='30']
+SELECT TOP(1) [u].[Id], [u].[AadharNumber], [u].[AccessFailedCount], [u].[Address], [u].[City], [u].[ConcurrencyStamp], [u].[CreatedAt], [u].[Email], [u].[EmailConfirmed], [u].[FullName], [u].[IsActive], [u].[LockoutEnabled], [u].[LockoutEnd], [u].[MobileNumber], [u].[NormalizedEmail], [u].[NormalizedUserName], [u].[PANNumber], [u].[PasswordHash], [u].[PhoneNumber], [u].[PhoneNumberConfirmed], [u].[PinCode], [u].[SecurityStamp], [u].[State], [u].[TwoFactorEnabled], [u].[UpdatedAt], [u].[UserName]
+FROM [Users] AS [u]
+WHERE [u].[NormalizedUserName] = @__normalizedUserName_0
+2026-05-08 15:10:56.596 +05:30 [INF] Executed DbCommand (1ms) [Parameters=[@__normalizedEmail_0='?' (Size = 256)], CommandType='"Text"', CommandTimeout='30']
+SELECT TOP(2) [u].[Id], [u].[AadharNumber], [u].[AccessFailedCount], [u].[Address], [u].[City], [u].[ConcurrencyStamp], [u].[CreatedAt], [u].[Email], [u].[EmailConfirmed], [u].[FullName], [u].[IsActive], [u].[LockoutEnabled], [u].[LockoutEnd], [u].[MobileNumber], [u].[NormalizedEmail], [u].[NormalizedUserName], [u].[PANNumber], [u].[PasswordHash], [u].[PhoneNumber], [u].[PhoneNumberConfirmed], [u].[PinCode], [u].[SecurityStamp], [u].[State], [u].[TwoFactorEnabled], [u].[UpdatedAt], [u].[UserName]
+FROM [Users] AS [u]
+WHERE [u].[NormalizedEmail] = @__normalizedEmail_0
+2026-05-08 15:10:56.747 +05:30 [INF] Executed DbCommand (146ms) [Parameters=[@p0='?' (Size = 450), @p1='?' (Size = 4000), @p2='?' (DbType = Int32), @p3='?' (Size = 4000), @p4='?' (Size = 4000), @p5='?' (Size = 4000), @p6='?' (DbType = DateTime2), @p7='?' (Size = 256), @p8='?' (DbType = Boolean), @p9='?' (Size = 4000), @p10='?' (DbType = Boolean), @p11='?' (DbType = Boolean), @p12='?' (DbType = DateTimeOffset), @p13='?' (Size = 4000), @p14='?' (Size = 256), @p15='?' (Size = 256), @p16='?' (Size = 4000), @p17='?' (Size = 4000), @p18='?' (Size = 4000), @p19='?' (DbType = Boolean), @p20='?' (Size = 4000), @p21='?' (Size = 4000), @p22='?' (Size = 4000), @p23='?' (DbType = Boolean), @p24='?' (DbType = DateTime2), @p25='?' (Size = 256)], CommandType='"Text"', CommandTimeout='30']
+SET IMPLICIT_TRANSACTIONS OFF;
+SET NOCOUNT ON;
+INSERT INTO [Users] ([Id], [AadharNumber], [AccessFailedCount], [Address], [City], [ConcurrencyStamp], [CreatedAt], [Email], [EmailConfirmed], [FullName], [IsActive], [LockoutEnabled], [LockoutEnd], [MobileNumber], [NormalizedEmail], [NormalizedUserName], [PANNumber], [PasswordHash], [PhoneNumber], [PhoneNumberConfirmed], [PinCode], [SecurityStamp], [State], [TwoFactorEnabled], [UpdatedAt], [UserName])
+VALUES (@p0, @p1, @p2, @p3, @p4, @p5, @p6, @p7, @p8, @p9, @p10, @p11, @p12, @p13, @p14, @p15, @p16, @p17, @p18, @p19, @p20, @p21, @p22, @p23, @p24, @p25);
+2026-05-08 15:10:56.752 +05:30 [INF] Executed DbCommand (2ms) [Parameters=[@__normalizedRoleName_0='?' (Size = 256)], CommandType='"Text"', CommandTimeout='30']
+SELECT TOP(2) [r].[Id], [r].[ConcurrencyStamp], [r].[Name], [r].[NormalizedName]
+FROM [Roles] AS [r]
+WHERE [r].[NormalizedName] = @__normalizedRoleName_0
+2026-05-08 15:10:56.756 +05:30 [INF] Executed DbCommand (1ms) [Parameters=[@__p_0='?' (Size = 450), @__p_1='?' (Size = 450)], CommandType='"Text"', CommandTimeout='30']
+SELECT TOP(1) [u].[UserId], [u].[RoleId]
+FROM [UserRoles] AS [u]
+WHERE [u].[UserId] = @__p_0 AND [u].[RoleId] = @__p_1
+2026-05-08 15:10:56.759 +05:30 [INF] Executed DbCommand (1ms) [Parameters=[@__normalizedRoleName_0='?' (Size = 256)], CommandType='"Text"', CommandTimeout='30']
+SELECT TOP(2) [r].[Id], [r].[ConcurrencyStamp], [r].[Name], [r].[NormalizedName]
+FROM [Roles] AS [r]
+WHERE [r].[NormalizedName] = @__normalizedRoleName_0
+2026-05-08 15:10:56.762 +05:30 [INF] Executed DbCommand (2ms) [Parameters=[@__normalizedUserName_0='?' (Size = 256)], CommandType='"Text"', CommandTimeout='30']
+SELECT TOP(1) [u].[Id], [u].[AadharNumber], [u].[AccessFailedCount], [u].[Address], [u].[City], [u].[ConcurrencyStamp], [u].[CreatedAt], [u].[Email], [u].[EmailConfirmed], [u].[FullName], [u].[IsActive], [u].[LockoutEnabled], [u].[LockoutEnd], [u].[MobileNumber], [u].[NormalizedEmail], [u].[NormalizedUserName], [u].[PANNumber], [u].[PasswordHash], [u].[PhoneNumber], [u].[PhoneNumberConfirmed], [u].[PinCode], [u].[SecurityStamp], [u].[State], [u].[TwoFactorEnabled], [u].[UpdatedAt], [u].[UserName]
+FROM [Users] AS [u]
+WHERE [u].[NormalizedUserName] = @__normalizedUserName_0
+2026-05-08 15:10:56.765 +05:30 [INF] Executed DbCommand (1ms) [Parameters=[@__normalizedEmail_0='?' (Size = 256)], CommandType='"Text"', CommandTimeout='30']
+SELECT TOP(2) [u].[Id], [u].[AadharNumber], [u].[AccessFailedCount], [u].[Address], [u].[City], [u].[ConcurrencyStamp], [u].[CreatedAt], [u].[Email], [u].[EmailConfirmed], [u].[FullName], [u].[IsActive], [u].[LockoutEnabled], [u].[LockoutEnd], [u].[MobileNumber], [u].[NormalizedEmail], [u].[NormalizedUserName], [u].[PANNumber], [u].[PasswordHash], [u].[PhoneNumber], [u].[PhoneNumberConfirmed], [u].[PinCode], [u].[SecurityStamp], [u].[State], [u].[TwoFactorEnabled], [u].[UpdatedAt], [u].[UserName]
+FROM [Users] AS [u]
+WHERE [u].[NormalizedEmail] = @__normalizedEmail_0
+2026-05-08 15:10:56.769 +05:30 [INF] Executed DbCommand (1ms) [Parameters=[@p0='?' (Size = 450), @p1='?' (Size = 450), @p27='?' (Size = 450), @p2='?' (Size = 4000), @p3='?' (DbType = Int32), @p4='?' (Size = 4000), @p5='?' (Size = 4000), @p6='?' (Size = 4000), @p28='?' (Size = 4000), @p7='?' (DbType = DateTime2), @p8='?' (Size = 256), @p9='?' (DbType = Boolean), @p10='?' (Size = 4000), @p11='?' (DbType = Boolean), @p12='?' (DbType = Boolean), @p13='?' (DbType = DateTimeOffset), @p14='?' (Size = 4000), @p15='?' (Size = 256), @p16='?' (Size = 256), @p17='?' (Size = 4000), @p18='?' (Size = 4000), @p19='?' (Size = 4000), @p20='?' (DbType = Boolean), @p21='?' (Size = 4000), @p22='?' (Size = 4000), @p23='?' (Size = 4000), @p24='?' (DbType = Boolean), @p25='?' (DbType = DateTime2), @p26='?' (Size = 256)], CommandType='"Text"', CommandTimeout='30']
+SET NOCOUNT ON;
+INSERT INTO [UserRoles] ([RoleId], [UserId])
+VALUES (@p0, @p1);
+UPDATE [Users] SET [AadharNumber] = @p2, [AccessFailedCount] = @p3, [Address] = @p4, [City] = @p5, [ConcurrencyStamp] = @p6, [CreatedAt] = @p7, [Email] = @p8, [EmailConfirmed] = @p9, [FullName] = @p10, [IsActive] = @p11, [LockoutEnabled] = @p12, [LockoutEnd] = @p13, [MobileNumber] = @p14, [NormalizedEmail] = @p15, [NormalizedUserName] = @p16, [PANNumber] = @p17, [PasswordHash] = @p18, [PhoneNumber] = @p19, [PhoneNumberConfirmed] = @p20, [PinCode] = @p21, [SecurityStamp] = @p22, [State] = @p23, [TwoFactorEnabled] = @p24, [UpdatedAt] = @p25, [UserName] = @p26
+OUTPUT 1
+WHERE [Id] = @p27 AND [ConcurrencyStamp] = @p28;
+2026-05-08 15:10:56.799 +05:30 [INF] Executed DbCommand (4ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+SELECT CASE
+    WHEN EXISTS (
+        SELECT 1
+        FROM [Workers] AS [w]) THEN CAST(1 AS bit)
+    ELSE CAST(0 AS bit)
+END
+2026-05-08 15:10:56.898 +05:30 [INF] Executed DbCommand (15ms) [Parameters=[@p0='?' (Size = 4000), @p1='?' (DbType = DateTime2), @p2='?' (Size = 4000), @p3='?' (Size = 4000), @p4='?' (DbType = Boolean), @p5='?' (DbType = Boolean), @p6='?' (Size = 4000), @p7='?' (Size = 4000), @p8='?' (Size = 4000), @p9='?' (Size = 4000), @p10='?' (DbType = DateTime2), @p11='?' (Size = 4000), @p12='?' (Size = 4000), @p13='?' (DbType = DateTime2), @p14='?' (Size = 4000), @p15='?' (Size = 4000), @p16='?' (DbType = Boolean), @p17='?' (DbType = Boolean), @p18='?' (Size = 4000), @p19='?' (Size = 4000), @p20='?' (Size = 4000), @p21='?' (Size = 4000), @p22='?' (DbType = DateTime2), @p23='?' (Size = 4000), @p24='?' (Size = 4000), @p25='?' (DbType = DateTime2), @p26='?' (Size = 4000), @p27='?' (Size = 4000), @p28='?' (DbType = Boolean), @p29='?' (DbType = Boolean), @p30='?' (Size = 4000), @p31='?' (Size = 4000), @p32='?' (Size = 4000), @p33='?' (Size = 4000), @p34='?' (DbType = DateTime2), @p35='?' (Size = 4000)], CommandType='"Text"', CommandTimeout='30']
+SET IMPLICIT_TRANSACTIONS OFF;
+SET NOCOUNT ON;
+MERGE [Workers] USING (
+VALUES (@p0, @p1, @p2, @p3, @p4, @p5, @p6, @p7, @p8, @p9, @p10, @p11, 0),
+(@p12, @p13, @p14, @p15, @p16, @p17, @p18, @p19, @p20, @p21, @p22, @p23, 1),
+(@p24, @p25, @p26, @p27, @p28, @p29, @p30, @p31, @p32, @p33, @p34, @p35, 2)) AS i ([City], [CreatedAt], [CreatedBy], [Email], [IsAvailable], [IsDeleted], [MobileNumber], [Name], [Specialization], [State], [UpdatedAt], [UpdatedBy], _Position) ON 1=0
+WHEN NOT MATCHED THEN
+INSERT ([City], [CreatedAt], [CreatedBy], [Email], [IsAvailable], [IsDeleted], [MobileNumber], [Name], [Specialization], [State], [UpdatedAt], [UpdatedBy])
+VALUES (i.[City], i.[CreatedAt], i.[CreatedBy], i.[Email], i.[IsAvailable], i.[IsDeleted], i.[MobileNumber], i.[Name], i.[Specialization], i.[State], i.[UpdatedAt], i.[UpdatedBy])
+OUTPUT INSERTED.[Id], i._Position;
+2026-05-08 15:10:56.945 +05:30 [INF] Creating key {4412ac4e-8445-4467-a15a-50896b25704e} with creation date 2026-05-08 09:40:56Z, activation date 2026-05-08 09:40:56Z, and expiration date 2026-08-06 09:40:56Z.
+2026-05-08 15:10:56.998 +05:30 [INF] Writing data to file 'C:\Users\Claude1\AppData\Local\ASP.NET\DataProtection-Keys\key-4412ac4e-8445-4467-a15a-50896b25704e.xml'.
+2026-05-08 15:10:57.195 +05:30 [INF] Now listening on: http://localhost:5038
+2026-05-08 15:10:57.197 +05:30 [INF] Application started. Press Ctrl+C to shut down.
+2026-05-08 15:10:57.198 +05:30 [INF] Hosting environment: Development
+2026-05-08 15:10:57.198 +05:30 [INF] Content root path: \\localhost\Sadhna\GitHub\Solar\SolarPortal\SolarPortal.Web

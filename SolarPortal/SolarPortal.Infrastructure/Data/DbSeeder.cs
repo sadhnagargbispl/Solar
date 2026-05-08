@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using SolarPortal.Domain.Entities;
 
@@ -17,7 +18,8 @@ public class DbSeeder
         var userManager = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
         var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
 
-        await db.Database.EnsureCreatedAsync();
+        if (db.Database.GetPendingMigrations().Any())
+            await db.Database.MigrateAsync();
 
         // Seed Roles
         string[] roles = { "Admin", "User" };

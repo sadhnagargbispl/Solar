@@ -76,11 +76,14 @@ public class SolarRequestController : Controller
     }
 
     // GET: Upload Documents
-    public async Task<IActionResult> UploadDocuments(int id)
+    public async Task<IActionResult> UploadDocuments(int? id)
     {
-        var result = await _solarRequestService.GetByIdAsync(id);
+        if (id is null or 0)
+            return RedirectToAction(nameof(Index));
+
+        var result = await _solarRequestService.GetByIdAsync(id.Value);
         if (!result.IsSuccess) return NotFound();
-        ViewBag.RequestId = id;
+        ViewBag.RequestId = id.Value;
         ViewBag.RequestNumber = result.Data!.RequestNumber;
         return View();
     }
