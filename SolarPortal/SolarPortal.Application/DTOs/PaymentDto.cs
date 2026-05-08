@@ -33,6 +33,6 @@ public class CreatePaymentDto
     public string UTRNumber { get; set; } = string.Empty;
     public DateTime PaymentDate { get; set; }
     //public IFormFile? ReceiptImage { get; set; }
-    public string? ReceiptImage { get; set; }
-    public string? ReceiptImagePath { get; set; }
+    public string ReceiptImage { get; set; }
+    public string? ReceiptImagePath { get; set; } // <-- ADD THIS (set after upload)
 }
