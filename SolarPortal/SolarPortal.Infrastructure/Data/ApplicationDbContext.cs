@@ -21,6 +21,7 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
     public DbSet<WorkerAssignment> WorkerAssignments => Set<WorkerAssignment>();
     public DbSet<Commission> Commissions => Set<Commission>();
     public DbSet<Notification> Notifications => Set<Notification>();
+    public DbSet<SolarProject> SolarProjects => Set<SolarProject>();
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
@@ -45,10 +46,29 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
             e.Property(x => x.RequestNumber).HasMaxLength(20).IsRequired();
             e.HasIndex(x => x.RequestNumber).IsUnique();
             e.Property(x => x.PlanAmount).HasColumnType("decimal(18,2)");
+            e.Property(x => x.KVCapacity).HasColumnType("decimal(8,2)");
             e.HasOne(x => x.User)
              .WithMany(u => u.SolarRequests)
              .HasForeignKey(x => x.UserId)
              .OnDelete(DeleteBehavior.Restrict);
+            e.HasOne(x => x.SolarProject)
+             .WithMany(p => p.Requests)
+             .HasForeignKey(x => x.SolarProjectId)
+             .OnDelete(DeleteBehavior.SetNull);
+            e.HasQueryFilter(x => !x.IsDeleted);
+        });
+
+        // SolarProject config
+        builder.Entity<SolarProject>(e =>
+        {
+            e.HasKey(x => x.Id);
+            e.Property(x => x.Name).HasMaxLength(100).IsRequired();
+            e.Property(x => x.SolarTypeKV).HasColumnType("decimal(8,2)");
+            e.Property(x => x.DiscomWork).HasColumnType("decimal(18,2)");
+            e.Property(x => x.DealClose).HasColumnType("decimal(18,2)");
+            e.Property(x => x.SCZMenue).HasColumnType("decimal(18,2)");
+            e.Property(x => x.SportainTeam).HasColumnType("decimal(18,2)");
+            e.Property(x => x.TotalAmount).HasColumnType("decimal(18,2)");
             e.HasQueryFilter(x => !x.IsDeleted);
         });
 

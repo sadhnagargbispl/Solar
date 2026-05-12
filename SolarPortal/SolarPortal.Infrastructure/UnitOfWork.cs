@@ -24,6 +24,7 @@ public class UnitOfWork : IUnitOfWork
     private IGenericRepository<DCRDocument>? _dcrDocuments;
     private IGenericRepository<Commission>? _commissions;
     private IGenericRepository<Notification>? _notifications;
+    private IGenericRepository<SolarProject>? _solarProjects;
 
     public UnitOfWork(ApplicationDbContext context) => _context = context;
 
@@ -51,6 +52,8 @@ public class UnitOfWork : IUnitOfWork
         _commissions ??= new GenericRepository<Commission>(_context);
     public IGenericRepository<Notification> Notifications =>
         _notifications ??= new GenericRepository<Notification>(_context);
+    public IGenericRepository<SolarProject> SolarProjects =>
+        _solarProjects ??= new GenericRepository<SolarProject>(_context);
 
     public async Task<int> SaveChangesAsync() =>
         await _context.SaveChangesAsync();

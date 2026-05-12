@@ -16,13 +16,19 @@ Log.Logger = new LoggerConfiguration()
 builder.Host.UseSerilog();
 
 // MVC with global auth policy
-builder.Services.AddControllersWithViews(options =>
+var mvcBuilder = builder.Services.AddControllersWithViews(options =>
 {
     var policy = new AuthorizationPolicyBuilder()
         .RequireAuthenticatedUser()
         .Build();
     options.Filters.Add(new AuthorizeFilter(policy));
 });
+
+// Razor runtime compilation in Development for hot-reload of .cshtml
+if (builder.Environment.IsDevelopment())
+{
+    mvcBuilder.AddRazorRuntimeCompilation();
+}
 
 // Infrastructure (DB, Identity, Services)
 builder.Services.AddInfrastructure(builder.Configuration);

@@ -31,6 +31,14 @@
 
             <div class="fr">
                 <div class="fg">
+                    <label asp-for="Type">Worker Type <span class="req">*</span></label>
+                    <select asp-for="Type" required>
+                        <option value="1">JOB (Salaried / Direct)</option>
+                        <option value="2">INC (Incentive / Commission based)</option>
+                    </select>
+                    <span class="hint">INC = earns per-connection commission. JOB = salaried.</span>
+                </div>
+                <div class="fg">
                     <label asp-for="Specialization">Specialization <span class="req">*</span></label>
                     <select asp-for="Specialization" required>
                         <option value="">Select specialization</option>
@@ -43,10 +51,16 @@
                     </select>
                     <span asp-validation-for="Specialization" class="text-danger hint"></span>
                 </div>
+            </div>
+            <div class="fr">
                 <div class="fg">
                     <label asp-for="City">City <span class="req">*</span></label>
                     <input asp-for="City" placeholder="Jaipur" required />
                     <span asp-validation-for="City" class="text-danger hint"></span>
+                </div>
+                <div class="fg">
+                    <label asp-for="Email">Email</label>
+                    <input asp-for="Email" type="email" placeholder="worker@example.com" />
                 </div>
             </div>
 

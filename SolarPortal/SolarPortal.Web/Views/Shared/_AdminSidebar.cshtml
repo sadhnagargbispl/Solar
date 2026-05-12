@@ -22,9 +22,6 @@
     <a class="sb-item" asp-area="Admin" asp-controller="Operations" asp-action="MeterDispatch">
         <span class="sbi">⚡</span>Meter Dispatch
     </a>
-    <a class="sb-item" asp-area="Admin" asp-controller="Operations" asp-action="SiteSurvey">
-        <span class="sbi">🗺️</span>Site Survey
-    </a>
     <a class="sb-item" asp-area="Admin" asp-controller="Operations" asp-action="MaterialDispatch">
         <span class="sbi">📦</span>Solar Material
     </a>
@@ -36,10 +33,16 @@
     </a>
 </div>
 <div class="sb-section">
-    <div class="sb-label">Management</div>
+    <div class="sb-label">Masters</div>
+    <a class="sb-item @IsActive("SolarProjects")" asp-area="Admin" asp-controller="SolarProjects" asp-action="Index">
+        <span class="sbi">☀️</span>Solar Projects
+    </a>
     <a class="sb-item @IsActive("Workers")" asp-area="Admin" asp-controller="Workers" asp-action="Index">
         <span class="sbi">👷</span>Installers
     </a>
+</div>
+<div class="sb-section">
+    <div class="sb-label">Management</div>
     <a class="sb-item" asp-area="Admin" asp-controller="Commission" asp-action="Index">
         <span class="sbi">📈</span>INC Commission
     </a>

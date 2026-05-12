@@ -1,59 +1,107 @@
-﻿@model CreateSolarRequestViewModel
+@model CreateSolarRequestViewModel
 @{
     ViewData["Title"] = "New Solar Request";
+    var projects = (IEnumerable<SolarPortal.Application.DTOs.SolarProjectDto>)(ViewBag.Projects ?? Enumerable.Empty<SolarPortal.Application.DTOs.SolarProjectDto>());
 }
 
 <div class="page active">
     <div class="ph">
-        <div class="ph-bc">👤 User / <span>New Request</span></div>
-        <div class="ph-title">➕ New Solar Connection Request</div>
-        <div class="ph-sub">Fill in the details to apply for solar connection</div>
+        <div class="ph-bc">👤 User / <span>New Solar Connection Request</span></div>
+        <div class="ph-title">➕ Solar Connection Request</div>
+        <div class="ph-sub">Fill in all details to submit your solar connection application</div>
     </div>
 
-    <!-- TABS -->
     <div class="tabs" id="req-tabs">
-        <div class="tab active" onclick="switchTab('req',0,this)">① Personal Info</div>
-        <div class="tab" onclick="switchTab('req',1,this)">② Product & Payment</div>
-        <div class="tab" onclick="switchTab('req',2,this)">③ Documents</div>
-        <div class="tab" onclick="switchTab('req',3,this)">④ Review & Submit</div>
+        <div class="tab active" onclick="switchTab('req',0,this)">① Activation &amp; Info</div>
+        <div class="tab" onclick="switchTab('req',1,this)">② Product &amp; Plan</div>
+        <div class="tab" onclick="switchTab('req',2,this)">③ Review &amp; Submit</div>
     </div>
 
     <form asp-area="User" asp-controller="SolarRequest" asp-action="Create" method="post"
-          enctype="multipart/form-data" id="requestForm">
+          enctype="multipart/form-data" id="requestForm" novalidate>
         @Html.AntiForgeryToken()
+        @if (!ViewData.ModelState.IsValid)
+        {
+            <div class="alert alert-e">
+                <span class="ai">⚠</span>
+                <div>
+                    <strong>Please fix these errors:</strong>
+                    <ul style="margin:6px 0 0 18px;padding:0">
+                        @foreach (var entry in ViewData.ModelState)
+                        {
+                            foreach (var err in entry.Value!.Errors)
+                            {
+                                <li>@(string.IsNullOrEmpty(entry.Key) ? "" : entry.Key + ": ")@err.ErrorMessage</li>
+                            }
+                        }
+                    </ul>
+                </div>
+            </div>
+        }
 
-        <!-- TAB 0: PERSONAL INFO -->
+        <!-- TAB 0 -->
         <div class="tc active" id="req-0">
             <div class="g2">
                 <div class="card">
-                    <div class="ct"><span class="ct-dot"></span>Applicant Details</div>
-                    <div class="fr">
-                        <div class="fg">
-                            <label asp-for="ApplicantName">Full Name <span class="req">*</span></label>
-                            <input asp-for="ApplicantName" placeholder="Ramesh Kumar" />
-                            <span asp-validation-for="ApplicantName" class="text-danger hint"></span>
-                        </div>
-                        <div class="fg">
-                            <label asp-for="MobileNumber">Mobile Number <span class="req">*</span></label>
-                            <input asp-for="MobileNumber" type="tel" placeholder="9876543210" maxlength="10" />
-                            <span asp-validation-for="MobileNumber" class="text-danger hint"></span>
+                    <div class="ct"><span class="ct-dot"></span>Activation Type</div>
+                    <div class="fg">
+                        <label>Request Type <span class="req">*</span></label>
+                        <input type="hidden" asp-for="RequestType" id="reqTypeInput" value="1" />
+                        <div class="rc-group">
+                            <div class="rc sel" data-val="1" onclick="selectRequestType(this,1)">
+                                <div class="rci">🔌</div><div class="rcl">With Activation</div><div class="rcs">New KYC</div>
+                            </div>
+                            <div class="rc" data-val="2" onclick="selectRequestType(this,2)">
+                                <div class="rci">⚡</div><div class="rcl">Only Solar</div><div class="rcs">Without activation</div>
+                            </div>
+                            <div class="rc" data-val="3" onclick="selectRequestType(this,3)">
+                                <div class="rci">✅</div><div class="rcl">Already Active</div><div class="rcs">Solar only</div>
+                            </div>
                         </div>
                     </div>
                     <div class="fr">
                         <div class="fg">
-                            <label asp-for="AlternateMobile">Alternate Mobile</label>
-                            <input asp-for="AlternateMobile" type="tel" placeholder="Optional" />
+                            <label asp-for="KVCapacity">Solar Type <span class="req">*</span></label>
+                            <select asp-for="KVCapacity" onchange="onKvChange(this.value)">
+                                <option value="1.1">1.1 kV — Domestic Small</option>
+                                <option value="3">3 kV — Standard</option>
+                                <option value="5">5 kV — Commercial Small</option>
+                                <option value="10">10 kV — Commercial Medium</option>
+                            </select>
+                        </div>
+                        <div class="fg">
+                            <label asp-for="ConnectionType">Connection Type <span class="req">*</span></label>
+                            <select asp-for="ConnectionType">
+                                <option value="1">Domestic</option>
+                                <option value="2">Commercial</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="ct"><span class="ct-dot"></span>Customer Information</div>
+                    <div class="fg">
+                        <label asp-for="ApplicantName">Full Name <span class="req">*</span></label>
+                        <input asp-for="ApplicantName" placeholder="Customer full name" />
+                        <span asp-validation-for="ApplicantName" class="hint" style="color:var(--danger)"></span>
+                    </div>
+                    <div class="fr">
+                        <div class="fg">
+                            <label asp-for="MobileNumber">Mobile No. <span class="req">*</span></label>
+                            <input asp-for="MobileNumber" type="tel" placeholder="10-digit mobile" maxlength="10" />
+                            <div class="hint">⚠ Not editable after submit</div>
+                            <span asp-validation-for="MobileNumber" class="hint" style="color:var(--danger)"></span>
                         </div>
                         <div class="fg">
                             <label asp-for="Email">Email <span class="req">*</span></label>
-                            <input asp-for="Email" type="email" placeholder="email@example.com" />
-                            <span asp-validation-for="Email" class="text-danger hint"></span>
+                            <input asp-for="Email" type="email" placeholder="Email address" />
+                            <span asp-validation-for="Email" class="hint" style="color:var(--danger)"></span>
                         </div>
                     </div>
                     <div class="fg">
-                        <label asp-for="Address">Full Address <span class="req">*</span></label>
+                        <label asp-for="Address">Address <span class="req">*</span></label>
                         <textarea asp-for="Address" placeholder="House No, Street, Area..."></textarea>
-                        <span asp-validation-for="Address" class="text-danger hint"></span>
                     </div>
                     <div class="fr3">
                         <div class="fg">
@@ -63,7 +111,7 @@
                         <div class="fg">
                             <label asp-for="State">State <span class="req">*</span></label>
                             <select asp-for="State">
-                                <option value="">Select State</option>
+                                <option value="">Select</option>
                                 <option>Rajasthan</option>
                                 <option>Gujarat</option>
                                 <option>Maharashtra</option>
@@ -75,213 +123,136 @@
                         <div class="fg">
                             <label asp-for="PinCode">Pin Code <span class="req">*</span></label>
                             <input asp-for="PinCode" placeholder="302001" maxlength="6" />
-                            <span asp-validation-for="PinCode" class="text-danger hint"></span>
+                            <span asp-validation-for="PinCode" class="hint" style="color:var(--danger)"></span>
                         </div>
                     </div>
-                </div>
-
-                <div class="card">
-                    <div class="ct"><span class="ct-dot"></span>KYC Identity</div>
                     <div class="fr">
                         <div class="fg">
                             <label asp-for="AadharNumber">Aadhar Number</label>
-                            <input asp-for="AadharNumber" id="aadhar-field" placeholder="12 digit number" maxlength="12" />
-                            <span asp-validation-for="AadharNumber" class="text-danger hint"></span>
+                            <input asp-for="AadharNumber" placeholder="12 digits" maxlength="12" />
                         </div>
                         <div class="fg">
                             <label asp-for="PANNumber">PAN Number</label>
-                            <input asp-for="PANNumber" id="pan-field" placeholder="ABCDE1234F" maxlength="10"
-                                   style="text-transform:uppercase" />
-                            <span asp-validation-for="PANNumber" class="text-danger hint"></span>
+                            <input asp-for="PANNumber" placeholder="ABCDE1234F" maxlength="10" style="text-transform:uppercase" />
                         </div>
                     </div>
-
                     <div class="fg">
                         <label>GPS / Location Photo</label>
                         <div class="upload-area" onclick="triggerFile('gps-file')">
                             <input type="file" id="gps-file" name="GPSPhoto" accept="image/*"
-                                   onchange="previewSingle('gps-file','gps-preview')"
-                                   style="opacity:0;position:absolute" />
+                                   onchange="previewSingle('gps-file','gps-preview')" />
                             <div class="upload-icon">📍</div>
                             <div class="upload-txt">Upload GPS Location Photo</div>
                             <div class="upload-hint">Image file • Max 5MB</div>
                         </div>
                         <div id="gps-preview" style="margin-top:8px"></div>
                     </div>
-
-                    <div class="alert alert-i" style="margin-top:12px">
-                        <span class="ai">ℹ</span>
-                        Your KYC documents will be uploaded separately in Step 3
-                    </div>
                 </div>
             </div>
 
             <div class="btn-row">
-                <button type="button" class="btn btn-p"
-                        onclick="validateStep0()">
-                    Next: Product & Payment →
+                <button type="button" class="btn btn-p" onclick="validateStep0()">
+                    Next: Product &amp; Plan →
                 </button>
             </div>
         </div>
 
-        <!-- TAB 1: PRODUCT & PAYMENT -->
+        <!-- TAB 1 -->
         <div class="tc" id="req-1">
             <div class="g2">
                 <div class="card">
                     <div class="ct"><span class="ct-dot"></span>Select Product Plan</div>
-
-                    <div class="fg">
-                        <label>Connection Type <span class="req">*</span></label>
-                        <div class="rc-group">
-                            <div class="rc sel" onclick="selectConnType(this,'Domestic')">
-                                <div class="rci">🏠</div>
-                                <div class="rcl">Domestic</div>
-                                <div class="rcs">Residential</div>
-                            </div>
-                            <div class="rc" onclick="selectConnType(this,'Commercial')">
-                                <div class="rci">🏢</div>
-                                <div class="rcl">Commercial</div>
-                                <div class="rcs">Business</div>
-                            </div>
-                        </div>
-                        <input type="hidden" asp-for="ConnectionType" id="connTypeInput" value="1" />
-                    </div>
-
-                    <div class="fg">
-                        <label asp-for="KVCapacity">KV Capacity <span class="req">*</span></label>
-                        <select asp-for="KVCapacity" onchange="updatePlanAmount(this.value)">
-                            <option value="1.1">1.1 kV — Domestic Small</option>
-                            <option value="3">3 kV — Standard</option>
-                            <option value="5">5 kV — Commercial Small</option>
-                            <option value="10">10 kV — Commercial Medium</option>
-                        </select>
-                    </div>
-
                     <div class="fg">
                         <label>Select Plan <span class="req">*</span></label>
-                        <div style="display:flex;flex-direction:column;gap:8px;margin-top:6px">
-                            <div class="rc sel" onclick="selectPlan(this,'Plan A',15900)"
-                                 style="text-align:left;display:flex;align-items:center;gap:12px;padding:12px">
-                                <span style="font-size:22px">⚡</span>
-                                <div>
-                                    <div class="rcl">Plan A — ₹15,900</div>
-                                    <div class="rcs">Low BV • 1.1 kV Domestic</div>
-                                </div>
+                        @if (projects.Any())
+                        {
+                            <div style="display:flex;flex-direction:column;gap:8px;margin-top:6px">
+                                @foreach (var p in projects)
+                                {
+                                    <div class="rc"
+                                         data-id="@p.Id"
+                                         data-name="@p.Name"
+                                         data-amount="@p.TotalAmount"
+                                         data-kv="@p.SolarTypeKV"
+                                         data-conn="@((int)p.ConnectionType)"
+                                         onclick="selectPlanFromMaster(this)"
+                                         style="text-align:left;display:flex;align-items:center;gap:12px;padding:12px">
+                                        <span style="font-size:22px">@(p.ConnectionType == SolarPortal.Domain.Enums.ConnectionType.Domestic ? "🏠" : "🏢")</span>
+                                        <div style="flex:1">
+                                            <div class="rcl">@p.Name — ₹@p.TotalAmount.ToString("N0")</div>
+                                            <div class="rcs">@p.SolarTypeKV kV • @p.ConnectionType • BV @p.BV → @p.FinalBV</div>
+                                        </div>
+                                    </div>
+                                }
                             </div>
-                            <div class="rc" onclick="selectPlan(this,'Plan B',19900)"
-                                 style="text-align:left;display:flex;align-items:center;gap:12px;padding:12px">
-                                <span style="font-size:22px">🔆</span>
-                                <div>
-                                    <div class="rcl">Plan B — ₹19,900</div>
-                                    <div class="rcs">100 BV • Standard plan</div>
-                                </div>
+                        }
+                        else
+                        {
+                            <div class="alert alert-w">
+                                <span class="ai">⚠</span>No solar projects available. Ask admin to add plans in <strong>Solar Projects</strong> master.
                             </div>
-                            <div class="rc" onclick="selectPlan(this,'Plan C',29900)"
-                                 style="text-align:left;display:flex;align-items:center;gap:12px;padding:12px">
-                                <span style="font-size:22px">🌟</span>
-                                <div>
-                                    <div class="rcl">Plan C — ₹29,900</div>
-                                    <div class="rcs">200 BV • Premium plan</div>
-                                </div>
-                            </div>
-                        </div>
+                        }
+                        <input type="hidden" asp-for="SolarProjectId" id="solarProjectIdInput" />
                         <input type="hidden" asp-for="SelectedPlan" id="selectedPlanInput" />
                         <input type="hidden" asp-for="PlanAmount" id="planAmountInput" />
+                    </div>
+                    <div class="alert alert-i">
+                        <span class="ai">ℹ</span>Select a plan to see your payable amount.
                     </div>
                 </div>
 
                 <div class="card">
                     <div class="ct"><span class="ct-dot"></span>Payment Summary</div>
-
-                    <div class="alert alert-w">
-                        <span class="ai">⚠</span>
-                        Minimum ₹20,000 payment required to proceed
-                    </div>
-
-                    <div class="pay-card" id="paymentSummary" style="margin-bottom:14px">
+                    <div class="alert alert-w"><span class="ai">⚠</span>Documents and payment will be uploaded after registration.</div>
+                    <div class="pay-card" style="margin-top:12px">
                         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
                             <div>
                                 <div style="font-size:11px;color:#6EE7B7">Total Payable</div>
                                 <div id="planAmountDisplay" style="font-family:Rajdhani,sans-serif;font-size:32px;font-weight:700;color:var(--green)">
-                                    ₹0
+                                    ₹15,900
                                 </div>
                             </div>
                             <span style="font-size:28px">☀️</span>
                         </div>
-                        <div class="pay-row">
-                            <span class="prk">Selected Plan</span>
-                            <span class="prv" id="selectedPlanDisplay">—</span>
-                        </div>
-                    </div>
-
-                    <div class="alert alert-i">
-                        <span class="ai">ℹ</span>
-                        Payment will be submitted in the next step after registration.
-                        You'll be able to upload payment receipt.
+                        <div class="pay-row"><span class="prk">Selected Plan</span><span class="prv" id="selectedPlanDisplay">Plan A</span></div>
+                        <div class="pay-row"><span class="prk">Connection Type</span><span class="prv" id="connTypeDisplay">Domestic</span></div>
+                        <div class="pay-row"><span class="prk">Capacity</span><span class="prv" id="kvDisplay">1.1 kV</span></div>
                     </div>
                 </div>
             </div>
 
             <div class="btn-row">
-                <button type="button" class="btn btn-s"
-                        onclick="switchTab('req',0,document.querySelectorAll('#req-tabs .tab')[0])">
-                    ← Back
-                </button>
-                <button type="button" class="btn btn-p"
-                        onclick="switchTab('req',2,document.querySelectorAll('#req-tabs .tab')[2])">
-                    Next: Documents →
-                </button>
+                <button type="button" class="btn btn-s" onclick="switchTab('req',0,document.querySelectorAll('#req-tabs .tab')[0])">← Back</button>
+                <button type="button" class="btn btn-p" onclick="switchTab('req',2,document.querySelectorAll('#req-tabs .tab')[2])">Next: Review →</button>
             </div>
         </div>
 
-        <!-- TAB 2: DOCUMENTS (Preview — actual upload happens after submit) -->
+        <!-- TAB 2 -->
         <div class="tc" id="req-2">
-            <div class="alert alert-i">
-                <span class="ai">ℹ</span>
-                Documents are uploaded after your application is submitted. Proceed to submit first.
-            </div>
-            <div class="btn-row">
-                <button type="button" class="btn btn-s"
-                        onclick="switchTab('req',1,document.querySelectorAll('#req-tabs .tab')[1])">
-                    ← Back
-                </button>
-                <button type="button" class="btn btn-p"
-                        onclick="switchTab('req',3,document.querySelectorAll('#req-tabs .tab')[3])">
-                    Next: Review →
-                </button>
-            </div>
-        </div>
-
-        <!-- TAB 3: REVIEW & SUBMIT -->
-        <div class="tc" id="req-3">
-            <div class="card">
-                <div class="ct"><span class="ct-dot"></span>Review Your Application</div>
-
-                <div class="section-t">Personal Information</div>
-                <div class="g2" id="review-personal">
-                    <div class="sr"><span class="srk">Name</span><span class="srv" id="rev-name">—</span></div>
+            <div class="g2">
+                <div class="card">
+                    <div class="ct"><span class="ct-dot"></span>① Customer Summary</div>
+                    <div class="sr"><span class="srk">Customer Name</span><span class="srv" id="rev-name">—</span></div>
                     <div class="sr"><span class="srk">Mobile</span><span class="srv" id="rev-mobile">—</span></div>
                     <div class="sr"><span class="srk">Email</span><span class="srv" id="rev-email">—</span></div>
-                    <div class="sr"><span class="srk">City / State</span><span class="srv" id="rev-city">—</span></div>
+                    <div class="sr"><span class="srk">Location</span><span class="srv" id="rev-loc">—</span></div>
                 </div>
-
-                <div class="section-t" style="margin-top:14px">Product & Plan</div>
-                <div class="g2">
-                    <div class="sr"><span class="srk">Plan</span><span class="srv" id="rev-plan">—</span></div>
-                    <div class="sr"><span class="srk">Amount</span><span class="srv" id="rev-amount">—</span></div>
-                    <div class="sr"><span class="srk">Connection</span><span class="srv" id="rev-conn">—</span></div>
-                    <div class="sr"><span class="srk">kV</span><span class="srv" id="rev-kv">—</span></div>
+                <div class="card">
+                    <div class="ct"><span class="ct-dot"></span>② Product Summary</div>
+                    <div class="sr"><span class="srk">Connection Type</span><span class="srv" id="rev-conn">—</span></div>
+                    <div class="sr"><span class="srk">Capacity</span><span class="srv" id="rev-kv">—</span></div>
+                    <div class="sr"><span class="srk">Selected Plan</span><span class="srv" id="rev-plan">—</span></div>
+                    <div class="sr"><span class="srk">Plan Amount</span><span class="srv" id="rev-amount" style="color:var(--sun)">—</span></div>
                 </div>
+            </div>
 
-                <div class="btn-row" style="margin-top:18px">
-                    <button type="button" class="btn btn-s"
-                            onclick="switchTab('req',2,document.querySelectorAll('#req-tabs .tab')[2])">
-                        ← Back
-                    </button>
-                    <button type="submit" class="btn btn-p" id="submitBtn"
-                            onclick="return confirmSubmit()">
-                        ☀️ Submit Application
-                    </button>
+            <div class="card" style="margin-top:14px">
+                <div class="alert alert-s">
+                    <span class="ai">✅</span>After submit, you'll be redirected to upload KYC documents and complete payment.
+                </div>
+                <div class="btn-row">
+                    <button type="button" class="btn btn-s" onclick="switchTab('req',1,document.querySelectorAll('#req-tabs .tab')[1])">← Back</button>
+                    <button type="submit" class="btn btn-p" onclick="return confirmSubmit()">☀️ Submit Application</button>
                 </div>
             </div>
         </div>
@@ -289,53 +260,99 @@
 </div>
 
 @section Scripts {
-    <partial name="_ValidationScriptsPartial" />
     <script>
+        // Submit logging for debug — surfaces client-side block reasons in console
+        document.addEventListener('DOMContentLoaded', () => {
+            const form = document.getElementById('requestForm');
+            if (form) form.addEventListener('submit', (e) => {
+                console.log('[SolarRequest] Submitting form. SolarProjectId=' +
+                    (document.getElementById('solarProjectIdInput')?.value || '(empty)') +
+                    ' Plan=' + (document.getElementById('selectedPlanInput')?.value || '(empty)') +
+                    ' Amount=' + (document.getElementById('planAmountInput')?.value || '(empty)'));
+            });
+        });
+    </script>
+    <script>
+        function rcSel(el, group) {
+            el.closest('.rc-group').querySelectorAll('.rc').forEach(r => r.classList.remove('sel'));
+            el.classList.add('sel');
+        }
+
+        function selectRequestType(el, val) {
+            el.closest('.rc-group').querySelectorAll('.rc').forEach(r => r.classList.remove('sel'));
+            el.classList.add('sel');
+            document.getElementById('reqTypeInput').value = val;
+        }
+
+        function selectPlanFromMaster(el) {
+            el.closest('.fg').querySelectorAll('.rc').forEach(r => r.classList.remove('sel'));
+            el.classList.add('sel');
+            const id = el.dataset.id;
+            const name = el.dataset.name;
+            const amount = parseFloat(el.dataset.amount || 0);
+            const kv = el.dataset.kv;
+            const conn = el.dataset.conn;
+            document.getElementById('solarProjectIdInput').value = id;
+            document.getElementById('selectedPlanInput').value = name;
+            document.getElementById('planAmountInput').value = amount;
+            // Sync the kv + connection-type form fields too
+            const kvSel = document.querySelector('[name="KVCapacity"]');
+            if (kvSel) kvSel.value = kv;
+            const connSel = document.querySelector('[name="ConnectionType"]');
+            if (connSel) connSel.value = conn;
+            // Update summary card
+            document.getElementById('planAmountDisplay').textContent = '₹' + amount.toLocaleString('en-IN');
+            document.getElementById('selectedPlanDisplay').textContent = name;
+            document.getElementById('kvDisplay').textContent = kv + ' kV';
+            document.getElementById('connTypeDisplay').textContent = conn === '1' ? 'Domestic' : 'Commercial';
+        }
+
+        function onKvChange(kv) {
+            document.getElementById('kvDisplay').textContent = kv + ' kV';
+        }
+
         function validateStep0() {
-            const name = document.querySelector('[name="ApplicantName"]').value;
-            const mobile = document.querySelector('[name="MobileNumber"]').value;
-            if (!name || !mobile) {
-                showError('Please fill Name and Mobile Number');
-                return;
+            const required = ['ApplicantName', 'MobileNumber', 'Email', 'Address', 'City', 'State', 'PinCode'];
+            for (const f of required) {
+                const el = document.querySelector(`[name="${f}"]`);
+                if (!el || !el.value.trim()) {
+                    if (typeof showError === 'function') showError(`Please fill ${f}`);
+                    else alert('Please fill ' + f);
+                    el && el.focus();
+                    return;
+                }
             }
             switchTab('req', 1, document.querySelectorAll('#req-tabs .tab')[1]);
         }
 
-        function selectConnType(el, type) {
-            el.closest('.rc-group').querySelectorAll('.rc').forEach(r => r.classList.remove('sel'));
-            el.classList.add('sel');
-            document.getElementById('connTypeInput').value = type === 'Domestic' ? '1' : '2';
-        }
-
-        function selectPlan(el, plan, amount) {
-            el.closest('.fg').querySelectorAll('.rc').forEach(r => r.classList.remove('sel'));
-            el.classList.add('sel');
-            document.getElementById('selectedPlanInput').value = plan;
-            document.getElementById('planAmountInput').value = amount;
-            document.getElementById('planAmountDisplay').textContent = '₹' + amount.toLocaleString('en-IN');
-            document.getElementById('selectedPlanDisplay').textContent = plan;
-        }
-
         function confirmSubmit() {
-            // Populate review tab
-            document.getElementById('rev-name').textContent =
-                document.querySelector('[name="ApplicantName"]').value;
-            document.getElementById('rev-mobile').textContent =
-                document.querySelector('[name="MobileNumber"]').value;
-            document.getElementById('rev-email').textContent =
-                document.querySelector('[name="Email"]').value;
-            document.getElementById('rev-city').textContent =
-                `${document.querySelector('[name="City"]').value}, ${document.querySelector('[name="State"]').value}`;
-            document.getElementById('rev-plan').textContent =
-                document.getElementById('selectedPlanInput').value || '—';
-            document.getElementById('rev-amount').textContent =
-                document.getElementById('planAmountDisplay').textContent;
+            // Plan must be selected
+            const planId = document.getElementById('solarProjectIdInput').value;
+            if (!planId) {
+                showError('Please select a Solar Project plan in step 2');
+                switchTab('req', 1, document.querySelectorAll('#req-tabs .tab')[1]);
+                return false;
+            }
+            document.getElementById('rev-name').textContent = document.querySelector('[name="ApplicantName"]').value;
+            document.getElementById('rev-mobile').textContent = document.querySelector('[name="MobileNumber"]').value;
+            document.getElementById('rev-email').textContent = document.querySelector('[name="Email"]').value;
+            document.getElementById('rev-loc').textContent =
+                `${document.querySelector('[name="City"]').value}, ${document.querySelector('[name="State"]').value} ${document.querySelector('[name="PinCode"]').value}`;
             document.getElementById('rev-conn').textContent =
-                document.getElementById('connTypeInput').value === '1' ? 'Domestic' : 'Commercial';
-            document.getElementById('rev-kv').textContent =
-                document.querySelector('[name="KVCapacity"]').value + ' kV';
-
+                document.querySelector('[name="ConnectionType"]').value === '1' ? 'Domestic' : 'Commercial';
+            document.getElementById('rev-kv').textContent = document.querySelector('[name="KVCapacity"]').value + ' kV';
+            document.getElementById('rev-plan').textContent = document.getElementById('selectedPlanInput').value || '—';
+            document.getElementById('rev-amount').textContent = document.getElementById('planAmountDisplay').textContent;
             return true;
         }
+
+        // Init defaults on load
+        document.addEventListener('DOMContentLoaded', () => {
+            const kv = document.querySelector('[name="KVCapacity"]');
+            if (kv) onKvChange(kv.value);
+            // Auto-select the first available plan so the user can't accidentally skip step 2
+            const firstPlan = document.querySelector('.rc[data-id]');
+            if (firstPlan) selectPlanFromMaster(firstPlan);
+        });
     </script>
 }

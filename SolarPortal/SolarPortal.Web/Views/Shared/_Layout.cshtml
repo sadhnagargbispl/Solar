@@ -30,12 +30,13 @@
         </div>
         <div class="top-right">
             <div style="position:relative">
-                <button class="top-btn" id="notifBtn">
+                <a class="top-btn" asp-area="" asp-controller="Notifications" asp-action="Index" id="notifBtn"
+                   style="text-decoration:none;display:inline-flex;align-items:center;gap:4px">
                     🔔 <span id="notifCount" class="sb-badge red" style="display:none">0</span>
-                </button>
+                </a>
             </div>
             <span style="font-size:13px;color:var(--text2)">@user?.FullName</span>
-            <form asp-controller="Account" asp-action="Logout" method="post" style="display:inline">
+            <form asp-area="" asp-controller="Account" asp-action="Logout" method="post" style="display:inline">
                 @Html.AntiForgeryToken()
                 <button type="submit" class="top-btn">⬅ Logout</button>
             </form>
@@ -105,7 +106,7 @@
                 <div class="mni" onclick="location.href='@Url.Action("Create","SolarRequest",new{area="User"})'">
                     <span class="mi2">➕</span><span class="ml2">New</span>
                 </div>
-                <div class="mni" onclick="location.href='@Url.Action("Index","Notifications")'">
+                <div class="mni" onclick="location.href='@Url.Action("Index","Notifications", new { area = "" })'">
                     <span class="mi2">🔔</span><span class="ml2">Alerts</span>
                 </div>
             }

@@ -342,6 +342,9 @@ namespace SolarPortal.Infrastructure.Data.Migrations
                     b.Property<bool>("IsVerified")
                         .HasColumnType("bit");
 
+                    b.Property<string>("Remark")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<int>("SolarRequestId")
                         .HasColumnType("int");
 
@@ -430,6 +433,9 @@ namespace SolarPortal.Infrastructure.Data.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
+                    b.Property<int?>("AssignedWorkerId")
+                        .HasColumnType("int");
+
                     b.Property<DateTime?>("CompletedAt")
                         .HasColumnType("datetime2");
 
@@ -454,6 +460,9 @@ namespace SolarPortal.Infrastructure.Data.Migrations
                     b.Property<string>("Notes")
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<string>("Remark")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<int>("SolarRequestId")
                         .HasColumnType("int");
 
@@ -464,6 +473,8 @@ namespace SolarPortal.Infrastructure.Data.Migrations
                         .HasColumnType("nvarchar(max)");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("AssignedWorkerId");
 
                     b.HasIndex("SolarRequestId");
 
@@ -477,6 +488,9 @@ namespace SolarPortal.Infrastructure.Data.Migrations
                         .HasColumnType("int");
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int?>("AssignedWorkerId")
+                        .HasColumnType("int");
 
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2");
@@ -502,6 +516,9 @@ namespace SolarPortal.Infrastructure.Data.Migrations
                     b.Property<string>("MaterialDetails")
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<string>("Remark")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<int>("SolarRequestId")
                         .HasColumnType("int");
 
@@ -515,6 +532,8 @@ namespace SolarPortal.Infrastructure.Data.Migrations
                         .HasColumnType("nvarchar(max)");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("AssignedWorkerId");
 
                     b.HasIndex("SolarRequestId");
 
@@ -558,6 +577,9 @@ namespace SolarPortal.Infrastructure.Data.Migrations
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("MeterType")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Remark")
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<int>("SolarRequestId")
@@ -762,6 +784,69 @@ namespace SolarPortal.Infrastructure.Data.Migrations
                     b.ToTable("SiteSurveys");
                 });
 
+            modelBuilder.Entity("SolarPortal.Domain.Entities.SolarProject", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("BV")
+                        .HasColumnType("int");
+
+                    b.Property<int>("ConnectionType")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<decimal>("DealClose")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<decimal>("DiscomWork")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<int>("FinalBV")
+                        .HasColumnType("int");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<decimal>("SCZMenue")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<decimal>("SolarTypeKV")
+                        .HasColumnType("decimal(8,2)");
+
+                    b.Property<decimal>("SportainTeam")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<decimal>("TotalAmount")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("UpdatedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("SolarProjects");
+                });
+
             modelBuilder.Entity("SolarPortal.Domain.Entities.SolarRequest", b =>
                 {
                     b.Property<int>("Id")
@@ -814,7 +899,7 @@ namespace SolarPortal.Infrastructure.Data.Migrations
                         .HasColumnType("bit");
 
                     b.Property<decimal>("KVCapacity")
-                        .HasColumnType("decimal(18,2)");
+                        .HasColumnType("decimal(8,2)");
 
                     b.Property<string>("MobileNumber")
                         .IsRequired()
@@ -838,8 +923,14 @@ namespace SolarPortal.Infrastructure.Data.Migrations
                         .HasMaxLength(20)
                         .HasColumnType("nvarchar(20)");
 
+                    b.Property<int>("RequestType")
+                        .HasColumnType("int");
+
                     b.Property<string>("SelectedPlan")
                         .HasColumnType("nvarchar(max)");
+
+                    b.Property<int?>("SolarProjectId")
+                        .HasColumnType("int");
 
                     b.Property<string>("State")
                         .IsRequired()
@@ -859,6 +950,8 @@ namespace SolarPortal.Infrastructure.Data.Migrations
 
                     b.HasIndex("RequestNumber")
                         .IsUnique();
+
+                    b.HasIndex("SolarProjectId");
 
                     b.HasIndex("UserId");
 
@@ -905,6 +998,9 @@ namespace SolarPortal.Infrastructure.Data.Migrations
 
                     b.Property<string>("State")
                         .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("Type")
+                        .HasColumnType("int");
 
                     b.Property<DateTime?>("UpdatedAt")
                         .HasColumnType("datetime2");
@@ -1051,22 +1147,34 @@ namespace SolarPortal.Infrastructure.Data.Migrations
 
             modelBuilder.Entity("SolarPortal.Domain.Entities.Installation", b =>
                 {
+                    b.HasOne("SolarPortal.Domain.Entities.Worker", "AssignedWorker")
+                        .WithMany()
+                        .HasForeignKey("AssignedWorkerId");
+
                     b.HasOne("SolarPortal.Domain.Entities.SolarRequest", "SolarRequest")
                         .WithMany("Installations")
                         .HasForeignKey("SolarRequestId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
+                    b.Navigation("AssignedWorker");
+
                     b.Navigation("SolarRequest");
                 });
 
             modelBuilder.Entity("SolarPortal.Domain.Entities.MaterialDispatch", b =>
                 {
+                    b.HasOne("SolarPortal.Domain.Entities.Worker", "AssignedWorker")
+                        .WithMany()
+                        .HasForeignKey("AssignedWorkerId");
+
                     b.HasOne("SolarPortal.Domain.Entities.SolarRequest", "SolarRequest")
                         .WithMany("MaterialDispatches")
                         .HasForeignKey("SolarRequestId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+
+                    b.Navigation("AssignedWorker");
 
                     b.Navigation("SolarRequest");
                 });
@@ -1129,11 +1237,18 @@ namespace SolarPortal.Infrastructure.Data.Migrations
 
             modelBuilder.Entity("SolarPortal.Domain.Entities.SolarRequest", b =>
                 {
+                    b.HasOne("SolarPortal.Domain.Entities.SolarProject", "SolarProject")
+                        .WithMany("Requests")
+                        .HasForeignKey("SolarProjectId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
                     b.HasOne("SolarPortal.Domain.Entities.ApplicationUser", "User")
                         .WithMany("SolarRequests")
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
+
+                    b.Navigation("SolarProject");
 
                     b.Navigation("User");
                 });
@@ -1167,6 +1282,11 @@ namespace SolarPortal.Infrastructure.Data.Migrations
             modelBuilder.Entity("SolarPortal.Domain.Entities.Installation", b =>
                 {
                     b.Navigation("WorkerAssignments");
+                });
+
+            modelBuilder.Entity("SolarPortal.Domain.Entities.SolarProject", b =>
+                {
+                    b.Navigation("Requests");
                 });
 
             modelBuilder.Entity("SolarPortal.Domain.Entities.SolarRequest", b =>

@@ -16,6 +16,7 @@ public interface IUnitOfWork : IDisposable
     IGenericRepository<Domain.Entities.DCRDocument> DCRDocuments { get; }
     IGenericRepository<Domain.Entities.Commission> Commissions { get; }
     IGenericRepository<Domain.Entities.Notification> Notifications { get; }
+    IGenericRepository<Domain.Entities.SolarProject> SolarProjects { get; }
     Task<int> SaveChangesAsync();
     Task BeginTransactionAsync();
     Task CommitTransactionAsync();

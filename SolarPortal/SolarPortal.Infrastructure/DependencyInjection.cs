@@ -58,6 +58,7 @@ public static class DependencyInjection
         services.AddScoped<IDocumentService, DocumentService>();
         services.AddScoped<IWorkerService, WorkerService>();
         services.AddScoped<IFileUploadService, FileUploadService>();
+        services.AddScoped<ISolarProjectService, SolarProjectService>();
 
         return services;
     }

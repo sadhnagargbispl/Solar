@@ -42,8 +42,15 @@ public class CreateSolarRequestViewModel
     [Display(Name = "PAN Number")]
     public string? PANNumber { get; set; }
 
+    // Activation Type
+    [Display(Name = "Request Type")]
+    public RequestType RequestType { get; set; } = RequestType.WithActivation;
+
     // Step 2 - Product
     public ConnectionType ConnectionType { get; set; } = ConnectionType.Domestic;
+
+    [Display(Name = "Solar Project")]
+    public int? SolarProjectId { get; set; }
 
     [Range(0.1, 100)]
     [Display(Name = "KV Capacity")]

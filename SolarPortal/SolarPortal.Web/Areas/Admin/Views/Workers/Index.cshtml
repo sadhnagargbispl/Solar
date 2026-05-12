@@ -26,6 +26,7 @@
                         <tr>
                             <th>Name</th>
                             <th>Mobile</th>
+                            <th>Type</th>
                             <th>Specialization</th>
                             <th>City</th>
                             <th>Is Available</th>
@@ -40,9 +41,12 @@
                                 <td class="td-b">@worker.Name</td>
                                 <td>@worker.MobileNumber</td>
                                 <td>
-                                    <span class="badge" style="background-color: var(--sun); color: var(--text1); padding: 4px 8px; border-radius: 4px; font-size: 11px">
-                                        @worker.Specialization
+                                    <span class="sts @(worker.Type == SolarPortal.Domain.Enums.WorkerType.INC ? "sts-inst" : "sts-disp")">
+                                        @worker.Type
                                     </span>
+                                </td>
+                                <td>
+                                    <span class="chip chip-s">@worker.Specialization</span>
                                 </td>
                                 <td>@worker.City</td>
                                 <td>

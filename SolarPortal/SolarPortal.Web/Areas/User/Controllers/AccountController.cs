@@ -31,15 +31,22 @@ public class AccountController : Controller
         var result = await _solarRequestService.GetByUserIdAsync(userId);
         var projects = result.Data?.ToList() ?? new List<SolarRequestDto>();
 
-        var paymentTasks = projects.Select(p => _paymentService.GetByRequestIdAsync(p.Id));
-        var allPaymentLists = await Task.WhenAll(paymentTasks);
-        var allPayments = allPaymentLists.SelectMany(p => p).ToList();
+        // Run sequentially — EF Core forbids concurrent ops on the same DbContext
+        var allPayments = new List<PaymentDto>();
+        foreach (var p in projects)
+        {
+            var pays = await _paymentService.GetByRequestIdAsync(p.Id);
+            allPayments.AddRange(pays);
+        }
+
+        var totalProject = projects.Sum(p => p.RequestedAmount);
+        var totalPaid = allPayments.Where(p => p.IsVerified).Sum(p => p.Amount);
 
         ViewBag.Projects = projects;
         ViewBag.Payments = allPayments;
-        ViewBag.TotalProjectAmount = projects.Sum(p => p.RequestedAmount);
-        ViewBag.TotalPaid = allPayments.Where(p => p.IsVerified).Sum(p => p.Amount);
-        ViewBag.TotalDue = (decimal)ViewBag.TotalProjectAmount - (decimal)ViewBag.TotalPaid;
+        ViewBag.TotalProjectAmount = totalProject;
+        ViewBag.TotalPaid = totalPaid;
+        ViewBag.TotalDue = totalProject - totalPaid;
 
         return View();
     }

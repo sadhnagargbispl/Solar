@@ -22,8 +22,10 @@ public class SolarRequest : BaseEntity
     public string? PANNumber { get; set; }
 
     // Technical
+    public RequestType RequestType { get; set; } = RequestType.WithActivation;
     public ConnectionType ConnectionType { get; set; }
     public decimal KVCapacity { get; set; }
+    public int? SolarProjectId { get; set; }
     public string? SelectedPlan { get; set; }
     public decimal PlanAmount { get; set; }
 
@@ -35,6 +37,7 @@ public class SolarRequest : BaseEntity
 
     // Navigation
     public virtual ApplicationUser? User { get; set; }
+    public virtual SolarProject? SolarProject { get; set; }
     public virtual ICollection<Payment> Payments { get; set; } = new List<Payment>();
     public virtual ICollection<Document> Documents { get; set; } = new List<Document>();
     public virtual ICollection<SiteSurvey> SiteSurveys { get; set; } = new List<SiteSurvey>();

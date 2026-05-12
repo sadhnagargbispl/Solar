@@ -1,6 +1,21 @@
-﻿@model UserDashboardDto
+@model UserDashboardDto
 @{
     ViewData["Title"] = "My Dashboard";
+
+    string StageStsClass(Domain.Enums.ProjectStatus s) => s switch
+    {
+        Domain.Enums.ProjectStatus.Completed => "sts-act",
+        Domain.Enums.ProjectStatus.MeterDispatch => "sts-disp",
+        Domain.Enums.ProjectStatus.Installation => "sts-inst",
+        _ => "sts-pend"
+    };
+
+    string ApprovalStsClass(Domain.Enums.ApprovalStatus s) => s switch
+    {
+        Domain.Enums.ApprovalStatus.Approved => "sts-act",
+        Domain.Enums.ApprovalStatus.Rejected => "sts-rej",
+        _ => "sts-pend"
+    };
 }
 
 <div class="page active">
@@ -10,7 +25,6 @@
         <div class="ph-sub">Welcome back! Track your solar connection status here.</div>
     </div>
 
-    <!-- Stats Grid -->
     <div class="g4" style="margin-bottom:18px">
         <div class="sc">
             <div class="sc-label">My Projects</div>
@@ -35,7 +49,6 @@
     </div>
 
     <div class="g2">
-        <!-- Recent Applications -->
         <div class="card">
             <div class="ct"><span class="ct-dot"></span>Recent Applications</div>
             <div class="tbl-wrap">
@@ -58,22 +71,21 @@
                                        style="color:var(--sun)">@p.RequestNumber</a>
                                 </td>
                                 <td>@p.ConnectionType</td>
-                                <td>@p.KVCapacity</td>
-                                <td>@p.CurrentStage.ToString().Replace("_", " ")</td>
+                                <td>@p.KVCapacity kV</td>
                                 <td>
-                                    <span class="sts @GetStatusClass(p.ApprovalStatus)">
-                                        @p.ApprovalStatus
-                                    </span>
+                                    <span class="sts @StageStsClass(p.CurrentStage)">@p.CurrentStage.ToString().Replace("_", " ")</span>
+                                </td>
+                                <td>
+                                    <span class="sts @ApprovalStsClass(p.ApprovalStatus)">@p.ApprovalStatus</span>
                                 </td>
                             </tr>
                         }
                         @if (!Model.MyProjects.Any())
                         {
                             <tr>
-                                <td colspan="5" style="text-align:center;color:var(--text3)">
+                                <td colspan="5" style="text-align:center;color:var(--text3);padding:20px">
                                     No applications yet.
-                                    <a asp-area="User" asp-controller="SolarRequest" asp-action="Create"
-                                       style="color:var(--sun)">Apply now →</a>
+                                    <a asp-area="User" asp-controller="SolarRequest" asp-action="Create" style="color:var(--sun)">Apply now →</a>
                                 </td>
                             </tr>
                         }
@@ -81,16 +93,11 @@
                 </table>
             </div>
             <div class="btn-row">
-                <a asp-area="User" asp-controller="SolarRequest" asp-action="Create" class="btn btn-p">
-                    ➕ New Request
-                </a>
-                <a asp-area="User" asp-controller="SolarRequest" asp-action="Index" class="btn btn-s">
-                    View All →
-                </a>
+                <a asp-area="User" asp-controller="SolarRequest" asp-action="Create" class="btn btn-p">➕ New Request</a>
+                <a asp-area="User" asp-controller="SolarRequest" asp-action="Index" class="btn btn-s">View All →</a>
             </div>
         </div>
 
-        <!-- Status Flow -->
         <div class="card">
             <div class="ct">
                 <span class="ct-dot"></span>
@@ -106,21 +113,38 @@
             }
             else
             {
-                <div style="text-align:center;padding:20px;color:var(--text3)">
+                <div style="text-align:center;padding:30px;color:var(--text3)">
                     No active project found.
-                    <a asp-area="User" asp-controller="SolarRequest" asp-action="Create" style="color:var(--sun)">Start one →</a>
+                    <div style="margin-top:10px">
+                        <a asp-area="User" asp-controller="SolarRequest" asp-action="Create" class="btn btn-p btn-sm">Start One →</a>
+                    </div>
                 </div>
             }
         </div>
     </div>
-</div>
 
-@functions {
-    string GetStatusClass(Domain.Enums.ApprovalStatus status) => status switch
+    @if (Model.UnreadNotifications.Any())
     {
-        Domain.Enums.ApprovalStatus.Pending => "sts-pend",
-        Domain.Enums.ApprovalStatus.Approved => "sts-act",
-        Domain.Enums.ApprovalStatus.Rejected => "sts-rej",
-        _ => "sts-pend"
-    };
-}
+        <div class="card" style="margin-top:16px">
+            <div class="ct"><span class="ct-dot"></span>Recent Notifications (@Model.UnreadNotifications.Count)</div>
+            <div class="tbl-wrap">
+                <table>
+                    <thead><tr><th>Title</th><th>Message</th><th>Date</th></tr></thead>
+                    <tbody>
+                        @foreach (var n in Model.UnreadNotifications)
+                        {
+                            <tr>
+                                <td class="td-b">@n.Title</td>
+                                <td>@n.Message</td>
+                                <td style="font-size:12px;color:var(--text3)">@n.CreatedAt.ToString("dd MMM HH:mm")</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+            <div class="btn-row">
+                <a asp-controller="Notifications" asp-action="Index" class="btn btn-s">View All Notifications →</a>
+            </div>
+        </div>
+    }
+</div>

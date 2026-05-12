@@ -17,6 +17,7 @@ public class SolarRequestController : Controller
     private readonly IPaymentService _paymentService;
     private readonly IDocumentService _documentService;
     private readonly IFileUploadService _fileUploadService;
+    private readonly ISolarProjectService _solarProjectService;
     private readonly UserManager<ApplicationUser> _userManager;
 
     public SolarRequestController(
@@ -24,17 +25,23 @@ public class SolarRequestController : Controller
         IPaymentService paymentService,
         IDocumentService documentService,
         IFileUploadService fileUploadService,
+        ISolarProjectService solarProjectService,
         UserManager<ApplicationUser> userManager)
     {
         _solarRequestService = solarRequestService;
         _paymentService = paymentService;
         _documentService = documentService;
         _fileUploadService = fileUploadService;
+        _solarProjectService = solarProjectService;
         _userManager = userManager;
     }
 
     // GET: New Request Form (multi-step)
-    public IActionResult Create() => View(new CreateSolarRequestViewModel());
+    public async Task<IActionResult> Create()
+    {
+        ViewBag.Projects = await _solarProjectService.GetAllAsync(activeOnly: true);
+        return View(new CreateSolarRequestViewModel());
+    }
 
     // POST: Step 1 - Personal Info
     [HttpPost]
@@ -42,7 +49,23 @@ public class SolarRequestController : Controller
     public async Task<IActionResult> Create(CreateSolarRequestViewModel model)
     {
         if (!ModelState.IsValid)
+        {
+            ViewBag.Projects = await _solarProjectService.GetAllAsync(activeOnly: true);
             return View(model);
+        }
+
+        // If a SolarProject was picked, hydrate plan name + amount + kv from master
+        if (model.SolarProjectId.HasValue)
+        {
+            var project = await _solarProjectService.GetByIdAsync(model.SolarProjectId.Value);
+            if (project != null)
+            {
+                model.SelectedPlan = project.Name;
+                model.PlanAmount = project.TotalAmount;
+                model.KVCapacity = project.SolarTypeKV;
+                model.ConnectionType = project.ConnectionType;
+            }
+        }
 
         var userId = _userManager.GetUserId(User)!;
         var dto = new CreateSolarRequestDto
@@ -56,8 +79,10 @@ public class SolarRequestController : Controller
             PinCode = model.PinCode,
             AadharNumber = model.AadharNumber,
             PANNumber = model.PANNumber,
+            RequestType = model.RequestType,
             ConnectionType = model.ConnectionType,
             KVCapacity = model.KVCapacity,
+            SolarProjectId = model.SolarProjectId,
             SelectedPlan = model.SelectedPlan,
             PlanAmount = model.PlanAmount
         };
@@ -67,6 +92,7 @@ public class SolarRequestController : Controller
         {
             foreach (var error in result.Errors)
                 ModelState.AddModelError(string.Empty, error);
+            ViewBag.Projects = await _solarProjectService.GetAllAsync(activeOnly: true);
             return View(model);
         }
 
@@ -85,6 +111,7 @@ public class SolarRequestController : Controller
         if (!result.IsSuccess) return NotFound();
         ViewBag.RequestId = id.Value;
         ViewBag.RequestNumber = result.Data!.RequestNumber;
+        ViewBag.IsDomestic = result.Data.ConnectionType == Domain.Enums.ConnectionType.Domestic;
         return View();
     }
 
@@ -154,6 +181,28 @@ public class SolarRequestController : Controller
         }
 
         var result = await _paymentService.CreateAsync(dto);
+
+        // Auto-advance: Registration / ProductSelection / Payment -> PMSurvey when user submits payment
+        if (result.IsSuccess)
+        {
+            var req = await _solarRequestService.GetByIdAsync(dto.SolarRequestId);
+            if (req.IsSuccess && req.Data != null)
+            {
+                var current = req.Data.CurrentStage;
+                if (current == Domain.Enums.ProjectStatus.Registration
+                    || current == Domain.Enums.ProjectStatus.ProductSelection
+                    || current == Domain.Enums.ProjectStatus.Payment)
+                {
+                    await _solarRequestService.UpdateStageAsync(new UpdateSolarRequestStatusDto
+                    {
+                        Id = dto.SolarRequestId,
+                        NewStage = Domain.Enums.ProjectStatus.PMSurvey,
+                        Notes = "Payment received — auto-advanced to PM Survey"
+                    }, userId);
+                }
+            }
+        }
+
         return Json(new { success = result.IsSuccess, message = result.Message ?? result.Errors.FirstOrDefault() });
     }
 

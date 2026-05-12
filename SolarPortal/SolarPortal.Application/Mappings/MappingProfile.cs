@@ -32,6 +32,11 @@ public class MappingProfile : Profile
             .ForMember(d => d.RequestNumber,
                 o => o.MapFrom(s => s.SolarRequest != null ? s.SolarRequest.RequestNumber : string.Empty));
 
+        // SolarProject
+        CreateMap<SolarProject, SolarProjectDto>();
+        CreateMap<CreateSolarProjectDto, SolarProject>()
+            .ForMember(d => d.Id, o => o.Ignore());
+
         // Document
         CreateMap<Document, DocumentDto>();
 

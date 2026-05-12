@@ -1,11 +1,28 @@
 @model SolarPortal.Application.DTOs.SolarRequestDto
 @{
-    ViewData["Title"] = @Model?.RequestNumber ?? "Project Details";
+    ViewData["Title"] = Model?.RequestNumber ?? "Project Details";
+
+    string StageStsClass(Domain.Enums.ProjectStatus s) => s switch
+    {
+        Domain.Enums.ProjectStatus.Completed => "sts-act",
+        Domain.Enums.ProjectStatus.MeterDispatch => "sts-disp",
+        Domain.Enums.ProjectStatus.Installation => "sts-inst",
+        _ => "sts-pend"
+    };
+
+    string ApprovalStsClass(Domain.Enums.ApprovalStatus s) => s switch
+    {
+        Domain.Enums.ApprovalStatus.Approved => "sts-act",
+        Domain.Enums.ApprovalStatus.Rejected => "sts-rej",
+        _ => "sts-pend"
+    };
 }
 
 <div class="page active">
     <div class="ph">
-        <div class="ph-bc">👤 User / <a asp-controller="SolarRequest" asp-action="Index" style="color:var(--sun)">Projects</a> / <span>Details</span></div>
+        <div class="ph-bc">
+            👤 User / <a asp-area="User" asp-controller="SolarRequest" asp-action="Index" style="color:var(--sun)">Projects</a> / <span>Details</span>
+        </div>
         <div class="ph-title">📋 Request @Model?.RequestNumber</div>
         <div class="ph-sub">Your solar connection project details and status</div>
     </div>
@@ -13,116 +30,85 @@
     @if (Model != null)
     {
         <div class="g2">
-            <!-- Request Info -->
             <div class="card">
                 <div class="ct"><span class="ct-dot"></span>Application Details</div>
-                <div class="detail-grid">
-                    <div class="detail-item">
-                        <span class="detail-label">Request Number</span>
-                        <span class="detail-value">@Model.RequestNumber</span>
-                    </div>
-                    <div class="detail-item">
-                        <span class="detail-label">Approval Status</span>
-                        <span class="detail-value">
-                            <span class="sts @GetStatusClass(Model.ApprovalStatus)">@Model.ApprovalStatus</span>
-                        </span>
-                    </div>
-                    <div class="detail-item">
-                        <span class="detail-label">Connection Type</span>
-                        <span class="detail-value">@Model.ConnectionType</span>
-                    </div>
-                    <div class="detail-item">
-                        <span class="detail-label">Applied On</span>
-                        <span class="detail-value">@Model.CreatedAt.ToString("dd MMM yyyy")</span>
-                    </div>
-                </div>
+                <div class="sr"><span class="srk">Request Number</span><span class="srv">@Model.RequestNumber</span></div>
+                <div class="sr"><span class="srk">Approval Status</span><span class="srv"><span class="sts @ApprovalStsClass(Model.ApprovalStatus)">@Model.ApprovalStatus</span></span></div>
+                <div class="sr"><span class="srk">Current Stage</span><span class="srv"><span class="sts @StageStsClass(Model.CurrentStage)">@Model.CurrentStage.ToString().Replace("_", " ")</span></span></div>
+                <div class="sr"><span class="srk">Connection Type</span><span class="srv">@Model.ConnectionType</span></div>
+                <div class="sr"><span class="srk">Applied On</span><span class="srv">@Model.CreatedAt.ToString("dd MMM yyyy")</span></div>
             </div>
 
-            <!-- System Info -->
             <div class="card">
                 <div class="ct"><span class="ct-dot"></span>System Configuration</div>
-                <div class="detail-grid">
-                    <div class="detail-item">
-                        <span class="detail-label">Capacity</span>
-                        <span class="detail-value">@Model.KVCapacity kV</span>
-                    </div>
-                    <div class="detail-item">
-                        <span class="detail-label">Selected Plan</span>
-                        <span class="detail-value">@Model.SelectedPlan</span>
-                    </div>
-                    <div class="detail-item">
-                        <span class="detail-label">Requested Amount</span>
-                        <span class="detail-value gold">₹@Model.RequestedAmount.ToString("N0")</span>
-                    </div>
-                    <div class="detail-item">
-                        <span class="detail-label">Approved Amount</span>
-                        <span class="detail-value green">₹@Model.ApprovedAmount.ToString("N0")</span>
-                    </div>
-                </div>
+                <div class="sr"><span class="srk">Capacity</span><span class="srv">@Model.KVCapacity kV</span></div>
+                <div class="sr"><span class="srk">Selected Plan</span><span class="srv">@(Model.SelectedPlan ?? "—")</span></div>
+                <div class="sr"><span class="srk">Requested Amount</span><span class="srv" style="color:var(--sun)">₹@Model.RequestedAmount.ToString("N0")</span></div>
+                <div class="sr"><span class="srk">Approved Amount</span><span class="srv" style="color:var(--green)">₹@Model.ApprovedAmount.ToString("N0")</span></div>
+                <div class="sr"><span class="srk">Total Paid</span><span class="srv" style="color:var(--green)">₹@Model.TotalPaid.ToString("N0")</span></div>
+                <div class="sr"><span class="srk">Due Amount</span><span class="srv" style="color:var(--sun)">₹@Model.TotalDue.ToString("N0")</span></div>
             </div>
 
-            <!-- Your Info -->
             <div class="card">
                 <div class="ct"><span class="ct-dot"></span>Your Information</div>
-                <div class="detail-grid">
-                    <div class="detail-item">
-                        <span class="detail-label">Name</span>
-                        <span class="detail-value">@Model.ApplicantName</span>
-                    </div>
-                    <div class="detail-item">
-                        <span class="detail-label">Mobile</span>
-                        <span class="detail-value">@Model.MobileNumber</span>
-                    </div>
-                    <div class="detail-item">
-                        <span class="detail-label">Email</span>
-                        <span class="detail-value">@Model.Email</span>
-                    </div>
-                    <div class="detail-item">
-                        <span class="detail-label">Location</span>
-                        <span class="detail-value">@Model.City, @Model.State @Model.PinCode</span>
-                    </div>
-                </div>
+                <div class="sr"><span class="srk">Name</span><span class="srv">@Model.ApplicantName</span></div>
+                <div class="sr"><span class="srk">Mobile</span><span class="srv">@Model.MobileNumber</span></div>
+                <div class="sr"><span class="srk">Email</span><span class="srv">@Model.Email</span></div>
+                <div class="sr"><span class="srk">Address</span><span class="srv">@Model.Address</span></div>
+                <div class="sr"><span class="srk">Location</span><span class="srv">@Model.City, @Model.State @Model.PinCode</span></div>
             </div>
 
-            <!-- Documents -->
-            @if (Model.Documents.Any())
-            {
-                <div class="card">
-                    <div class="ct"><span class="ct-dot"></span>Submitted Documents (@Model.Documents.Count)</div>
-                    <div style="max-height:300px;overflow-y:auto">
-                        @foreach (var doc in Model.Documents)
-                        {
-                            <div style="padding:12px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center">
-                                <div>
-                                    <div style="font-size:12px">@doc.DocumentType</div>
-                                    <div style="color:var(--text2);font-size:11px">@doc.FileName</div>
-                                </div>
-                                <a href="@doc.FilePath" target="_blank" class="btn btn-s btn-sm">
-                                    📥 Download
-                                </a>
-                            </div>
-                        }
-                    </div>
-                </div>
-            }
-
-            <!-- Actions -->
             <div class="card">
                 <div class="ct"><span class="ct-dot"></span>Quick Actions</div>
                 <div class="btn-row">
-                    <a asp-controller="SolarRequest" asp-action="UploadDocuments" asp-route-id="@Model.Id"
+                    <a asp-area="User" asp-controller="SolarRequest" asp-action="UploadDocuments" asp-route-id="@Model.Id"
                        class="btn btn-s">📄 Upload Documents</a>
-                    @if (Model.ApprovalStatus.ToString() == "Approved")
-                    {
-                        <a asp-controller="SolarRequest" asp-action="Payment" asp-route-id="@Model.Id"
-                           class="btn btn-p" style="margin-left:4px">💰 Make Payment</a>
-                    }
+                    <a asp-area="User" asp-controller="SolarRequest" asp-action="Payment" asp-route-id="@Model.Id"
+                       class="btn btn-p">💰 Make Payment</a>
+                    <a asp-area="User" asp-controller="SolarRequest" asp-action="Status" asp-route-id="@Model.Id"
+                       class="btn btn-o">📍 View Status</a>
                 </div>
             </div>
+
+            @if (Model.Documents != null && Model.Documents.Any())
+            {
+                <div class="card" style="grid-column:span 2">
+                    <div class="ct"><span class="ct-dot"></span>Submitted Documents (@Model.Documents.Count)</div>
+                    <div class="tbl-wrap">
+                        <table>
+                            <thead>
+                                <tr><th>Type</th><th>File</th><th>Size</th><th>Verified</th><th>Action</th></tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var doc in Model.Documents)
+                                {
+                                    <tr>
+                                        <td class="td-b">@doc.DocumentType</td>
+                                        <td>@(doc.OriginalFileName ?? doc.FileName)</td>
+                                        <td>@((doc.FileSizeBytes / 1024.0).ToString("N1")) KB</td>
+                                        <td>
+                                            @if (doc.IsVerified)
+                                            {
+                                                <span class="sts sts-act">Verified</span>
+                                            }
+                                            else
+                                            {
+                                                <span class="sts sts-pend">Pending</span>
+                                            }
+                                        </td>
+                                        <td>
+                                            <a href="@doc.FilePath" target="_blank" class="btn btn-s btn-sm">📥 View</a>
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            }
         </div>
 
-        <!-- Status Flow -->
-        <div class="card" style="margin-top:20px">
+        <div class="card" style="margin-top:16px">
             <div class="ct"><span class="ct-dot"></span>Project Status Flow</div>
             <partial name="~/Views/Shared/_StatusFlow.cshtml" model="(int)Model.CurrentStage" />
         </div>
@@ -134,50 +120,3 @@
         </div>
     }
 </div>
-
-<style>
-.detail-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-    gap: 20px;
-    padding: 0;
-}
-
-.detail-item {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-}
-
-.detail-label {
-    font-size: 12px;
-    color: var(--text2);
-    text-transform: uppercase;
-    font-weight: 600;
-    letter-spacing: 0.5px;
-}
-
-.detail-value {
-    font-size: 16px;
-    color: var(--text1);
-    font-weight: 500;
-}
-
-.detail-value.gold {
-    color: var(--sun);
-}
-
-.detail-value.green {
-    color: var(--succ);
-}
-</style>
-
-@functions {
-    string GetStatusClass(Domain.Enums.ApprovalStatus status) => status switch
-    {
-        Domain.Enums.ApprovalStatus.Pending => "sts-pend",
-        Domain.Enums.ApprovalStatus.Approved => "sts-act",
-        Domain.Enums.ApprovalStatus.Rejected => "sts-rej",
-        _ => "sts-pend"
-    };
-}

@@ -44,5 +44,19 @@ public enum DocumentType
     PaymentReceipt = 6,
     GPSPhoto = 7,
     DCRDocument = 8,
-    SitePhoto = 9
+    SitePhoto = 9,
+    PMSuryagramDocument = 10
+}
+
+public enum RequestType
+{
+    WithActivation = 1,
+    OnlySolarWithoutActivation = 2,
+    AlreadyActiveOnlyRequest = 3
+}
+
+public enum WorkerType
+{
+    JOB = 1,
+    INC = 2
 }

@@ -14,8 +14,10 @@ public class SolarRequestDto
     public string City { get; set; } = string.Empty;
     public string State { get; set; } = string.Empty;
     public string PinCode { get; set; } = string.Empty;
+    public RequestType RequestType { get; set; }
     public ConnectionType ConnectionType { get; set; }
     public decimal KVCapacity { get; set; }
+    public int? SolarProjectId { get; set; }
     public string? SelectedPlan { get; set; }
     public decimal PlanAmount { get; set; }
     public decimal RequestedAmount { get; set; }
@@ -41,8 +43,10 @@ public class CreateSolarRequestDto
     public string PinCode { get; set; } = string.Empty;
     public string? AadharNumber { get; set; }
     public string? PANNumber { get; set; }
+    public RequestType RequestType { get; set; } = RequestType.WithActivation;
     public ConnectionType ConnectionType { get; set; }
     public decimal KVCapacity { get; set; }
+    public int? SolarProjectId { get; set; }
     public string? SelectedPlan { get; set; }
     public decimal PlanAmount { get; set; }
 }

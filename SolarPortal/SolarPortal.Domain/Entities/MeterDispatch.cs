@@ -10,6 +10,7 @@ public class MeterDispatch : BaseEntity
     public DateTime? DispatchDate { get; set; }
     public string? DispatchDocumentPath { get; set; }
     public string? CourierDetails { get; set; }
+    public string? Remark { get; set; }
     public bool IsDispatched { get; set; } = false;
     public string? DispatchedBy { get; set; }
 

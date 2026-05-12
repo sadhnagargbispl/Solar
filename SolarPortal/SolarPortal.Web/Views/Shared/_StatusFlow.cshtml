@@ -1,6 +1,8 @@
 ﻿@model int
 @{
     var currentStage = Model;
+    // Stage numbers must match ProjectStatus enum int values.
+    // SiteSurvey (6) is intentionally skipped — feature on hold.
     var stages = new[]
     {
         (1, "✅", "Registration", "Customer verified & registered"),
@@ -8,7 +10,6 @@
         (3, "💰", "Payment", "Submit payment & receipt"),
         (4, "🗺️", "PM Survey", "Pre-meter survey by team"),
         (5, "⚡", "Meter Dispatch", "Admin dispatching meter"),
-        (6, "🔍", "Site Survey", "Technical site assessment"),
         (7, "📦", "Material Dispatch", "Solar panels & equipment"),
         (8, "🔧", "Installation", "Physical installation"),
         (9, "📄", "DCR Update", "Documentation & closure"),
