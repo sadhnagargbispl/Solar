@@ -1,0 +1,41 @@
+@{
+    var currentController = ViewContext.RouteData.Values["controller"]?.ToString();
+    var currentAction = ViewContext.RouteData.Values["action"]?.ToString();
+    string IsActive(string ctrl, string? action = null) =>
+        currentController == ctrl && (action == null || currentAction == action) ? "active" : "";
+}
+
+<div class="sb-section">
+    <div class="sb-label">User Menu</div>
+    <a class="sb-item @IsActive("Dashboard")" asp-area="SolarPanelUserPanel" asp-controller="Dashboard" asp-action="Index">
+        <span class="sbi">📊</span>Dashboard
+    </a>
+    <a class="sb-item @IsActive("SolarRequest","Status")" asp-area="SolarPanelUserPanel" asp-controller="SolarRequest" asp-action="Status">
+        <span class="sbi">📍</span>My Solar Status
+    </a>
+    <a class="sb-item @IsActive("SolarRequest","Create")" asp-area="SolarPanelUserPanel" asp-controller="SolarRequest" asp-action="Create">
+        <span class="sbi">➕</span>New Request
+        <span class="sb-badge">New</span>
+    </a>
+</div>
+<div class="sb-section">
+    <div class="sb-label">My Applications</div>
+    <a class="sb-item @IsActive("SolarRequest","Index")" asp-area="SolarPanelUserPanel" asp-controller="SolarRequest" asp-action="Index">
+        <span class="sbi">🏗️</span>My Projects
+    </a>
+    <a class="sb-item" asp-area="SolarPanelUserPanel" asp-controller="Account" asp-action="SolarAccount">
+        <span class="sbi">💰</span>Solar A/c
+    </a>
+</div>
+<div class="sb-section">
+    <div class="sb-label">Workflow</div>
+    <a class="sb-item @IsActive("PMSurya")" asp-area="SolarPanelUserPanel" asp-controller="PMSurya" asp-action="Upload">
+        <span class="sbi">📋</span>PM Surya Ghar
+    </a>
+    <a class="sb-item @IsActive("SiteSurvey")" asp-area="SolarPanelUserPanel" asp-controller="SiteSurvey" asp-action="Index">
+        <span class="sbi">📐</span>Site Survey
+    </a>
+    <a class="sb-item @IsActive("DCR")" asp-area="SolarPanelUserPanel" asp-controller="DCR" asp-action="Upload">
+        <span class="sbi">📄</span>DCR Upload
+    </a>
+</div>
