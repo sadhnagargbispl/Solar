@@ -1,4 +1,4 @@
-﻿using AutoMapper;
+using AutoMapper;
 using SolarPortal.Application.DTOs;
 using SolarPortal.Application.Interfaces;
 using SolarPortal.Application.Interfaces.Services;
@@ -9,6 +9,14 @@ namespace SolarPortal.Application.Services;
 
 public class PaymentService : IPaymentService
 {
+    /// <summary>
+    /// Business rule: cumulative paid amount must be ≥ ₹20,000 before the
+    /// workflow can advance past Payment stage. Each payment is allowed
+    /// (e.g. a user can pay ₹5,000 + ₹15,000), but the request stays in
+    /// Payment stage until the cumulative total clears the minimum.
+    /// </summary>
+    public const decimal MinimumPaymentThreshold = 20000m;
+
     private readonly IUnitOfWork _uow;
     private readonly IMapper _mapper;
 
@@ -22,6 +30,9 @@ public class PaymentService : IPaymentService
     {
         try
         {
+            if (dto.Amount <= 0)
+                return ServiceResult<PaymentDto>.Failure("Amount must be greater than zero.");
+
             // Generate receipt number
             var count = await _uow.Payments.CountAsync() + 1;
             var receiptNumber = $"RCP-{DateTime.Now:yyyy}-{count:D4}";
@@ -45,8 +56,14 @@ public class PaymentService : IPaymentService
             await _uow.Payments.AddAsync(payment);
             await _uow.SaveChangesAsync();
 
+            // Compute cumulative paid (verified + just-added pending) for hint message
+            var totalPaid = await GetTotalPaidAsync(dto.SolarRequestId);
+            var hint = totalPaid >= MinimumPaymentThreshold
+                ? $"Cumulative ₹{totalPaid:N0} meets the ₹{MinimumPaymentThreshold:N0} minimum. Awaiting admin verification."
+                : $"Cumulative ₹{totalPaid:N0} of ₹{MinimumPaymentThreshold:N0} minimum. Add ₹{MinimumPaymentThreshold - totalPaid:N0} more to unlock the next stage.";
+
             var result = _mapper.Map<PaymentDto>(payment);
-            return ServiceResult<PaymentDto>.Success(result, "Payment submitted successfully. Awaiting verification.");
+            return ServiceResult<PaymentDto>.Success(result, hint);
         }
         catch (Exception ex)
         {
@@ -74,5 +91,30 @@ public class PaymentService : IPaymentService
         await _uow.SaveChangesAsync();
 
         return ServiceResult<bool>.Success(true, "Payment verified");
+    }
+
+    /// <summary>
+    /// Cumulative amount of all payments for the request, regardless of status.
+    /// Used to enforce the ₹20,000 minimum business rule.
+    /// </summary>
+    public async Task<decimal> GetTotalPaidAsync(int requestId)
+    {
+        var payments = await _uow.Payments.FindAsync(p => p.SolarRequestId == requestId);
+        return payments.Sum(p => p.Amount);
+    }
+
+    /// <summary>
+    /// Cumulative amount of payments admin has verified.
+    /// </summary>
+    public async Task<decimal> GetVerifiedPaidAsync(int requestId)
+    {
+        var payments = await _uow.Payments.FindAsync(p => p.SolarRequestId == requestId && p.IsVerified);
+        return payments.Sum(p => p.Amount);
+    }
+
+    public async Task<bool> HasMetMinimumAsync(int requestId)
+    {
+        var total = await GetTotalPaidAsync(requestId);
+        return total >= MinimumPaymentThreshold;
     }
 }

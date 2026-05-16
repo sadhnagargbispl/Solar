@@ -40,6 +40,16 @@ builder.Services.AddSession(options =>
     options.IdleTimeout = TimeSpan.FromMinutes(30);
     options.Cookie.HttpOnly = true;
     options.Cookie.IsEssential = true;
+    options.Cookie.Name = ".SolarPortal.User.Session";
+});
+
+// Distinct auth cookie so admin/user/inc sites don't collide on localhost
+builder.Services.ConfigureApplicationCookie(options =>
+{
+    options.Cookie.Name = ".SolarPortal.User.Auth";
+    options.LoginPath  = "/Account/Login";
+    options.LogoutPath = "/Account/Logout";
+    options.AccessDeniedPath = "/Account/AccessDenied";
 });
 
 var app = builder.Build();

@@ -1,9 +1,0 @@
-{
-  "permissions": {
-    "allow": [
-      "PowerShell(dotnet tool install --global dotnet-ef --version 8.0.0 2>&1)",
-      "PowerShell(Get-Process | Where-Object { $_.ProcessName -eq \"SolarPortal.Web\" -or \\($_.ProcessName -eq \"dotnet\" -and $_.MainWindowTitle -match \"SolarPortal\"\\) } | ForEach-Object { Stop-Process -Id $_.Id -Force -ErrorAction SilentlyContinue }; \"Done cleaning up\")",
-      "PowerShell($tcp = Get-NetTCPConnection -LocalPort 5038 -ErrorAction SilentlyContinue; if \\($tcp\\) { $pids = $tcp.OwningProcess | Select-Object -Unique; foreach \\($p in $pids\\) { try { Stop-Process -Id $p -Force -ErrorAction Stop; \"Killed PID $p \\(was holding 5038\\)\" } catch { \"Couldn't kill PID $p\" } } } else { \"Port 5038 free\" })"
-    ]
-  }
-}

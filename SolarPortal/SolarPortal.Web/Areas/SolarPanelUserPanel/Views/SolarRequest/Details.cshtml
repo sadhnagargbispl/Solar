@@ -1,0 +1,162 @@
+@model SolarPortal.Application.DTOs.SolarRequestDto
+@{
+    ViewData["Title"] = Model?.RequestNumber ?? "Project Details";
+
+    string StageStsClass(Domain.Enums.ProjectStatus s) => s switch
+    {
+        Domain.Enums.ProjectStatus.Completed => "sts-act",
+        Domain.Enums.ProjectStatus.MeterDispatch => "sts-disp",
+        Domain.Enums.ProjectStatus.Installation => "sts-inst",
+        _ => "sts-pend"
+    };
+
+    string ApprovalStsClass(Domain.Enums.ApprovalStatus s) => s switch
+    {
+        Domain.Enums.ApprovalStatus.Approved => "sts-act",
+        Domain.Enums.ApprovalStatus.Rejected => "sts-rej",
+        _ => "sts-pend"
+    };
+}
+
+<div class="page active">
+    <div class="ph">
+        <div class="ph-bc">
+            👤 User / <a asp-area="SolarPanelUserPanel" asp-controller="SolarRequest" asp-action="Index" style="color:var(--sun)">Projects</a> / <span>Details</span>
+        </div>
+        <div class="ph-title">📋 Request @Model?.RequestNumber</div>
+        <div class="ph-sub">Your solar connection project details and status</div>
+    </div>
+
+    @if (Model != null)
+    {
+        <div class="g2">
+            <div class="card">
+                <div class="ct"><span class="ct-dot"></span>Application Details</div>
+                <div class="sr"><span class="srk">Request Number</span><span class="srv">@Model.RequestNumber</span></div>
+                <div class="sr"><span class="srk">Approval Status</span><span class="srv"><span class="sts @ApprovalStsClass(Model.ApprovalStatus)">@Model.ApprovalStatus</span></span></div>
+                <div class="sr"><span class="srk">Current Stage</span><span class="srv"><span class="sts @StageStsClass(Model.CurrentStage)">@Model.CurrentStage.ToString().Replace("_", " ")</span></span></div>
+                <div class="sr"><span class="srk">Connection Type</span><span class="srv">@Model.ConnectionType</span></div>
+                <div class="sr"><span class="srk">Applied On</span><span class="srv">@Model.CreatedAt.ToString("dd MMM yyyy")</span></div>
+            </div>
+
+            <div class="card">
+                <div class="ct"><span class="ct-dot"></span>System Configuration</div>
+                <div class="sr"><span class="srk">Capacity</span><span class="srv">@Model.KVCapacity kV</span></div>
+                <div class="sr"><span class="srk">Selected Plan</span><span class="srv">@(Model.SelectedPlan ?? "—")</span></div>
+                <div class="sr"><span class="srk">Requested Amount</span><span class="srv" style="color:var(--sun)">₹@Model.RequestedAmount.ToString("N0")</span></div>
+                <div class="sr"><span class="srk">Approved Amount</span><span class="srv" style="color:var(--green)">₹@Model.ApprovedAmount.ToString("N0")</span></div>
+                <div class="sr"><span class="srk">Total Paid</span><span class="srv" style="color:var(--green)">₹@Model.TotalPaid.ToString("N0")</span></div>
+                <div class="sr"><span class="srk">Due Amount</span><span class="srv" style="color:var(--sun)">₹@Model.TotalDue.ToString("N0")</span></div>
+            </div>
+
+            <div class="card">
+                <div class="ct"><span class="ct-dot"></span>Your Information</div>
+                <div class="sr"><span class="srk">Name</span><span class="srv">@Model.ApplicantName</span></div>
+                <div class="sr"><span class="srk">Mobile</span><span class="srv">@Model.MobileNumber</span></div>
+                <div class="sr"><span class="srk">Email</span><span class="srv">@Model.Email</span></div>
+                <div class="sr"><span class="srk">Address</span><span class="srv">@Model.Address</span></div>
+                <div class="sr"><span class="srk">Location</span><span class="srv">@Model.City, @Model.State @Model.PinCode</span></div>
+            </div>
+
+            <div class="card">
+                <div class="ct"><span class="ct-dot"></span>Quick Actions</div>
+                <div class="btn-row">
+                    @{
+                        var stage  = Model.CurrentStage;
+                        var isDone = stage == Domain.Enums.ProjectStatus.Completed;
+                        // PM Surya Ghar docs button: only while the project is at-or-before that stage.
+                        // Once we're past PMSurvey (or already Completed), the button is no longer useful.
+                        var showPmSurya = !isDone && (
+                            stage == Domain.Enums.ProjectStatus.Registration ||
+                            stage == Domain.Enums.ProjectStatus.ProductSelection ||
+                            stage == Domain.Enums.ProjectStatus.Payment ||
+                            stage == Domain.Enums.ProjectStatus.PMSurvey);
+                        // Site Survey button only while at that stage
+                        var showSiteSurvey = !isDone && stage == Domain.Enums.ProjectStatus.SiteSurvey;
+                        // DCR button only at DCR stage AND only for Domestic
+                        var showDcr = !isDone &&
+                                       stage == Domain.Enums.ProjectStatus.DCRUpdate &&
+                                       Model.ConnectionType == Domain.Enums.ConnectionType.Domestic;
+                    }
+
+                    @if (showPmSurya)
+                    {
+                        <a asp-area="SolarPanelUserPanel" asp-controller="PMSurya" asp-action="Upload" asp-route-id="@Model.Id"
+                           class="btn btn-s">📋 PM Surya Ghar Docs</a>
+                    }
+                    @if (showSiteSurvey)
+                    {
+                        <a asp-area="SolarPanelUserPanel" asp-controller="SiteSurvey" asp-action="Index" asp-route-id="@Model.Id"
+                           class="btn btn-s">📐 Site Survey</a>
+                    }
+                    @if (showDcr)
+                    {
+                        <a asp-area="SolarPanelUserPanel" asp-controller="DCR" asp-action="Upload" asp-route-id="@Model.Id"
+                           class="btn btn-s">📄 DCR Upload</a>
+                    }
+                    @if (!isDone)
+                    {
+                        <a asp-area="SolarPanelUserPanel" asp-controller="SolarRequest" asp-action="Payment" asp-route-id="@Model.Id"
+                           class="btn btn-p">💰 Make Payment</a>
+                    }
+                    <a asp-area="SolarPanelUserPanel" asp-controller="SolarRequest" asp-action="Status" asp-route-id="@Model.Id"
+                       class="btn btn-o">📍 View Status</a>
+                </div>
+                @if (isDone)
+                {
+                    <div class="alert alert-s" style="margin-top:10px;font-size:13px">
+                        <span class="ai">✅</span>This project is <strong>Completed</strong>. No further actions are needed.
+                    </div>
+                }
+            </div>
+
+            @if (Model.Documents != null && Model.Documents.Any())
+            {
+                <div class="card" style="grid-column:span 2">
+                    <div class="ct"><span class="ct-dot"></span>Submitted Documents (@Model.Documents.Count)</div>
+                    <div class="tbl-wrap">
+                        <table>
+                            <thead>
+                                <tr><th>Type</th><th>File</th><th>Size</th><th>Verified</th><th>Action</th></tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var doc in Model.Documents)
+                                {
+                                    <tr>
+                                        <td class="td-b">@doc.DocumentType</td>
+                                        <td>@(doc.OriginalFileName ?? doc.FileName)</td>
+                                        <td>@((doc.FileSizeBytes / 1024.0).ToString("N1")) KB</td>
+                                        <td>
+                                            @if (doc.IsVerified)
+                                            {
+                                                <span class="sts sts-act">Verified</span>
+                                            }
+                                            else
+                                            {
+                                                <span class="sts sts-pend">Pending</span>
+                                            }
+                                        </td>
+                                        <td>
+                                            <a href="@doc.FilePath" target="_blank" class="btn btn-s btn-sm">📥 View</a>
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            }
+        </div>
+
+        <div class="card" style="margin-top:16px">
+            <div class="ct"><span class="ct-dot"></span>Project Status Flow</div>
+            <partial name="~/Views/Shared/_StatusFlow.cshtml" model="(int)Model.CurrentStage" />
+        </div>
+    }
+    else
+    {
+        <div class="card">
+            <div style="text-align:center;padding:40px;color:var(--text3)">Project not found</div>
+        </div>
+    }
+</div>

@@ -25,6 +25,12 @@ public class UnitOfWork : IUnitOfWork
     private IGenericRepository<Commission>? _commissions;
     private IGenericRepository<Notification>? _notifications;
     private IGenericRepository<SolarProject>? _solarProjects;
+    private IGenericRepository<SolarAccount>? _solarAccounts;
+    private IGenericRepository<PMDocument>? _pmDocuments;
+    private IGenericRepository<Wallet>? _wallets;
+    private IGenericRepository<WalletTransaction>? _walletTransactions;
+    private IGenericRepository<Withdrawal>? _withdrawals;
+    private IGenericRepository<ActivityLog>? _activityLogs;
 
     public UnitOfWork(ApplicationDbContext context) => _context = context;
 
@@ -54,6 +60,18 @@ public class UnitOfWork : IUnitOfWork
         _notifications ??= new GenericRepository<Notification>(_context);
     public IGenericRepository<SolarProject> SolarProjects =>
         _solarProjects ??= new GenericRepository<SolarProject>(_context);
+    public IGenericRepository<SolarAccount> SolarAccounts =>
+        _solarAccounts ??= new GenericRepository<SolarAccount>(_context);
+    public IGenericRepository<PMDocument> PMDocuments =>
+        _pmDocuments ??= new GenericRepository<PMDocument>(_context);
+    public IGenericRepository<Wallet> Wallets =>
+        _wallets ??= new GenericRepository<Wallet>(_context);
+    public IGenericRepository<WalletTransaction> WalletTransactions =>
+        _walletTransactions ??= new GenericRepository<WalletTransaction>(_context);
+    public IGenericRepository<Withdrawal> Withdrawals =>
+        _withdrawals ??= new GenericRepository<Withdrawal>(_context);
+    public IGenericRepository<ActivityLog> ActivityLogs =>
+        _activityLogs ??= new GenericRepository<ActivityLog>(_context);
 
     public async Task<int> SaveChangesAsync() =>
         await _context.SaveChangesAsync();

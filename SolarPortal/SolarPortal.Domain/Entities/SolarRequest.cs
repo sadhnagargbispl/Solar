@@ -47,4 +47,5 @@ public class SolarRequest : BaseEntity
     public virtual ICollection<DCRDocument> DCRDocuments { get; set; } = new List<DCRDocument>();
     public virtual ICollection<Notification> Notifications { get; set; } = new List<Notification>();
     public virtual Commission? Commission { get; set; }
+    public virtual SolarAccount? SolarAccount { get; set; }
 }

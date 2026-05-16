@@ -155,6 +155,64 @@ namespace SolarPortal.Infrastructure.Data.Migrations
                     b.ToTable("UserTokens", (string)null);
                 });
 
+            modelBuilder.Entity("SolarPortal.Domain.Entities.ActivityLog", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Action")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Details")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("EntityId")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<string>("EntityName")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<string>("IpAddress")
+                        .IsRequired()
+                        .HasMaxLength(45)
+                        .HasColumnType("nvarchar(45)");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
+                    b.Property<DateTime>("Timestamp")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("UpdatedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("UserId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("ActivityLogs");
+                });
+
             modelBuilder.Entity("SolarPortal.Domain.Entities.ApplicationUser", b =>
                 {
                     b.Property<string>("Id")
@@ -185,6 +243,9 @@ namespace SolarPortal.Infrastructure.Data.Migrations
 
                     b.Property<bool>("EmailConfirmed")
                         .HasColumnType("bit");
+
+                    b.Property<string>("FatherName")
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("FullName")
                         .IsRequired()
@@ -654,6 +715,64 @@ namespace SolarPortal.Infrastructure.Data.Migrations
                     b.ToTable("Notifications");
                 });
 
+            modelBuilder.Entity("SolarPortal.Domain.Entities.PMDocument", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("ContentType")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("DocumentType")
+                        .HasColumnType("int");
+
+                    b.Property<string>("FileName")
+                        .IsRequired()
+                        .HasMaxLength(255)
+                        .HasColumnType("nvarchar(255)");
+
+                    b.Property<string>("FilePath")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<long>("FileSize")
+                        .HasColumnType("bigint");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("Remarks")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("SolarRequestId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("UpdatedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("SolarRequestId");
+
+                    b.ToTable("PMDocuments");
+                });
+
             modelBuilder.Entity("SolarPortal.Domain.Entities.Payment", b =>
                 {
                     b.Property<int>("Id")
@@ -782,6 +901,75 @@ namespace SolarPortal.Infrastructure.Data.Migrations
                     b.HasIndex("SolarRequestId");
 
                     b.ToTable("SiteSurveys");
+                });
+
+            modelBuilder.Entity("SolarPortal.Domain.Entities.SolarAccount", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("AccountNumber")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("CurrentStatus")
+                        .HasColumnType("int");
+
+                    b.Property<decimal>("DepositAmount")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<decimal>("DueAmount")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("IsFrozen")
+                        .HasColumnType("bit");
+
+                    b.Property<decimal>("ProjectAmount")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<int>("SolarRequestId")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("SolarRequestId1")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("UpdatedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("UserId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AccountNumber")
+                        .IsUnique();
+
+                    b.HasIndex("SolarRequestId");
+
+                    b.HasIndex("SolarRequestId1")
+                        .IsUnique()
+                        .HasFilter("[SolarRequestId1] IS NOT NULL");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("SolarAccounts");
                 });
 
             modelBuilder.Entity("SolarPortal.Domain.Entities.SolarProject", b =>
@@ -956,6 +1144,160 @@ namespace SolarPortal.Infrastructure.Data.Migrations
                     b.HasIndex("UserId");
 
                     b.ToTable("SolarRequests");
+                });
+
+            modelBuilder.Entity("SolarPortal.Domain.Entities.Wallet", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
+                    b.Property<decimal>("NetAmount")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<decimal>("PendingBalance")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<decimal>("TDS")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<decimal>("TotalIncome")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("UpdatedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("UserId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<decimal>("WithdrawnAmount")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("Wallets");
+                });
+
+            modelBuilder.Entity("SolarPortal.Domain.Entities.WalletTransaction", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<decimal>("Amount")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Description")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
+                    b.Property<int?>("SolarAccountId")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("SolarAccountId1")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("TransactionDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("TransactionType")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("UpdatedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("WalletId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("SolarAccountId");
+
+                    b.HasIndex("SolarAccountId1");
+
+                    b.HasIndex("WalletId");
+
+                    b.ToTable("WalletTransactions");
+                });
+
+            modelBuilder.Entity("SolarPortal.Domain.Entities.Withdrawal", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<decimal>("Amount")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
+                    b.Property<DateTime?>("ProcessedDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Remarks")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime>("RequestedDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("UpdatedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("WalletId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("WalletId");
+
+                    b.ToTable("Withdrawals");
                 });
 
             modelBuilder.Entity("SolarPortal.Domain.Entities.Worker", b =>
@@ -1207,6 +1549,17 @@ namespace SolarPortal.Infrastructure.Data.Migrations
                     b.Navigation("User");
                 });
 
+            modelBuilder.Entity("SolarPortal.Domain.Entities.PMDocument", b =>
+                {
+                    b.HasOne("SolarPortal.Domain.Entities.SolarRequest", "SolarRequest")
+                        .WithMany()
+                        .HasForeignKey("SolarRequestId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("SolarRequest");
+                });
+
             modelBuilder.Entity("SolarPortal.Domain.Entities.Payment", b =>
                 {
                     b.HasOne("SolarPortal.Domain.Entities.SolarRequest", "SolarRequest")
@@ -1235,6 +1588,29 @@ namespace SolarPortal.Infrastructure.Data.Migrations
                     b.Navigation("SolarRequest");
                 });
 
+            modelBuilder.Entity("SolarPortal.Domain.Entities.SolarAccount", b =>
+                {
+                    b.HasOne("SolarPortal.Domain.Entities.SolarRequest", "SolarRequest")
+                        .WithMany()
+                        .HasForeignKey("SolarRequestId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("SolarPortal.Domain.Entities.SolarRequest", null)
+                        .WithOne("SolarAccount")
+                        .HasForeignKey("SolarPortal.Domain.Entities.SolarAccount", "SolarRequestId1");
+
+                    b.HasOne("SolarPortal.Domain.Entities.ApplicationUser", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("SolarRequest");
+
+                    b.Navigation("User");
+                });
+
             modelBuilder.Entity("SolarPortal.Domain.Entities.SolarRequest", b =>
                 {
                     b.HasOne("SolarPortal.Domain.Entities.SolarProject", "SolarProject")
@@ -1251,6 +1627,50 @@ namespace SolarPortal.Infrastructure.Data.Migrations
                     b.Navigation("SolarProject");
 
                     b.Navigation("User");
+                });
+
+            modelBuilder.Entity("SolarPortal.Domain.Entities.Wallet", b =>
+                {
+                    b.HasOne("SolarPortal.Domain.Entities.ApplicationUser", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("SolarPortal.Domain.Entities.WalletTransaction", b =>
+                {
+                    b.HasOne("SolarPortal.Domain.Entities.SolarAccount", "SolarAccount")
+                        .WithMany()
+                        .HasForeignKey("SolarAccountId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.HasOne("SolarPortal.Domain.Entities.SolarAccount", null)
+                        .WithMany("WalletTransactions")
+                        .HasForeignKey("SolarAccountId1");
+
+                    b.HasOne("SolarPortal.Domain.Entities.Wallet", "Wallet")
+                        .WithMany("Transactions")
+                        .HasForeignKey("WalletId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("SolarAccount");
+
+                    b.Navigation("Wallet");
+                });
+
+            modelBuilder.Entity("SolarPortal.Domain.Entities.Withdrawal", b =>
+                {
+                    b.HasOne("SolarPortal.Domain.Entities.Wallet", "Wallet")
+                        .WithMany("Withdrawals")
+                        .HasForeignKey("WalletId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Wallet");
                 });
 
             modelBuilder.Entity("SolarPortal.Domain.Entities.WorkerAssignment", b =>
@@ -1284,6 +1704,11 @@ namespace SolarPortal.Infrastructure.Data.Migrations
                     b.Navigation("WorkerAssignments");
                 });
 
+            modelBuilder.Entity("SolarPortal.Domain.Entities.SolarAccount", b =>
+                {
+                    b.Navigation("WalletTransactions");
+                });
+
             modelBuilder.Entity("SolarPortal.Domain.Entities.SolarProject", b =>
                 {
                     b.Navigation("Requests");
@@ -1308,6 +1733,15 @@ namespace SolarPortal.Infrastructure.Data.Migrations
                     b.Navigation("Payments");
 
                     b.Navigation("SiteSurveys");
+
+                    b.Navigation("SolarAccount");
+                });
+
+            modelBuilder.Entity("SolarPortal.Domain.Entities.Wallet", b =>
+                {
+                    b.Navigation("Transactions");
+
+                    b.Navigation("Withdrawals");
                 });
 
             modelBuilder.Entity("SolarPortal.Domain.Entities.Worker", b =>

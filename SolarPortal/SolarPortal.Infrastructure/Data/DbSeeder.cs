@@ -1,10 +1,27 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using SolarPortal.Domain.Entities;
 
 namespace SolarPortal.Infrastructure.Data;
 
+/// <summary>
+/// Startup bootstrap for the live DB.
+///
+/// Strategy:
+/// - Try MigrateAsync first. If the live DB doesn't have our Solar workflow
+///   tables yet, EF will create them. m_membermaster / m_usermaster /
+///   m_statedivmaster are excluded from migrations and stay untouched.
+/// - If migration fails (e.g., because of partial schema, permissions,
+///   or any other reason), we DO NOT crash the app. The app continues to
+///   run; login via LiveDbAuthBridge keeps working as long as the AspNet*
+///   tables exist (use SETUP-IdentityTables.sql if you'd rather create
+///   them by hand and disable migrations entirely).
+/// - We ensure Identity roles exist so [Authorize(Roles="Admin")] works.
+/// - We seed ONE installer demo account for the Inc site.
+/// - We do not seed any user/admin accounts — those come from the live DB.
+/// </summary>
 public class DbSeeder
 {
     private readonly IServiceProvider _services;
@@ -14,99 +31,72 @@ public class DbSeeder
     public async Task SeedAsync()
     {
         using var scope = _services.CreateScope();
-        var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
-        var userManager = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
-        var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+        var logger = scope.ServiceProvider.GetRequiredService<ILogger<DbSeeder>>();
 
-        if (db.Database.GetPendingMigrations().Any())
+        // 1. Try to apply pending migrations. Wrapped so a partial/legacy
+        //    schema doesn't crash the host.
+        try
+        {
+            var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
             await db.Database.MigrateAsync();
-
-        // Seed Roles
-        string[] roles = { "Admin", "User" };
-        foreach (var role in roles)
+            logger.LogInformation("Database migration completed (or already up to date).");
+        }
+        catch (Exception ex)
         {
-            if (!await roleManager.RoleExistsAsync(role))
-                await roleManager.CreateAsync(new IdentityRole(role));
+            logger.LogWarning(ex,
+                "Migration step skipped — the app will continue. If login or " +
+                "request creation fails, run SETUP-IdentityTables.sql against " +
+                "the live database manually, then restart.");
         }
 
-        // Seed Admin User
-        const string adminEmail = "admin@solarportal.com";
-        if (await userManager.FindByEmailAsync(adminEmail) == null)
+        // 2. Ensure Identity roles.
+        try
         {
-            var admin = new ApplicationUser
+            var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
+            string[] roles = { "SuperAdmin", "Admin", "User", "Installer" };
+            foreach (var role in roles)
             {
-                UserName = adminEmail,
-                Email = adminEmail,
-                FullName = "System Administrator",
-                MobileNumber = "9999999999",
+                if (!await roleManager.RoleExistsAsync(role))
+                    await roleManager.CreateAsync(new IdentityRole(role));
+            }
+        }
+        catch (Exception ex)
+        {
+            logger.LogWarning(ex, "Role ensure step failed.");
+        }
+
+        // 3. Demo installer (Inc site). User and Admin come from live DB.
+        try
+        {
+            var userManager = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
+            await EnsureUser(userManager, "installer@solarportal.com", "Installer@1234",
+                "Demo Installer", "9800001111", "Installer");
+        }
+        catch (Exception ex)
+        {
+            logger.LogWarning(ex, "Installer demo seed skipped.");
+        }
+    }
+
+    private static async Task EnsureUser(
+        UserManager<ApplicationUser> userManager,
+        string email, string password, string fullName, string mobile, string role)
+    {
+        var user = await userManager.FindByEmailAsync(email);
+        if (user == null)
+        {
+            user = new ApplicationUser
+            {
+                UserName = email,
+                Email = email,
                 EmailConfirmed = true,
+                FullName = fullName,
+                PhoneNumber = mobile,
                 IsActive = true
             };
-
-            var result = await userManager.CreateAsync(admin, "Admin@1234");
+            var result = await userManager.CreateAsync(user, password);
             if (result.Succeeded)
-                await userManager.AddToRoleAsync(admin, "Admin");
-        }
-
-        // Seed Demo User
-        const string userEmail = "user@solarportal.com";
-        if (await userManager.FindByEmailAsync(userEmail) == null)
-        {
-            var user = new ApplicationUser
-            {
-                UserName = userEmail,
-                Email = userEmail,
-                FullName = "Demo User",
-                MobileNumber = "9876543210",
-                City = "Jaipur",
-                State = "Rajasthan",
-                EmailConfirmed = true,
-                IsActive = true
-            };
-
-            var result = await userManager.CreateAsync(user, "User@1234");
-            if (result.Succeeded)
-                await userManager.AddToRoleAsync(user, "User");
-        }
-
-        // Seed Workers
-        if (!db.Workers.Any())
-        {
-            db.Workers.AddRange(
-                new Domain.Entities.Worker { Name = "Rajan Sharma", MobileNumber = "9800001111", Specialization = "Solar Electrician", Type = Domain.Enums.WorkerType.JOB, City = "Jaipur", State = "Rajasthan", IsAvailable = true },
-                new Domain.Entities.Worker { Name = "Mohan Verma", MobileNumber = "9800002222", Specialization = "Installer", Type = Domain.Enums.WorkerType.INC, City = "Jodhpur", State = "Rajasthan", IsAvailable = true },
-                new Domain.Entities.Worker { Name = "Suresh Kumar", MobileNumber = "9800003333", Specialization = "Wiring Expert", Type = Domain.Enums.WorkerType.JOB, City = "Udaipur", State = "Rajasthan", IsAvailable = true }
-            );
-            await db.SaveChangesAsync();
-        }
-
-        // Seed Solar Projects (master)
-        if (!db.SolarProjects.Any())
-        {
-            db.SolarProjects.AddRange(
-                new Domain.Entities.SolarProject {
-                    Name = "Plan A — 1.1 kV Domestic",
-                    SolarTypeKV = 1.1m, ConnectionType = Domain.Enums.ConnectionType.Domestic,
-                    BV = 100, FinalBV = 110,
-                    DiscomWork = 1500, DealClose = 1500, SCZMenue = 3000, SportainTeam = 3000,
-                    TotalAmount = 15900, IsActive = true
-                },
-                new Domain.Entities.SolarProject {
-                    Name = "Plan B — 3 kV Domestic",
-                    SolarTypeKV = 3m, ConnectionType = Domain.Enums.ConnectionType.Domestic,
-                    BV = 100, FinalBV = 175,
-                    DiscomWork = 2500, DealClose = 2500, SCZMenue = 4500, SportainTeam = 4500,
-                    TotalAmount = 19900, IsActive = true
-                },
-                new Domain.Entities.SolarProject {
-                    Name = "Plan C — 5 kV Commercial",
-                    SolarTypeKV = 5m, ConnectionType = Domain.Enums.ConnectionType.Commercial,
-                    BV = 100, FinalBV = 175,
-                    DiscomWork = 5000, DealClose = 5000, SCZMenue = 8000, SportainTeam = 8000,
-                    TotalAmount = 29900, IsActive = true
-                }
-            );
-            await db.SaveChangesAsync();
+                await userManager.AddToRoleAsync(user, role);
         }
     }
 }

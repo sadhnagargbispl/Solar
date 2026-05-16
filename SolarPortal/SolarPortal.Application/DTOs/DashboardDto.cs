@@ -22,6 +22,9 @@ public class UserDashboardDto
     public List<SolarRequestDto> MyProjects { get; set; } = new();
     public SolarRequestDto? LatestProject { get; set; }
     public List<NotificationDto> UnreadNotifications { get; set; } = new();
+    public List<SiteSurveyDto> MySiteSurveys { get; set; } = new();
+    public int PendingSurveys { get; set; }
+    public int CompletedSurveys { get; set; }
 }
 
 public class NotificationDto

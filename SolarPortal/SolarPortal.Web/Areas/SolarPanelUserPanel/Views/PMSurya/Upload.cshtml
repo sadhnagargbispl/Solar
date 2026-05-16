@@ -1,0 +1,176 @@
+@{
+    ViewData["Title"] = "PM Surya Ghar Documents";
+    var req = (SolarPortal.Domain.Entities.SolarRequest)ViewBag.Request;
+    var docs = (IEnumerable<SolarPortal.Application.DTOs.PMDocumentDto>)ViewBag.Documents;
+    // Once admin has moved the request past the PM Surya stage, this page becomes
+    // read-only. The user can still view files, but cannot replace them or re-submit.
+    var isLocked = (int)req.CurrentStage > (int)SolarPortal.Domain.Enums.ProjectStatus.PMSurvey;
+}
+
+<div class="page-header" style="padding:16px">
+    <h2>PM Surya Ghar Documents — @req.RequestNumber</h2>
+    <p class="text-muted">Upload all required documents under the PM Surya Ghar scheme. Once submitted, an admin will verify them.</p>
+</div>
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-lg-7">
+            <div class="card">
+                <div class="card-header bg-primary text-white">Upload Documents</div>
+                <div class="card-body">
+                    @{
+                        var requiredDocs = new[]
+                        {
+                            new { Type = "PMSuryagramDocument", Label = "PM Surya Ghar Application", Icon="📄" },
+                            new { Type = "AadharCard",          Label = "Aadhaar Card", Icon="🪪" },
+                            new { Type = "PANCard",             Label = "PAN Card", Icon="💳" },
+                            new { Type = "LightBill",           Label = "Light Bill (Last 3 Months)", Icon="💡" },
+                            new { Type = "BankPassbook",        Label = "Cancelled Cheque / Passbook", Icon="🏦" },
+                            new { Type = "PropertyDocument",    Label = "Property Document (Farad / पट्टा / Registry)", Icon="🏠" },
+                            new { Type = "GPSPhoto",            Label = "GPS / Location Photo", Icon="📍" }
+                        };
+                    }
+
+                    @foreach (var d in requiredDocs)
+                    {
+                        var uploaded = docs.FirstOrDefault(x => x.DocumentType.ToString() == d.Type);
+                        <div class="pm-doc-row d-flex align-items-center justify-content-between p-2 mb-2 border rounded">
+                            <div>
+                                <span style="font-size:20px">@d.Icon</span>
+                                <strong class="ms-2">@d.Label</strong>
+                                @if (uploaded != null)
+                                {
+                                    <span class="badge bg-@(uploaded.Status == SolarPortal.Domain.Enums.ApprovalStatus.Approved ? "success" : uploaded.Status == SolarPortal.Domain.Enums.ApprovalStatus.Rejected ? "danger" : "warning") ms-2">
+                                        @uploaded.Status
+                                    </span>
+                                }
+                            </div>
+                            <div>
+                                @if (!isLocked)
+                                {
+                                    <input type="file" class="d-none pm-file" id="file-@d.Type" data-type="@d.Type" accept=".pdf,.png,.jpg,.jpeg" />
+                                    <button class="btn btn-sm btn-outline-primary pm-pick" data-target="file-@d.Type">
+                                        @(uploaded != null ? "Replace" : "Upload")
+                                    </button>
+                                }
+                                @if (uploaded != null)
+                                {
+                                    <a href="~/@uploaded.FilePath" target="_blank" class="btn btn-sm btn-link">View</a>
+                                }
+                            </div>
+                        </div>
+                    }
+
+                    <hr />
+                    @if (isLocked)
+                    {
+                        <div class="alert alert-success" style="margin:0">
+                            <span style="font-size:18px">✅</span>
+                            <strong>Approved & Locked.</strong>
+                            Admin has verified all PM Surya Ghar documents. This stage is complete — no further action needed here.
+                        </div>
+                    }
+                    else
+                    {
+                        <button id="btnSubmit" class="btn btn-success w-100" @(docs.Any() ? "" : "disabled")>
+                            Submit for Admin Verification
+                        </button>
+                    }
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-5">
+            <div class="card">
+                <div class="card-header">Status</div>
+                <div class="card-body">
+                    <p>Project: <strong>@req.RequestNumber</strong></p>
+                    <p>Current Stage: <span class="badge bg-info">@req.CurrentStage</span></p>
+                    @{
+                        // PM Surya specific status:
+                        //   - stage past PMSurvey   → admin verified, this step done
+                        //   - has docs, still PMSurvey → awaiting admin review
+                        //   - no docs at all        → user still needs to upload
+                        var anyDocs = docs.Any();
+                        var pmStage = req.CurrentStage;
+                        string pmLabel; string pmBg;
+                        if ((int)pmStage > (int)SolarPortal.Domain.Enums.ProjectStatus.PMSurvey)
+                        {
+                            pmLabel = "Verified by Admin ✓"; pmBg = "success";
+                        }
+                        else if (anyDocs)
+                        {
+                            pmLabel = "Awaiting admin review"; pmBg = "warning";
+                        }
+                        else
+                        {
+                            pmLabel = "Documents not uploaded yet"; pmBg = "secondary";
+                        }
+                    }
+                    <p>PM Surya Status: <span class="badge bg-@pmBg">@pmLabel</span></p>
+                    <hr />
+                    <small class="text-muted">After admin verifies your documents, you'll be able to download the Site Survey form.</small>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+$(function () {
+    const token = $('input[name="__RequestVerificationToken"]').val();
+
+    $('.pm-pick').on('click', function () {
+        $('#' + $(this).data('target')).trigger('click');
+    });
+
+    $('.pm-file').on('change', function () {
+        const file = this.files[0];
+        const docType = $(this).data('type');
+        if (!file) return;
+
+        const fd = new FormData();
+        fd.append('requestId', @req.Id);
+        fd.append('documentType', docType);
+        fd.append('file', file);
+        fd.append('__RequestVerificationToken', token);
+
+        $.ajax({
+            url: '@Url.Action("UploadDocument", "PMSurya")',
+            type: 'POST',
+            data: fd,
+            processData: false,
+            contentType: false,
+            success: function (r) {
+                if (r.success) {
+                    alert(r.message);
+                    location.reload();
+                } else {
+                    alert('Upload failed: ' + r.message);
+                }
+            },
+            error: function () { alert('Upload error'); }
+        });
+    });
+
+    $('#btnSubmit').on('click', function () {
+        const fd = new FormData();
+        fd.append('requestId', @req.Id);
+        fd.append('__RequestVerificationToken', token);
+
+        $.ajax({
+            url: '@Url.Action("Submit", "PMSurya")',
+            type: 'POST',
+            data: fd,
+            processData: false,
+            contentType: false,
+            success: function (r) {
+                alert(r.message);
+                if (r.success) window.location.href = '@Url.Action("Status", "SolarRequest", new { id = req.Id })';
+            }
+        });
+    });
+});
+</script>
+@Html.AntiForgeryToken()
+}

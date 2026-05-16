@@ -1,0 +1,106 @@
+@{
+    ViewData["Title"] = "Site Survey";
+    var req = (SolarPortal.Domain.Entities.SolarRequest)ViewBag.Request;
+    var latest = (SolarPortal.Domain.Entities.SiteSurvey?)ViewBag.LatestSurvey;
+}
+
+<div class="page-header" style="padding:16px">
+    <h2>Site Survey — @req.RequestNumber</h2>
+    <p class="text-muted">Download the form, fill it on site, then upload the filled form along with photos.</p>
+</div>
+
+<div class="container-fluid">
+    <div class="row g-3">
+        <div class="col-md-5">
+            <div class="card h-100">
+                <div class="card-header bg-warning">Step 1 — Download Survey Form</div>
+                <div class="card-body">
+                    <p>The form is pre-filled with your project details. Print it or save it as PDF, fill onsite, take photos of the roof + GPS location, then come back to upload.</p>
+                    <a class="btn btn-warning" asp-action="DownloadForm" asp-route-id="@req.Id">
+                        ⬇ Download Survey Form
+                    </a>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-7">
+            <div class="card h-100">
+                <div class="card-header bg-success text-white">Step 2 — Upload Filled Form & Photos</div>
+                <div class="card-body">
+                    @{
+                        // Lock the upload form once the latest submission has been approved.
+                        // User can still see the audit row above; no replace / re-submit allowed.
+                        var isSurveyLocked = latest != null && latest.IsCompleted;
+                    }
+                    @if (latest != null)
+                    {
+                        <div class="alert @(isSurveyLocked ? "alert-success" : "alert-info")">
+                            Last submission on @latest.CreatedAt.ToLocalTime().ToString("dd MMM yyyy HH:mm")
+                            — @(latest.IsCompleted ? "✅ Approved by admin" : "⏳ Awaiting admin approval")
+                        </div>
+                    }
+
+                    @if (isSurveyLocked)
+                    {
+                        <div class="alert alert-success" style="margin-top:14px">
+                            <span style="font-size:18px">✅</span>
+                            <strong>Survey Approved & Locked.</strong>
+                            Your site survey has been verified by admin. This stage is complete — no further upload is needed.
+                            @if (!string.IsNullOrEmpty(latest!.SurveyPhotoPath))
+                            {
+                                <div style="margin-top:8px">
+                                    <a href="~/@latest.SurveyPhotoPath" target="_blank" class="btn btn-sm btn-outline-success">📄 View Submitted Form</a>
+                                </div>
+                            }
+                        </div>
+                    }
+                    else
+                    {
+                        <form id="surveyForm" enctype="multipart/form-data">
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" name="requestId" value="@req.Id" />
+
+                            <div class="mb-2">
+                                <label class="form-label">Filled Form (PDF / Image) *</label>
+                                <input type="file" class="form-control" name="filledForm" accept=".pdf,.png,.jpg,.jpeg" required />
+                            </div>
+                            <div class="mb-2">
+                                <label class="form-label">Roof Photo</label>
+                                <input type="file" class="form-control" name="roofPhoto" accept="image/*" />
+                            </div>
+                            <div class="mb-2">
+                                <label class="form-label">GPS Photo</label>
+                                <input type="file" class="form-control" name="gpsPhoto" accept="image/*" />
+                            </div>
+                            <div class="mb-2">
+                                <label class="form-label">Notes</label>
+                                <textarea class="form-control" name="surveyNotes" rows="3"></textarea>
+                            </div>
+                            <button type="submit" class="btn btn-success">Submit Survey</button>
+                        </form>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+$('#surveyForm').on('submit', function (e) {
+    e.preventDefault();
+    const fd = new FormData(this);
+    $.ajax({
+        url: '@Url.Action("Upload", "SiteSurvey")',
+        type: 'POST',
+        data: fd,
+        processData: false,
+        contentType: false,
+        success: function (r) {
+            alert(r.message);
+            if (r.success) window.location.href = '@Url.Action("Status", "SolarRequest", new { id = req.Id })';
+        },
+        error: function () { alert('Upload error'); }
+    });
+});
+</script>
+}

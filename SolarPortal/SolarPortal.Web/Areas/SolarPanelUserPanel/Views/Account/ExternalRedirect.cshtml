@@ -1,0 +1,50 @@
+@{
+    ViewData["Title"] = "Redirecting to Main Portal";
+    var url = ViewBag.RedirectUrl as string ?? "";
+    var msg = ViewBag.RedirectMessage as string ?? "Redirecting…";
+}
+
+<div class="page active">
+    <div class="ph">
+        <div class="ph-bc">👤 User / <span>Solar A/c</span></div>
+        <div class="ph-title">Redirecting to Main Portal</div>
+    </div>
+
+    <div class="card" style="text-align:center;padding:40px 24px;max-width:560px;margin:32px auto">
+        <div style="font-size:48px;margin-bottom:14px">🔗</div>
+        <h3 style="margin-bottom:10px">Opening your Solar Summary</h3>
+        <p class="text-muted" style="margin-bottom:20px;font-size:14px">@msg</p>
+
+        <div class="alert alert-i" style="text-align:left">
+            <span class="ai">ℹ</span>
+            <div>
+                Auto-redirect in <strong id="cdn">3</strong> seconds.
+                If nothing happens, <a id="manualLink" href="@url" target="_self" style="color:var(--accent);font-weight:600;text-decoration:underline">click here</a>.
+            </div>
+        </div>
+
+        <div style="margin-top:18px;display:flex;gap:8px;justify-content:center">
+            <a class="btn btn-p" href="@url" target="_self">Go to Main Portal Now</a>
+            <a class="btn btn-s" asp-area="SolarPanelUserPanel" asp-controller="Dashboard" asp-action="Index">Stay Here</a>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        (function () {
+            var url = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(url));
+            if (!url) return;
+            var s = 3;
+            var el = document.getElementById('cdn');
+            var t = setInterval(function () {
+                s--;
+                if (el) el.textContent = s;
+                if (s <= 0) {
+                    clearInterval(t);
+                    window.location.href = url;
+                }
+            }, 1000);
+        })();
+    </script>
+}

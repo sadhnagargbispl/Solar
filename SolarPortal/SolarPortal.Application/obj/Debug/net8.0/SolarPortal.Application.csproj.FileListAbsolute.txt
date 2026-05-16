@@ -1,43 +1,15 @@
-E:\Sadhna Garg\GithubCore\SolarPortal\SolarPortal.Application\obj\Debug\net8.0\SolarPortal.Application.csproj.AssemblyReference.cache
-E:\Sadhna Garg\GithubCore\SolarPortal\SolarPortal.Application\obj\Debug\net8.0\SolarPortal.Application.GeneratedMSBuildEditorConfig.editorconfig
-E:\Sadhna Garg\GithubCore\SolarPortal\SolarPortal.Application\obj\Debug\net8.0\SolarPortal.Application.AssemblyInfoInputs.cache
-E:\Sadhna Garg\GithubCore\SolarPortal\SolarPortal.Application\obj\Debug\net8.0\SolarPortal.Application.AssemblyInfo.cs
-E:\Sadhna Garg\GithubCore\SolarPortal\SolarPortal.Application\obj\Debug\net8.0\SolarPortal.Application.csproj.CoreCompileInputs.cache
-E:\Sadhna Garg\GithubCore\Solar\SolarPortal\SolarPortal.Application\obj\Debug\net8.0\SolarPortal.Application.csproj.AssemblyReference.cache
-E:\Sadhna Garg\GithubCore\Solar\SolarPortal\SolarPortal.Application\obj\Debug\net8.0\SolarPortal.Application.GeneratedMSBuildEditorConfig.editorconfig
-E:\Sadhna Garg\GithubCore\Solar\SolarPortal\SolarPortal.Application\obj\Debug\net8.0\SolarPortal.Application.AssemblyInfoInputs.cache
-E:\Sadhna Garg\GithubCore\Solar\SolarPortal\SolarPortal.Application\obj\Debug\net8.0\SolarPortal.Application.AssemblyInfo.cs
-E:\Sadhna Garg\GithubCore\Solar\SolarPortal\SolarPortal.Application\obj\Debug\net8.0\SolarPortal.Application.csproj.CoreCompileInputs.cache
-E:\Sadhna Garg\GithubCore\Solar\SolarPortal\SolarPortal.Application\obj\Debug\net8.0\SolarPortal.Application.sourcelink.json
-\\localhost\Dimpal\Github\Solar\SolarPortal\SolarPortal.Application\bin\Debug\net8.0\SolarPortal.Application.deps.json
-\\localhost\Dimpal\Github\Solar\SolarPortal\SolarPortal.Application\bin\Debug\net8.0\SolarPortal.Application.dll
-\\localhost\Dimpal\Github\Solar\SolarPortal\SolarPortal.Application\bin\Debug\net8.0\SolarPortal.Application.pdb
-\\localhost\Dimpal\Github\Solar\SolarPortal\SolarPortal.Application\bin\Debug\net8.0\SolarPortal.Domain.dll
-\\localhost\Dimpal\Github\Solar\SolarPortal\SolarPortal.Application\bin\Debug\net8.0\SolarPortal.Domain.pdb
-\\localhost\Dimpal\Github\Solar\SolarPortal\SolarPortal.Application\obj\Debug\net8.0\SolarPortal.Application.csproj.AssemblyReference.cache
-\\localhost\Dimpal\Github\Solar\SolarPortal\SolarPortal.Application\obj\Debug\net8.0\SolarPortal.Application.GeneratedMSBuildEditorConfig.editorconfig
-\\localhost\Dimpal\Github\Solar\SolarPortal\SolarPortal.Application\obj\Debug\net8.0\SolarPortal.Application.AssemblyInfoInputs.cache
-\\localhost\Dimpal\Github\Solar\SolarPortal\SolarPortal.Application\obj\Debug\net8.0\SolarPortal.Application.AssemblyInfo.cs
-\\localhost\Dimpal\Github\Solar\SolarPortal\SolarPortal.Application\obj\Debug\net8.0\SolarPortal.Application.csproj.CoreCompileInputs.cache
-\\localhost\Dimpal\Github\Solar\SolarPortal\SolarPortal.Application\obj\Debug\net8.0\SolarPortal.Application.sourcelink.json
-\\localhost\Dimpal\Github\Solar\SolarPortal\SolarPortal.Application\obj\Debug\net8.0\SolarPor.3DFCCB24.Up2Date
-\\localhost\Dimpal\Github\Solar\SolarPortal\SolarPortal.Application\obj\Debug\net8.0\SolarPortal.Application.dll
-\\localhost\Dimpal\Github\Solar\SolarPortal\SolarPortal.Application\obj\Debug\net8.0\refint\SolarPortal.Application.dll
-\\localhost\Dimpal\Github\Solar\SolarPortal\SolarPortal.Application\obj\Debug\net8.0\SolarPortal.Application.pdb
-\\localhost\Dimpal\Github\Solar\SolarPortal\SolarPortal.Application\obj\Debug\net8.0\ref\SolarPortal.Application.dll
-\\localhost\Sadhna\GitHub\Solar\SolarPortal\SolarPortal.Application\bin\Debug\net8.0\SolarPortal.Application.deps.json
-\\localhost\Sadhna\GitHub\Solar\SolarPortal\SolarPortal.Application\bin\Debug\net8.0\SolarPortal.Application.dll
-\\localhost\Sadhna\GitHub\Solar\SolarPortal\SolarPortal.Application\bin\Debug\net8.0\SolarPortal.Application.pdb
-\\localhost\Sadhna\GitHub\Solar\SolarPortal\SolarPortal.Application\bin\Debug\net8.0\SolarPortal.Domain.dll
-\\localhost\Sadhna\GitHub\Solar\SolarPortal\SolarPortal.Application\bin\Debug\net8.0\SolarPortal.Domain.pdb
-\\localhost\Sadhna\GitHub\Solar\SolarPortal\SolarPortal.Application\obj\Debug\net8.0\SolarPortal.Application.csproj.AssemblyReference.cache
-\\localhost\Sadhna\GitHub\Solar\SolarPortal\SolarPortal.Application\obj\Debug\net8.0\SolarPortal.Application.GeneratedMSBuildEditorConfig.editorconfig
-\\localhost\Sadhna\GitHub\Solar\SolarPortal\SolarPortal.Application\obj\Debug\net8.0\SolarPortal.Application.AssemblyInfoInputs.cache
-\\localhost\Sadhna\GitHub\Solar\SolarPortal\SolarPortal.Application\obj\Debug\net8.0\SolarPortal.Application.AssemblyInfo.cs
-\\localhost\Sadhna\GitHub\Solar\SolarPortal\SolarPortal.Application\obj\Debug\net8.0\SolarPortal.Application.csproj.CoreCompileInputs.cache
-\\localhost\Sadhna\GitHub\Solar\SolarPortal\SolarPortal.Application\obj\Debug\net8.0\SolarPortal.Application.sourcelink.json
-\\localhost\Sadhna\GitHub\Solar\SolarPortal\SolarPortal.Application\obj\Debug\net8.0\SolarPor.3DFCCB24.Up2Date
-\\localhost\Sadhna\GitHub\Solar\SolarPortal\SolarPortal.Application\obj\Debug\net8.0\SolarPortal.Application.dll
-\\localhost\Sadhna\GitHub\Solar\SolarPortal\SolarPortal.Application\obj\Debug\net8.0\refint\SolarPortal.Application.dll
-\\localhost\Sadhna\GitHub\Solar\SolarPortal\SolarPortal.Application\obj\Debug\net8.0\SolarPortal.Application.pdb
-\\localhost\Sadhna\GitHub\Solar\SolarPortal\SolarPortal.Application\obj\Debug\net8.0\ref\SolarPortal.Application.dll
+\\localhost\Sadhna\New folder (7)\files\SolarPortal-LiveDb-UserSite\SolarPortal\SolarPortal.Application\bin\Debug\net8.0\SolarPortal.Application.deps.json
+\\localhost\Sadhna\New folder (7)\files\SolarPortal-LiveDb-UserSite\SolarPortal\SolarPortal.Application\bin\Debug\net8.0\SolarPortal.Application.dll
+\\localhost\Sadhna\New folder (7)\files\SolarPortal-LiveDb-UserSite\SolarPortal\SolarPortal.Application\bin\Debug\net8.0\SolarPortal.Application.pdb
+\\localhost\Sadhna\New folder (7)\files\SolarPortal-LiveDb-UserSite\SolarPortal\SolarPortal.Application\bin\Debug\net8.0\SolarPortal.Domain.dll
+\\localhost\Sadhna\New folder (7)\files\SolarPortal-LiveDb-UserSite\SolarPortal\SolarPortal.Application\bin\Debug\net8.0\SolarPortal.Domain.pdb
+\\localhost\Sadhna\New folder (7)\files\SolarPortal-LiveDb-UserSite\SolarPortal\SolarPortal.Application\obj\Debug\net8.0\SolarPortal.Application.csproj.AssemblyReference.cache
+\\localhost\Sadhna\New folder (7)\files\SolarPortal-LiveDb-UserSite\SolarPortal\SolarPortal.Application\obj\Debug\net8.0\SolarPortal.Application.GeneratedMSBuildEditorConfig.editorconfig
+\\localhost\Sadhna\New folder (7)\files\SolarPortal-LiveDb-UserSite\SolarPortal\SolarPortal.Application\obj\Debug\net8.0\SolarPortal.Application.AssemblyInfoInputs.cache
+\\localhost\Sadhna\New folder (7)\files\SolarPortal-LiveDb-UserSite\SolarPortal\SolarPortal.Application\obj\Debug\net8.0\SolarPortal.Application.AssemblyInfo.cs
+\\localhost\Sadhna\New folder (7)\files\SolarPortal-LiveDb-UserSite\SolarPortal\SolarPortal.Application\obj\Debug\net8.0\SolarPortal.Application.csproj.CoreCompileInputs.cache
+\\localhost\Sadhna\New folder (7)\files\SolarPortal-LiveDb-UserSite\SolarPortal\SolarPortal.Application\obj\Debug\net8.0\SolarPor.3DFCCB24.Up2Date
+\\localhost\Sadhna\New folder (7)\files\SolarPortal-LiveDb-UserSite\SolarPortal\SolarPortal.Application\obj\Debug\net8.0\SolarPortal.Application.dll
+\\localhost\Sadhna\New folder (7)\files\SolarPortal-LiveDb-UserSite\SolarPortal\SolarPortal.Application\obj\Debug\net8.0\refint\SolarPortal.Application.dll
+\\localhost\Sadhna\New folder (7)\files\SolarPortal-LiveDb-UserSite\SolarPortal\SolarPortal.Application\obj\Debug\net8.0\SolarPortal.Application.pdb
+\\localhost\Sadhna\New folder (7)\files\SolarPortal-LiveDb-UserSite\SolarPortal\SolarPortal.Application\obj\Debug\net8.0\ref\SolarPortal.Application.dll

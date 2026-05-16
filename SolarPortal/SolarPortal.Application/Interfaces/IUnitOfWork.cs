@@ -17,6 +17,12 @@ public interface IUnitOfWork : IDisposable
     IGenericRepository<Domain.Entities.Commission> Commissions { get; }
     IGenericRepository<Domain.Entities.Notification> Notifications { get; }
     IGenericRepository<Domain.Entities.SolarProject> SolarProjects { get; }
+    IGenericRepository<Domain.Entities.SolarAccount> SolarAccounts { get; }
+    IGenericRepository<Domain.Entities.PMDocument> PMDocuments { get; }
+    IGenericRepository<Domain.Entities.Wallet> Wallets { get; }
+    IGenericRepository<Domain.Entities.WalletTransaction> WalletTransactions { get; }
+    IGenericRepository<Domain.Entities.Withdrawal> Withdrawals { get; }
+    IGenericRepository<Domain.Entities.ActivityLog> ActivityLogs { get; }
     Task<int> SaveChangesAsync();
     Task BeginTransactionAsync();
     Task CommitTransactionAsync();

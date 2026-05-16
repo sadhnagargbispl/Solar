@@ -1,0 +1,212 @@
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Mvc;
+using SolarPortal.Application.DTOs;
+using SolarPortal.Application.Interfaces;
+using SolarPortal.Application.Interfaces.Services;
+using SolarPortal.Domain.Entities;
+using SolarPortal.Domain.Enums;
+
+namespace SolarPortal.Web.Areas.SolarPanelUserPanel.Controllers;
+
+/// <summary>
+/// User-side site survey flow.
+/// 1. Download blank survey form (PDF/printable HTML)
+/// 2. Fill it offline (or onsite)
+/// 3. Upload filled form + roof photo + GPS photo
+/// </summary>
+[Area("SolarPanelUserPanel")]
+[Authorize(Roles = "User")]
+public class SiteSurveyController : Controller
+{
+    private readonly IUnitOfWork _uow;
+    private readonly IFileUploadService _fileUpload;
+    private readonly INotificationService _notifications;
+    private readonly ISolarRequestService _requestService;
+    private readonly UserManager<ApplicationUser> _userManager;
+
+    public SiteSurveyController(
+        IUnitOfWork uow,
+        IFileUploadService fileUpload,
+        INotificationService notifications,
+        ISolarRequestService requestService,
+        UserManager<ApplicationUser> userManager)
+    {
+        _uow = uow;
+        _fileUpload = fileUpload;
+        _notifications = notifications;
+        _requestService = requestService;
+        _userManager = userManager;
+    }
+
+    // GET: /User/SiteSurvey            → picks user's latest project
+    // GET: /User/SiteSurvey/Index/5    → uses request id 5
+    public async Task<IActionResult> Index(int? id)
+    {
+        var userId = _userManager.GetUserId(User)!;
+
+        if (id == null || id.Value == 0)
+        {
+            var mine = await _uow.SolarRequests.FindAsync(r => r.UserId == userId);
+            var latest = mine.OrderByDescending(r => r.CreatedAt).FirstOrDefault();
+            if (latest == null)
+            {
+                TempData["Error"] = "You don't have any active solar request yet. Please create one first.";
+                return RedirectToAction("Create", "SolarRequest");
+            }
+            id = latest.Id;
+        }
+
+        var req = await _uow.SolarRequests.GetByIdAsync(id.Value);
+        if (req == null || req.UserId != userId) return NotFound();
+
+        if (req.CurrentStage < ProjectStatus.SiteSurvey)
+        {
+            TempData["Error"] = "Site survey unlocks after PM Surya Ghar is approved by admin.";
+            return RedirectToAction("Status", "SolarRequest", new { id });
+        }
+
+        var surveys = await _uow.SiteSurveys.FindAsync(s => s.SolarRequestId == req.Id);
+        ViewBag.Request = req;
+        ViewBag.LatestSurvey = surveys.OrderByDescending(s => s.CreatedAt).FirstOrDefault();
+        return View();
+    }
+
+    // GET: /User/SiteSurvey/DownloadForm/5  — generates a printable HTML form pre-filled with the user's info
+    public async Task<IActionResult> DownloadForm(int id)
+    {
+        var userId = _userManager.GetUserId(User)!;
+        var req = await _uow.SolarRequests.GetByIdAsync(id);
+        if (req == null || req.UserId != userId) return NotFound();
+
+        var html = BuildSurveyFormHtml(req);
+        var bytes = System.Text.Encoding.UTF8.GetBytes(html);
+        var fileName = $"SiteSurveyForm-{req.RequestNumber}.html";
+        return File(bytes, "text/html", fileName);
+    }
+
+    // POST: /User/SiteSurvey/Upload (AJAX)
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> Upload(
+        int requestId,
+        string? surveyNotes,
+        IFormFile? filledForm,
+        IFormFile? roofPhoto,
+        IFormFile? gpsPhoto)
+    {
+        var userId = _userManager.GetUserId(User)!;
+        var req = await _uow.SolarRequests.GetByIdAsync(requestId);
+        if (req == null || req.UserId != userId)
+            return Json(new { success = false, message = "Request not found" });
+
+        if (filledForm == null && roofPhoto == null && gpsPhoto == null)
+            return Json(new { success = false, message = "Please attach at least the filled form." });
+
+        string? formPath = null, roofPath = null, gpsPath = null;
+
+        if (filledForm != null)
+        {
+            var (ok, path, _) = await _fileUpload.UploadAsync(filledForm, $"sitesurvey/{requestId}");
+            if (ok) formPath = path;
+        }
+        if (roofPhoto != null)
+        {
+            var (ok, path, _) = await _fileUpload.UploadAsync(roofPhoto, $"sitesurvey/{requestId}/roof");
+            if (ok) roofPath = path;
+        }
+        if (gpsPhoto != null)
+        {
+            var (ok, path, _) = await _fileUpload.UploadAsync(gpsPhoto, $"sitesurvey/{requestId}/gps");
+            if (ok) gpsPath = path;
+        }
+
+        // Combine photo paths into SurveyPhotoPath (semicolon separated) and notes
+        var combinedPhotoPath = string.Join(";",
+            new[] { formPath, roofPath, gpsPath }.Where(p => !string.IsNullOrWhiteSpace(p))!);
+
+        var survey = new SiteSurvey
+        {
+            SolarRequestId = requestId,
+            AssignedToUserId = userId,
+            SurveyDate = DateTime.UtcNow,
+            SurveyNotes = surveyNotes,
+            SurveyPhotoPath = combinedPhotoPath,
+            IsCompleted = false // admin must approve
+        };
+        await _uow.SiteSurveys.AddAsync(survey);
+        await _uow.SaveChangesAsync();
+
+        await _notifications.CreateAsync(new CreateNotificationDto
+        {
+            UserId = userId,
+            SolarRequestId = requestId,
+            Title = "Site Survey submitted",
+            Message = "Your filled site survey has been uploaded. Admin will verify shortly.",
+            NotificationType = "SiteSurvey"
+        });
+
+        return Json(new { success = true, message = "Survey submitted. Awaiting admin approval." });
+    }
+
+    private static string BuildSurveyFormHtml(SolarRequest req)
+    {
+        // Printable, fillable HTML survey form. User prints/fills/re-uploads.
+        var sb = new System.Text.StringBuilder();
+        sb.Append("""
+<!doctype html><html><head><meta charset='utf-8'/><title>Site Survey Form</title>
+<style>
+  body { font-family: Arial, sans-serif; max-width: 800px; margin: 24px auto; color: #222; }
+  h1 { text-align: center; border-bottom: 2px solid #f59e0b; padding-bottom: 8px; }
+  h3 { background: #fef3c7; padding: 6px 10px; margin-top: 24px; }
+  table { width: 100%; border-collapse: collapse; margin: 8px 0; }
+  td, th { border: 1px solid #999; padding: 6px 10px; vertical-align: top; }
+  .field { height: 28px; }
+  .sig { height: 80px; }
+  .footer { margin-top: 24px; font-size: 12px; color: #666; text-align: center; }
+  @media print { .noprint { display: none; } }
+</style></head><body>
+<button class='noprint' onclick='window.print()' style='padding:8px 16px;background:#f59e0b;color:white;border:0;border-radius:6px;cursor:pointer'>Print / Save as PDF</button>
+""");
+        sb.Append($"<h1>Site Survey Form — {req.RequestNumber}</h1>");
+        sb.Append("<h3>Applicant Information</h3><table>");
+        sb.Append($"<tr><th width='30%'>Applicant Name</th><td>{req.ApplicantName}</td></tr>");
+        sb.Append($"<tr><th>Mobile</th><td>{req.MobileNumber}</td></tr>");
+        sb.Append($"<tr><th>Email</th><td>{req.Email}</td></tr>");
+        sb.Append($"<tr><th>Address</th><td>{req.Address}</td></tr>");
+        sb.Append($"<tr><th>City / State / PIN</th><td>{req.City} / {req.State} / {req.PinCode}</td></tr>");
+        sb.Append($"<tr><th>Plan</th><td>{req.SelectedPlan} ({req.KVCapacity} kV, {req.ConnectionType})</td></tr>");
+        sb.Append("</table>");
+
+        sb.Append("<h3>Site Details (Fill on site)</h3><table>");
+        sb.Append("<tr><th width='40%'>Roof Type (RCC / Tin / Other)</th><td class='field'></td></tr>");
+        sb.Append("<tr><th>Roof Area Available (sq ft)</th><td class='field'></td></tr>");
+        sb.Append("<tr><th>Roof Orientation (N / S / E / W)</th><td class='field'></td></tr>");
+        sb.Append("<tr><th>Roof Tilt / Slope</th><td class='field'></td></tr>");
+        sb.Append("<tr><th>Shadow / Obstruction Notes</th><td class='field'></td></tr>");
+        sb.Append("<tr><th>Distance Roof → Meter (mtr)</th><td class='field'></td></tr>");
+        sb.Append("<tr><th>Existing Sanctioned Load (kW)</th><td class='field'></td></tr>");
+        sb.Append("<tr><th>Phase (Single / Three)</th><td class='field'></td></tr>");
+        sb.Append("<tr><th>Earthing Available</th><td class='field'></td></tr>");
+        sb.Append("</table>");
+
+        sb.Append("<h3>GPS / Coordinates</h3><table>");
+        sb.Append("<tr><th width='40%'>Latitude</th><td class='field'></td></tr>");
+        sb.Append("<tr><th>Longitude</th><td class='field'></td></tr>");
+        sb.Append("<tr><th>Plus Code</th><td class='field'></td></tr>");
+        sb.Append("</table>");
+
+        sb.Append("<h3>Additional Notes</h3>");
+        sb.Append("<div style='border:1px solid #999; min-height: 120px; padding: 8px'></div>");
+
+        sb.Append("<h3>Sign-off</h3><table>");
+        sb.Append("<tr><th width='40%'>Applicant Signature</th><td class='sig'></td></tr>");
+        sb.Append("<tr><th>Surveyor Signature</th><td class='sig'></td></tr>");
+        sb.Append("<tr><th>Date</th><td class='field'></td></tr>");
+        sb.Append("</table>");
+
+        sb.Append("<div class='footer'>Generated by Solar Portal — fill, sign, photograph or scan, then re-upload.</div>");
+        sb.Append("</body></html>");
+        return sb.ToString();
+    }
+}

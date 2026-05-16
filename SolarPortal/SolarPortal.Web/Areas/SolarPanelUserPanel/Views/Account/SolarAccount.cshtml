@@ -1,0 +1,180 @@
+@{
+    ViewData["Title"] = "Solar A/c";
+    var projects = (IEnumerable<SolarPortal.Application.DTOs.SolarRequestDto>)ViewBag.Projects;
+    var payments = (IEnumerable<SolarPortal.Application.DTOs.PaymentDto>)ViewBag.Payments;
+    var totalProjectAmount = (decimal)ViewBag.TotalProjectAmount;
+    var totalPaid = (decimal)ViewBag.TotalPaid;
+    var totalDue = (decimal)ViewBag.TotalDue;
+    // Pending payment = submitted but not yet verified by admin
+    var totalPending = payments.Where(p => !p.IsVerified).Sum(p => p.Amount);
+}
+
+<div class="page active">
+    <div class="ph">
+        <div class="ph-bc">👤 User / <span>Solar A/c</span></div>
+        <div class="ph-title">💰 Solar Account</div>
+        <div class="ph-sub">Your projects, payments and balance summary</div>
+    </div>
+
+    <div class="g4" style="margin-bottom:18px">
+        <div class="sc">
+            <div class="sc-label">Pending Amount</div>
+            <div class="sc-val" style="color:#f59e0b">₹@totalPending.ToString("N0")</div>
+            <div class="sc-sub">@payments.Count(p => !p.IsVerified) awaiting admin approval</div>
+        </div>
+        <div class="sc">
+            <div class="sc-label">Project Amount</div>
+            <div class="sc-val blue">₹@totalProjectAmount.ToString("N0")</div>
+            <div class="sc-sub">@projects.Count() request(s) total</div>
+        </div>
+        <div class="sc">
+            <div class="sc-label">Total Paid</div>
+            <div class="sc-val green">₹@totalPaid.ToString("N0")</div>
+            <div class="sc-sub">Verified payments</div>
+        </div>
+        <div class="sc">
+            <div class="sc-label">Due Amount</div>
+            <div class="sc-val red">₹@totalDue.ToString("N0")</div>
+            <div class="sc-sub">Balance remaining</div>
+        </div>
+    </div>
+
+    <div class="g2">
+        <div class="card">
+            <div class="ct"><span class="ct-dot"></span>My Projects</div>
+            @if (projects.Any())
+            {
+                <div class="tbl-wrap">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Request</th>
+                                <th>Type</th>
+                                <th>Amount</th>
+                                <th>Stage</th>
+                                <th>Quick Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var p in projects)
+                            {
+                                <tr>
+                                    <td class="td-b">
+                                        <a asp-area="SolarPanelUserPanel" asp-controller="SolarRequest" asp-action="Details"
+                                           asp-route-id="@p.Id" style="color:var(--accent)">@p.RequestNumber</a>
+                                    </td>
+                                    <td>@p.ConnectionType</td>
+                                    <td style="text-align:right;color:var(--accent)">₹@p.RequestedAmount.ToString("N0")</td>
+                                    <td>@p.CurrentStage.ToString().Replace("_", " ")</td>
+                                    <td style="white-space:nowrap">
+                                        <a class="btn btn-sm btn-s" asp-area="SolarPanelUserPanel" asp-controller="SolarRequest"
+                                           asp-action="Payment" asp-route-id="@p.Id" title="Add a payment / clear due">💰 Payment</a>
+                                        @if (p.CurrentStage == SolarPortal.Domain.Enums.ProjectStatus.PMSurvey)
+                                        {
+                                            <a class="btn btn-sm btn-p" asp-area="SolarPanelUserPanel" asp-controller="PMSurya"
+                                               asp-action="Upload" asp-route-id="@p.Id" title="Upload PM Surya Ghar documents">📋 PM Surya</a>
+                                        }
+                                        @if (p.CurrentStage == SolarPortal.Domain.Enums.ProjectStatus.SiteSurvey)
+                                        {
+                                            <a class="btn btn-sm btn-p" asp-area="SolarPanelUserPanel" asp-controller="SiteSurvey"
+                                               asp-action="Index" asp-route-id="@p.Id" title="Site survey form">📐 Survey</a>
+                                        }
+                                        @if (p.CurrentStage == SolarPortal.Domain.Enums.ProjectStatus.DCRUpdate
+                                             && p.ConnectionType == SolarPortal.Domain.Enums.ConnectionType.Domestic)
+                                        {
+                                            <a class="btn btn-sm btn-p" asp-area="SolarPanelUserPanel" asp-controller="DCR"
+                                               asp-action="Upload" asp-route-id="@p.Id" title="Upload DCR document">📄 DCR</a>
+                                        }
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+            else
+            {
+                <div style="text-align:center;padding:30px;color:var(--text3)">No projects yet.</div>
+            }
+        </div>
+
+        <div class="card">
+            <div class="ct"><span class="ct-dot"></span>Payment History</div>
+            @{
+                var pendingPayments  = payments.Where(p => !p.IsVerified).OrderByDescending(p => p.PaymentDate).ToList();
+                var verifiedPayments = payments.Where(p => p.IsVerified).OrderByDescending(p => p.PaymentDate).ToList();
+            }
+
+            @* --- Pending block (shown at top so user sees what's still awaiting admin) --- *@
+            @if (pendingPayments.Any())
+            {
+                <div style="font-size:12.5px;font-weight:600;color:#92400e;margin:6px 0 8px;letter-spacing:.05em;text-transform:uppercase">
+                    ⏳ Pending Admin Approval (@pendingPayments.Count)
+                </div>
+                <div class="tbl-wrap" style="margin-bottom:14px">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Receipt</th>
+                                <th>UTR</th>
+                                <th style="text-align:right">Amount</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var pay in pendingPayments)
+                            {
+                                <tr style="background:#fffbeb">
+                                    <td>@pay.PaymentDate.ToString("dd/MM/yyyy")</td>
+                                    <td class="td-b">@(pay.ReceiptNumber ?? "—")</td>
+                                    <td><code style="font-size:11.5px">@pay.UTRNumber</code></td>
+                                    <td style="text-align:right;color:#f59e0b;font-weight:600">₹@pay.Amount.ToString("N0")</td>
+                                    <td><span class="sts sts-pend">⏳ Pending</span></td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+
+            @* --- Verified block (the real approved history) --- *@
+            @if (verifiedPayments.Any())
+            {
+                <div style="font-size:12.5px;font-weight:600;color:#15803d;margin:6px 0 8px;letter-spacing:.05em;text-transform:uppercase">
+                    ✅ Verified Payments (@verifiedPayments.Count)
+                </div>
+                <div class="tbl-wrap">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Receipt</th>
+                                <th>UTR</th>
+                                <th style="text-align:right">Amount</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var pay in verifiedPayments)
+                            {
+                                <tr>
+                                    <td>@pay.PaymentDate.ToString("dd/MM/yyyy")</td>
+                                    <td class="td-b">@(pay.ReceiptNumber ?? "—")</td>
+                                    <td><code style="font-size:11.5px">@pay.UTRNumber</code></td>
+                                    <td style="text-align:right;color:var(--green);font-weight:600">₹@pay.Amount.ToString("N0")</td>
+                                    <td><span class="sts sts-act">✓ Verified</span></td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+
+            @if (!pendingPayments.Any() && !verifiedPayments.Any())
+            {
+                <div style="text-align:center;padding:30px;color:var(--text3)">No payments yet.</div>
+            }
+        </div>
+    </div>
+</div>

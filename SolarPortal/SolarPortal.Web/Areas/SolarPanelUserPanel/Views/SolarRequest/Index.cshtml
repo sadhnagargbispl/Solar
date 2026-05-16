@@ -1,0 +1,148 @@
+@model IEnumerable<SolarPortal.Application.DTOs.SolarRequestDto>
+@{
+    ViewData["Title"] = "My Projects";
+
+    string StageStsClass(Domain.Enums.ProjectStatus s) => s switch
+    {
+        Domain.Enums.ProjectStatus.Completed => "sts-act",
+        Domain.Enums.ProjectStatus.MeterDispatch => "sts-disp",
+        Domain.Enums.ProjectStatus.Installation => "sts-inst",
+        _ => "sts-pend"
+    };
+
+    string ApprovalStsClass(Domain.Enums.ApprovalStatus s) => s switch
+    {
+        Domain.Enums.ApprovalStatus.Approved => "sts-act",
+        Domain.Enums.ApprovalStatus.Rejected => "sts-rej",
+        _ => "sts-pend"
+    };
+}
+
+<div class="page active">
+    <div class="ph">
+        <div class="ph-bc">👤 User / <span>My Projects</span></div>
+        <div class="ph-title">🏗️ My Solar Projects</div>
+        <div class="ph-sub">Track all your solar connection applications</div>
+    </div>
+
+    <div class="btn-row" style="margin-bottom:16px">
+        <a asp-area="SolarPanelUserPanel" asp-controller="SolarRequest" asp-action="Create" class="btn btn-p">➕ New Request</a>
+        <a asp-area="SolarPanelUserPanel" asp-controller="SolarRequest" asp-action="Status" class="btn btn-s">📊 Status Tracker</a>
+    </div>
+
+    @if (Model.Any())
+    {
+        <div class="card">
+            <div class="ct"><span class="ct-dot"></span>My Applications (@Model.Count())</div>
+
+            @{
+                var paidMap = (Dictionary<int, decimal>)(ViewBag.PaidMap ?? new Dictionary<int, decimal>());
+                var sumTotal   = Model.Sum(p => p.RequestedAmount);
+                var sumPaid    = paidMap.Values.Sum();
+                var sumDue     = Math.Max(0, sumTotal - sumPaid);
+            }
+
+            <!-- Portfolio summary strip -->
+            <div class="g4" style="margin-bottom:12px">
+                <div class="sc">
+                    <div class="sc-label">Total Request Amount</div>
+                    <div class="sc-val gold">₹@sumTotal.ToString("N0")</div>
+                    <div class="sc-sub">Across @Model.Count() project(s)</div>
+                </div>
+                <div class="sc">
+                    <div class="sc-label">Total Paid</div>
+                    <div class="sc-val green">₹@sumPaid.ToString("N0")</div>
+                    <div class="sc-sub">Cumulative payments</div>
+                </div>
+                <div class="sc">
+                    <div class="sc-label">Remaining Due</div>
+                    <div class="sc-val red">₹@sumDue.ToString("N0")</div>
+                    <div class="sc-sub">Balance to clear</div>
+                </div>
+                <div class="sc">
+                    <div class="sc-label">Progress</div>
+                    <div class="sc-val blue">@(sumTotal > 0 ? Math.Round((double)(sumPaid * 100 / sumTotal), 1) : 0)%</div>
+                    <div class="sc-sub">Of total amount paid</div>
+                </div>
+            </div>
+
+            <div class="tbl-wrap">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Request</th>
+                            <th>Type</th>
+                            <th>kV</th>
+                            <th>Plan</th>
+                            <th style="text-align:right">Total Amount</th>
+                            <th style="text-align:right">Total Paid</th>
+                            <th style="text-align:right">Remaining</th>
+                            <th>Stage</th>
+                            <th>Status</th>
+                            <th>Applied</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var p in Model.OrderByDescending(x => x.CreatedAt))
+                        {
+                            var paid = paidMap.TryGetValue(p.Id, out var v) ? v : 0m;
+                            var due  = Math.Max(0, p.RequestedAmount - paid);
+                            <tr>
+                                <td class="td-b">
+                                    <a asp-area="SolarPanelUserPanel" asp-controller="SolarRequest" asp-action="Details"
+                                       asp-route-id="@p.Id" style="color:var(--accent)">@p.RequestNumber</a>
+                                </td>
+                                <td>@p.ConnectionType</td>
+                                <td>@p.KVCapacity kV</td>
+                                <td style="font-size:12.5px">@(p.SelectedPlan ?? "—")</td>
+                                <td style="text-align:right;color:var(--accent);font-weight:600">₹@p.RequestedAmount.ToString("N0")</td>
+                                <td style="text-align:right;color:var(--green);font-weight:600">₹@paid.ToString("N0")</td>
+                                <td style="text-align:right;color:@(due > 0 ? "var(--danger)" : "var(--green)");font-weight:600">
+                                    ₹@due.ToString("N0")
+                                    @if (due == 0 && p.RequestedAmount > 0)
+                                    {
+                                        <small style="display:block;font-size:10px;color:var(--green)">✓ Fully Paid</small>
+                                    }
+                                </td>
+                                <td>
+                                    <span class="sts @StageStsClass(p.CurrentStage)">
+                                        @p.CurrentStage.ToString().Replace("_", " ")
+                                    </span>
+                                </td>
+                                <td>
+                                    <span class="sts @ApprovalStsClass(p.ApprovalStatus)">@p.ApprovalStatus</span>
+                                </td>
+                                <td style="font-size:12px;color:var(--text2)">@p.CreatedAt.ToString("dd MMM")</td>
+                                <td>
+                                    <a asp-area="SolarPanelUserPanel" asp-controller="SolarRequest" asp-action="Details"
+                                       asp-route-id="@p.Id" class="btn btn-s btn-sm">View</a>
+                                    @if (p.ApprovalStatus == Domain.Enums.ApprovalStatus.Approved &&
+                                         p.CurrentStage != Domain.Enums.ProjectStatus.Completed &&
+                                         due > 0)
+                                    {
+                                        <a asp-area="SolarPanelUserPanel" asp-controller="SolarRequest" asp-action="Payment"
+                                           asp-route-id="@p.Id" class="btn btn-p btn-sm" style="margin-left:4px">Pay</a>
+                                    }
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    }
+    else
+    {
+        <div class="card">
+            <div class="ct"><span class="ct-dot"></span>No Applications</div>
+            <div style="text-align:center;padding:40px;color:var(--text3)">
+                <div style="font-size:48px;margin-bottom:16px">📋</div>
+                <div style="font-size:18px;margin-bottom:8px">No solar applications yet</div>
+                <a asp-area="SolarPanelUserPanel" asp-controller="SolarRequest" asp-action="Create" class="btn btn-p" style="margin-top:16px">
+                    ➕ Create First Application
+                </a>
+            </div>
+        </div>
+    }
+</div>

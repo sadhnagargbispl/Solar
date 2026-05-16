@@ -49,5 +49,20 @@ public class MappingProfile : Profile
                 o => o.MapFrom(s => s.Assignments != null ? s.Assignments.Count : 0));
         CreateMap<CreateWorkerDto, Worker>()
             .ForMember(d => d.Id, o => o.Ignore());
+
+        // SolarAccount
+        CreateMap<SolarAccount, SolarAccountDto>();
+
+        // PMDocument
+        CreateMap<PMDocument, PMDocumentDto>();
+
+        // Wallet
+        CreateMap<Wallet, WalletDto>();
+
+        // Withdrawal
+        CreateMap<Withdrawal, WithdrawalDto>();
+
+        // SiteSurvey
+        CreateMap<SiteSurvey, SiteSurveyDto>();
     }
 }

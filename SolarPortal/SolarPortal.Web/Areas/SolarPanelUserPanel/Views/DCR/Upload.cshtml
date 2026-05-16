@@ -1,0 +1,77 @@
+@{
+    ViewData["Title"] = "DCR Upload";
+    var req = (SolarPortal.Domain.Entities.SolarRequest)ViewBag.Request;
+    var existing = (SolarPortal.Domain.Entities.DCRDocument?)ViewBag.Existing;
+}
+
+<div class="page-header" style="padding:16px">
+    <h2>DCR Upload — @req.RequestNumber</h2>
+    <p class="text-muted">Domestic connection — final step. Upload your DCR document so admin can mark the project complete.</p>
+</div>
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-lg-7">
+            <div class="card">
+                <div class="card-header bg-primary text-white">DCR Document</div>
+                <div class="card-body">
+                    @if (existing != null)
+                    {
+                        <div class="alert alert-info">
+                            Submitted on @existing.CreatedAt.ToLocalTime().ToString("dd MMM yyyy HH:mm")
+                            — @(existing.IsVerified ? "✅ Verified" : "⏳ Awaiting admin verification")
+                            (DCR #@existing.DCRNumber)
+                            @if (!string.IsNullOrEmpty(existing.DocumentPath))
+                            {
+                                <a href="~/@existing.DocumentPath" target="_blank" class="ms-2">View document</a>
+                            }
+                        </div>
+                    }
+
+                    <form id="dcrForm" enctype="multipart/form-data">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="requestId" value="@req.Id" />
+
+                        <div class="mb-2">
+                            <label class="form-label">DCR Number *</label>
+                            <input type="text" class="form-control" name="dcrNumber" required maxlength="50" />
+                        </div>
+                        <div class="mb-2">
+                            <label class="form-label">DCR Date</label>
+                            <input type="date" class="form-control" name="dcrDate" value="@DateTime.Today.ToString("yyyy-MM-dd")" />
+                        </div>
+                        <div class="mb-2">
+                            <label class="form-label">DCR Document (PDF / Image) *</label>
+                            <input type="file" class="form-control" name="dcrDoc" accept=".pdf,.png,.jpg,.jpeg" required />
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Remarks</label>
+                            <textarea class="form-control" name="remark" rows="2"></textarea>
+                        </div>
+                        <button type="submit" class="btn btn-success">Submit DCR</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+$('#dcrForm').on('submit', function (e) {
+    e.preventDefault();
+    const fd = new FormData(this);
+    $.ajax({
+        url: '@Url.Action("Submit", "DCR")',
+        type: 'POST',
+        data: fd,
+        processData: false,
+        contentType: false,
+        success: function (r) {
+            alert(r.message);
+            if (r.success) window.location.href = '@Url.Action("Status", "SolarRequest", new { id = req.Id })';
+        }
+    });
+});
+</script>
+}
