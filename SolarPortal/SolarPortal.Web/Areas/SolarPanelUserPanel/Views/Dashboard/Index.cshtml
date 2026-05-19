@@ -72,6 +72,10 @@
                         {
                             case SolarPortal.Domain.Enums.ProjectStatus.Registration:
                             case SolarPortal.Domain.Enums.ProjectStatus.ProductSelection:
+                                <h6>🛒 Select Plan & Make Payment</h6>
+                                <p class="text-muted" style="font-size:13px">Choose your solar kit (1 kW, 2 kW, etc.) and submit your first payment. <strong>Admin must verify</strong> before workflow advances.</p>
+                                <a class="btn btn-p btn-full" asp-area="SolarPanelUserPanel" asp-controller="SolarRequest" asp-action="Create">Solar Request & Payment</a>
+                                break;
                             case SolarPortal.Domain.Enums.ProjectStatus.Payment:
                                 <h6>💰 Make a Payment</h6>
                                 <p class="text-muted" style="font-size:13px">Submit at least ₹@minVal.ToString("N0") cumulative. <strong>Admin must verify</strong> before workflow advances.</p>
@@ -130,19 +134,42 @@
 
                 <div class="card">
                     <div class="ct"><span class="ct-dot"></span>Project Info</div>
+                    @{
+                        // The auto-stub is "empty" until the user actually fills the
+                        // New Request form — no plan picked, KV=0, amount=0. Showing
+                        // "With Activation / Domestic / ₹0 / 0.00 kV" then looks like
+                        // real saved values which is misleading. Show "Not selected yet"
+                        // placeholders instead.
+                        var isEmptyStub = !Model.LatestProject.SolarProjectId.HasValue
+                                          && Model.LatestProject.KVCapacity == 0
+                                          && Model.LatestProject.RequestedAmount == 0;
+                    }
                     <div class="sr"><span class="srk">Project</span><span class="srv">@Model.LatestProject.RequestNumber</span></div>
-                    <div class="sr"><span class="srk">Mode</span><span class="srv">
-                        @switch (Model.LatestProject.RequestType)
-                        {
-                            case SolarPortal.Domain.Enums.RequestType.WithActivation: <text>🔌 With Activation</text>; break;
-                            case SolarPortal.Domain.Enums.RequestType.OnlySolarWithoutActivation: <text>⚡ Only Solar</text>; break;
-                            case SolarPortal.Domain.Enums.RequestType.AlreadyActiveOnlyRequest: <text>✅ Already Active</text>; break;
-                        }
-                    </span></div>
-                    <div class="sr"><span class="srk">Plan</span><span class="srv">@Model.LatestProject.SelectedPlan</span></div>
-                    <div class="sr"><span class="srk">Capacity</span><span class="srv">@Model.LatestProject.KVCapacity kV</span></div>
-                    <div class="sr"><span class="srk">Connection</span><span class="srv">@Model.LatestProject.ConnectionType</span></div>
-                    <div class="sr"><span class="srk">Total Amount</span><span class="srv">₹@Model.LatestProject.RequestedAmount.ToString("N0")</span></div>
+
+                    @if (isEmptyStub)
+                    {
+                        <div class="sr"><span class="srk">Mode</span><span class="srv" style="color:#94a3b8;font-style:italic">Not selected yet</span></div>
+                        <div class="sr"><span class="srk">Plan</span><span class="srv" style="color:#94a3b8;font-style:italic">Not selected yet</span></div>
+                        <div class="sr"><span class="srk">Capacity</span><span class="srv" style="color:#94a3b8;font-style:italic">—</span></div>
+                        <div class="sr"><span class="srk">Connection</span><span class="srv" style="color:#94a3b8;font-style:italic">Not selected yet</span></div>
+                        <div class="sr"><span class="srk">Total Amount</span><span class="srv" style="color:#94a3b8;font-style:italic">—</span></div>
+                    }
+                    else
+                    {
+                        <div class="sr"><span class="srk">Mode</span><span class="srv">
+                            @switch (Model.LatestProject.RequestType)
+                            {
+                                case SolarPortal.Domain.Enums.RequestType.WithActivation: <text>🔌 With Activation</text>; break;
+                                case SolarPortal.Domain.Enums.RequestType.OnlySolarWithoutActivation: <text>⚡ Only Solar</text>; break;
+                                case SolarPortal.Domain.Enums.RequestType.AlreadyActiveOnlyRequest: <text>✅ Already Active</text>; break;
+                            }
+                        </span></div>
+                        <div class="sr"><span class="srk">Plan</span><span class="srv">@(string.IsNullOrWhiteSpace(Model.LatestProject.SelectedPlan) ? "—" : Model.LatestProject.SelectedPlan)</span></div>
+                        <div class="sr"><span class="srk">Capacity</span><span class="srv">@(Model.LatestProject.KVCapacity > 0 ? $"{Model.LatestProject.KVCapacity} kV" : "—")</span></div>
+                        <div class="sr"><span class="srk">Connection</span><span class="srv">@Model.LatestProject.ConnectionType</span></div>
+                        <div class="sr"><span class="srk">Total Amount</span><span class="srv">@(Model.LatestProject.RequestedAmount > 0 ? "₹" + Model.LatestProject.RequestedAmount.ToString("N0") : "—")</span></div>
+                    }
+
                     <div class="sr"><span class="srk">Stage</span><span class="srv"><span class="sts @StageStsClass(Model.LatestProject.CurrentStage)">@Model.LatestProject.CurrentStage</span></span></div>
                     <div class="sr"><span class="srk">Approval</span><span class="srv"><span class="sts @ApprovalStsClass(Model.LatestProject.ApprovalStatus)">@Model.LatestProject.ApprovalStatus</span></span></div>
                 </div>

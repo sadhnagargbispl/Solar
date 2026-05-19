@@ -1,11 +1,13 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using SolarPortal.Application.DTOs;
 using SolarPortal.Application.Interfaces.Services;
 using SolarPortal.Application.Services;
 using SolarPortal.Domain.Entities;
 using SolarPortal.Domain.Enums;
+using SolarPortal.Infrastructure.Data;
 using SolarPortal.Web.ViewModels;
 
 namespace SolarPortal.Web.Areas.SolarPanelUserPanel.Controllers;
@@ -21,6 +23,7 @@ public class SolarRequestController : Controller
     private readonly ISolarProjectService _solarProjectService;
     private readonly INotificationService _notificationService;
     private readonly UserManager<ApplicationUser> _userManager;
+    private readonly ApplicationDbContext _db;
     private readonly IConfiguration _config;
 
     public SolarRequestController(
@@ -31,6 +34,7 @@ public class SolarRequestController : Controller
         ISolarProjectService solarProjectService,
         INotificationService notificationService,
         UserManager<ApplicationUser> userManager,
+        ApplicationDbContext db,
         IConfiguration config)
     {
         _solarRequestService = solarRequestService;
@@ -40,36 +44,76 @@ public class SolarRequestController : Controller
         _solarProjectService = solarProjectService;
         _notificationService = notificationService;
         _userManager = userManager;
+        _db = db;
         _config = config;
     }
 
     // GET: New Request Form (multi-step)
     public async Task<IActionResult> Create()
     {
-        // One-active-request-per-user rule: block if an active (not-yet-completed) request exists
-        // EXCEPTION: a brand-new request marked "AlreadyActiveOnlyRequest" (mode 3 per spec)
-        //            is allowed alongside an existing request, since that mode is specifically
-        //            for users who already have an active solar account and just want another request.
-        // Since this is the GET (no mode selected yet), we still surface the warning but allow
-        // the user to choose mode 3 inside the form.
         var userId = _userManager.GetUserId(User)!;
         var existing = await _solarRequestService.GetByUserIdAsync(userId);
-        if (existing.IsSuccess && existing.Data != null)
+
+        if (existing.IsSuccess && existing.Data != null && existing.Data.Any())
         {
-            // A request is "active" only if it is in progress — not Completed,
-            // and not Rejected by admin. Rejected requests are dead, so the user
-            // can freely create a fresh one.
-            var active = existing.Data.FirstOrDefault(r =>
-                r.CurrentStage != ProjectStatus.Completed &&
-                r.ApprovalStatus != ApprovalStatus.Rejected);
-            if (active != null)
+            // STRICT LIFETIME RULE — one IdNo, one solar request, forever.
+            // Across all 3 modes (With Activation, Only Solar Without Activation,
+            // Already Active Only Request) and all statuses (Pending / Approved /
+            // Rejected / Completed) the user is bound to their single request.
+            //
+            // ONLY EXCEPTION: the auto-stub created at first login is meant to be
+            // FILLED IN — that's not "creating a new request", it's completing the
+            // initial submission. Identified by:
+            //   • Stage = Registration or ProductSelection
+            //   • ApprovalStatus = Pending
+            //   • No SolarProject picked yet
+            var latest = existing.Data
+                .OrderByDescending(r => r.CreatedAt)
+                .First();
+
+            var isAutoStub = (latest.CurrentStage == ProjectStatus.Registration ||
+                              latest.CurrentStage == ProjectStatus.ProductSelection) &&
+                             latest.ApprovalStatus == ApprovalStatus.Pending &&
+                             latest.SolarProjectId == null;
+
+            if (isAutoStub)
             {
-                // One-request rule: redirect to the active request instead of letting
-                // the user fill out a new one they cannot submit.
-                TempData["Warning"] = $"You already have an active request ({active.RequestNumber}). " +
-                                       "Only one active request is allowed at a time. Please track this one until it's completed or rejected.";
-                return RedirectToAction(nameof(Status), new { id = active.Id });
+                // Allow the form to open so the user can pick a plan + fill the stub
+                ViewBag.Projects = await _solarProjectService.GetAllAsync(activeOnly: true);
+                var prefill = new CreateSolarRequestViewModel
+                {
+                    ApplicantName  = latest.ApplicantName ?? string.Empty,
+                    MobileNumber   = latest.MobileNumber ?? string.Empty,
+                    Email          = latest.Email ?? string.Empty,
+                    Address        = latest.Address ?? string.Empty,
+                    City           = latest.City ?? string.Empty,
+                    State          = latest.State ?? string.Empty,
+                    PinCode        = latest.PinCode ?? string.Empty,
+                    AadharNumber   = latest.AadharNumber,
+                    PANNumber      = latest.PANNumber,
+                    ConnectionType = latest.ConnectionType,
+                    KVCapacity     = latest.KVCapacity,
+                    SolarProjectId = latest.SolarProjectId,
+                    SelectedPlan   = latest.SelectedPlan,
+                    PlanAmount     = latest.RequestedAmount,
+                    RequestType    = latest.RequestType
+                };
+                ViewBag.EditingRequestId = latest.Id;
+                return View(prefill);
             }
+
+            // Any other state → BLOCK forever, redirect to Status.
+            string statusLabel = latest.ApprovalStatus switch
+            {
+                ApprovalStatus.Approved when latest.CurrentStage == ProjectStatus.Completed => "completed",
+                ApprovalStatus.Approved => "approved and in progress",
+                ApprovalStatus.Rejected => "rejected",
+                _                       => "in progress"
+            };
+
+            TempData["Warning"] = $"You already have a solar request ({latest.RequestNumber}) which is {statusLabel}. " +
+                                   "Only one solar request is allowed per user. Please track its status here.";
+            return RedirectToAction(nameof(Status), new { id = latest.Id });
         }
 
         ViewBag.Projects = await _solarProjectService.GetAllAsync(activeOnly: true);
@@ -85,24 +129,46 @@ public class SolarRequestController : Controller
         if (!string.IsNullOrWhiteSpace(model.PANNumber))
             model.PANNumber = model.PANNumber.Trim().ToUpperInvariant();
 
-        // Server-side enforcement of one-active-request rule
-        // - Approved + in-progress: BLOCK (user must complete current request first)
-        // - Completed:              ALLOW (current is done — fresh start)
-        // - Rejected:               ALLOW (current is dead — user can try again)
-        // RULE APPLIES TO ALL MODES — a user can have only ONE active request at a time,
-        // regardless of whether it's With Activation / Only Solar / Already Active.
+        // Server-side enforcement.
+        // Q1: Approved request — BLOCK forever.
         var userIdEarly = _userManager.GetUserId(User)!;
         var existingEarly = await _solarRequestService.GetByUserIdAsync(userIdEarly);
-        if (existingEarly.IsSuccess && existingEarly.Data != null)
+        SolarRequestDto? stubToUpdate = null;
+        if (existingEarly.IsSuccess && existingEarly.Data != null && existingEarly.Data.Any())
         {
-            var active = existingEarly.Data.FirstOrDefault(r =>
-                r.CurrentStage != ProjectStatus.Completed &&
-                r.ApprovalStatus != ApprovalStatus.Rejected);
-            if (active != null)
+            // STRICT LIFETIME RULE — same as GET. Only the auto-stub can be updated.
+            var latest = existingEarly.Data
+                .OrderByDescending(r => r.CreatedAt)
+                .First();
+
+            var isAutoStub = (latest.CurrentStage == ProjectStatus.Registration ||
+                              latest.CurrentStage == ProjectStatus.ProductSelection) &&
+                             latest.ApprovalStatus == ApprovalStatus.Pending &&
+                             latest.SolarProjectId == null;
+
+            if (isAutoStub)
             {
-                TempData["Error"] = $"You already have an active request ({active.RequestNumber}). " +
-                                     "Only one active request is allowed at a time. Please wait for it to be completed or rejected before creating a new one.";
-                return RedirectToAction(nameof(Status), new { id = active.Id });
+                stubToUpdate = latest;   // user is filling the stub — allow update
+            }
+            else
+            {
+                TempData["Error"] = $"You already have a solar request ({latest.RequestNumber}). " +
+                                     "Only one solar request is allowed per user.";
+                return RedirectToAction(nameof(Status), new { id = latest.Id });
+            }
+        }
+
+        // ─── UTR duplicate check ─────────────────────────────────────────
+        // The same UTR / Transaction No. must not exist anywhere in the system.
+        // We cross-check against:
+        //   1. walletreq.chqno — live cooperative master table
+        //   2. Payments.UTRNumber — our own payment ledger
+        if (model.PaymentAmount > 0 && !string.IsNullOrWhiteSpace(model.PaymentUTR))
+        {
+            var dupReason = await CheckUtrDuplicateAsync(model.PaymentUTR.Trim());
+            if (dupReason != null)
+            {
+                ModelState.AddModelError(nameof(model.PaymentUTR), dupReason);
             }
         }
 
@@ -117,43 +183,66 @@ public class SolarRequestController : Controller
         // - Mode 3 (AlreadyActiveOnlyRequest): inherits from user's existing active project
         if (model.RequestType == RequestType.AlreadyActiveOnlyRequest)
         {
+            // Look for the user's earlier REAL request (one that has a SolarProjectId
+            // set — not the auto-stub which has SolarProjectId == null). Without this
+            // filter the auto-stub itself becomes the "basis" and PlanAmount ends up 0.
             var mine = existingEarly.IsSuccess && existingEarly.Data != null
-                ? existingEarly.Data.OrderByDescending(r => r.CreatedAt).ToList()
+                ? existingEarly.Data
+                    .Where(r => r.SolarProjectId.HasValue && r.RequestedAmount > 0)
+                    .OrderByDescending(r => r.CreatedAt)
+                    .ToList()
                 : new List<SolarRequestDto>();
             var basis = mine.FirstOrDefault();
-            if (basis == null)
+
+            if (basis != null)
             {
-                TempData["Error"] = "Mode 'Already Active' requires you to already have an existing solar project. Please choose another mode.";
-                ViewBag.Projects = await _solarProjectService.GetAllAsync(activeOnly: true);
-                return View(model);
+                // Carry forward existing project info
+                model.SolarProjectId = basis.SolarProjectId;
+                model.SelectedPlan   = string.IsNullOrWhiteSpace(model.SelectedPlan)
+                                        ? (basis.SelectedPlan ?? "Already Active — Only Request")
+                                        : model.SelectedPlan;
+                model.PlanAmount     = basis.RequestedAmount;
+                model.KVCapacity     = basis.KVCapacity;
+                // Preserve the user's currently chosen ConnectionType. Do not overwrite
+                // with the prior request's value — they may legitimately be changing it.
             }
-            // Carry forward existing project info so this top-up request continues against the same Solar Account
-            model.SolarProjectId = basis.SolarProjectId;
-            model.SelectedPlan   = string.IsNullOrWhiteSpace(model.SelectedPlan)
-                                    ? (basis.SelectedPlan ?? "Already Active — Only Request")
-                                    : model.SelectedPlan;
-            model.PlanAmount     = basis.RequestedAmount;
-            model.KVCapacity     = basis.KVCapacity;
-            model.ConnectionType = basis.ConnectionType;
+            else
+            {
+                // No prior real project. Auto-match a plan by KV so PlanAmount isn't 0.
+                var matched = await FindMatchingPlanAsync(model.KVCapacity, model.ConnectionType);
+                if (matched != null)
+                {
+                    model.SolarProjectId = matched.Id;
+                    model.SelectedPlan   = string.IsNullOrWhiteSpace(model.SelectedPlan)
+                                            ? $"Already Active — {matched.Name}"
+                                            : model.SelectedPlan;
+                    model.PlanAmount     = matched.ProjectAmount;
+                }
+                else
+                {
+                    model.SelectedPlan = "Already Active — Only Request (pending plan assignment)";
+                }
+            }
         }
         else if (model.RequestType == RequestType.OnlySolarWithoutActivation)
         {
-            // No product picker shown — try to match a SolarProject plan based on
-            // the user's KV + ConnectionType selection so the amount is auto-fetched.
-            if (model.KVCapacity <= 0) model.KVCapacity = 1.1m;
+            // Mode 2: try to auto-link a plan by KV so the user sees a real
+            // Project Amount on the Status page. Admin can change the plan later.
             var matched = await FindMatchingPlanAsync(model.KVCapacity, model.ConnectionType);
             if (matched != null)
             {
                 model.SolarProjectId = matched.Id;
-                model.SelectedPlan   = matched.Name + " (Only Solar — Without Activation)";
-                model.PlanAmount     = matched.TotalAmount;
+                model.SelectedPlan   = $"Only Solar — {matched.Name}";
+                model.PlanAmount     = matched.ProjectAmount;
+                model.KVCapacity     = matched.SolarTypeKV;
+                // Preserve the user's ConnectionType selection — don't override.
             }
             else
             {
-                // No matching plan in master — admin will assign later
                 model.SolarProjectId = null;
                 model.SelectedPlan   = "Only Solar — Without Activation (pending plan assignment)";
-                if (model.PlanAmount <= 0) model.PlanAmount = 0m;
+                if (model.PlanAmount < 0) model.PlanAmount = 0m;
+                if (model.KVCapacity <= 0) model.KVCapacity = 0m;
             }
         }
         // If a SolarProject was picked (Mode 1), hydrate plan name + amount + kv from master
@@ -162,10 +251,10 @@ public class SolarRequestController : Controller
             var project = await _solarProjectService.GetByIdAsync(model.SolarProjectId.Value);
             if (project != null)
             {
-                model.SelectedPlan = project.Name;
-                model.PlanAmount = project.TotalAmount;
-                model.KVCapacity = project.SolarTypeKV;
-                model.ConnectionType = project.ConnectionType;
+                model.SelectedPlan   = project.Name;
+                model.PlanAmount     = project.ProjectAmount;
+                model.KVCapacity     = project.SolarTypeKV;
+                // Preserve the user's chosen ConnectionType — don't override with plan's.
             }
         }
         else
@@ -176,7 +265,21 @@ public class SolarRequestController : Controller
             {
                 model.SolarProjectId = matched.Id;
                 model.SelectedPlan   = matched.Name;
-                model.PlanAmount     = matched.TotalAmount;
+                model.PlanAmount     = matched.ProjectAmount;
+            }
+        }
+
+        // SAFETY NET: if PlanAmount is still 0 but we have a KVCapacity, do one last lookup.
+        // This catches edge cases where Mode/RequestType branches missed assigning a plan.
+        if (model.PlanAmount <= 0 && model.KVCapacity > 0)
+        {
+            var lastChance = await FindMatchingPlanAsync(model.KVCapacity, model.ConnectionType);
+            if (lastChance != null)
+            {
+                model.SolarProjectId ??= lastChance.Id;
+                model.PlanAmount       = lastChance.ProjectAmount;
+                if (string.IsNullOrWhiteSpace(model.SelectedPlan))
+                    model.SelectedPlan = lastChance.Name;
             }
         }
 
@@ -200,7 +303,50 @@ public class SolarRequestController : Controller
             PlanAmount = model.PlanAmount
         };
 
-        var result = await _solarRequestService.CreateAsync(dto, userId);
+        // If we're filling an auto-created stub, update it; else create new.
+        ServiceResult<SolarRequestDto> result;
+        if (stubToUpdate != null)
+        {
+            // Update the existing stub record with the form data
+            var entity = await _db.SolarRequests.FirstOrDefaultAsync(r => r.Id == stubToUpdate.Id);
+            if (entity != null)
+            {
+                entity.ApplicantName  = dto.ApplicantName;
+                entity.MobileNumber   = dto.MobileNumber;
+                entity.Email          = dto.Email;
+                entity.Address        = dto.Address;
+                entity.City           = dto.City;
+                entity.State          = dto.State;
+                entity.PinCode        = dto.PinCode;
+                entity.AadharNumber   = dto.AadharNumber;
+                entity.PANNumber      = dto.PANNumber;
+                entity.RequestType    = dto.RequestType;
+                entity.ConnectionType = dto.ConnectionType;
+                entity.KVCapacity     = dto.KVCapacity;
+                entity.SolarProjectId = dto.SolarProjectId;
+                entity.SelectedPlan   = dto.SelectedPlan;
+                entity.PlanAmount     = dto.PlanAmount;
+                entity.CurrentStage   = ProjectStatus.Payment;  // ← advance to Payment stage
+                entity.UpdatedAt      = DateTime.UtcNow;
+                entity.UpdatedBy      = userId;
+                await _db.SaveChangesAsync();
+
+                // Re-fetch as DTO for downstream code
+                var refreshed = await _solarRequestService.GetByIdAsync(stubToUpdate.Id);
+                result = refreshed.IsSuccess && refreshed.Data != null
+                    ? ServiceResult<SolarRequestDto>.Success(refreshed.Data)
+                    : ServiceResult<SolarRequestDto>.Failure("Could not reload request after update");
+            }
+            else
+            {
+                result = ServiceResult<SolarRequestDto>.Failure("Stub request not found");
+            }
+        }
+        else
+        {
+            result = await _solarRequestService.CreateAsync(dto, userId);
+        }
+
         if (!result.IsSuccess)
         {
             foreach (var error in result.Errors)
@@ -292,10 +438,80 @@ public class SolarRequestController : Controller
     private async Task<SolarProjectDto?> FindMatchingPlanAsync(decimal kv, ConnectionType conn)
     {
         var all = await _solarProjectService.GetAllAsync(activeOnly: true);
-        // Exact KV + connection match first, then KV-only match, then any active plan with same conn
+        // Require KV to match — picking a wildly different plan just because
+        // the connection type happens to match would silently misprice the request.
+        // Prefer exact KV+connection, fall back to KV-only.
         return all.FirstOrDefault(p => p.SolarTypeKV == kv && p.ConnectionType == conn)
-            ?? all.FirstOrDefault(p => p.SolarTypeKV == kv)
-            ?? all.FirstOrDefault(p => p.ConnectionType == conn);
+            ?? all.FirstOrDefault(p => p.SolarTypeKV == kv);
+    }
+
+    /// <summary>
+    /// Cross-checks a UTR / Transaction number against both:
+    ///   1. walletreq.chqno   — live cooperative DB master
+    ///   2. Payments.UTRNumber — our own ledger
+    /// Returns a user-friendly error message if the UTR is already in use, else null.
+    /// </summary>
+    private async Task<string?> CheckUtrDuplicateAsync(string utr)
+    {
+        if (string.IsNullOrWhiteSpace(utr)) return null;
+        var trimmed = utr.Trim();
+
+        // 1. walletreq master (raw SQL — table is outside our entity model).
+        //    Use a SEPARATE SqlConnection — never wrap the DbContext's own
+        //    connection in a `using` block, because disposing it leaves EF
+        //    Core's DbContext with no ConnectionString for later queries.
+        try
+        {
+            var connStr = _config.GetConnectionString("DefaultConnection")
+                       ?? _db.Database.GetConnectionString();
+            if (!string.IsNullOrWhiteSpace(connStr))
+            {
+                using var sqlConn = new Microsoft.Data.SqlClient.SqlConnection(connStr);
+                await sqlConn.OpenAsync();
+                using var cmd = sqlConn.CreateCommand();
+                cmd.CommandText = "SELECT COUNT(1) FROM walletreq WHERE LTRIM(RTRIM(chqno)) = @utr";
+                var p = cmd.CreateParameter();
+                p.ParameterName = "@utr";
+                p.Value = trimmed;
+                cmd.Parameters.Add(p);
+
+                var result = await cmd.ExecuteScalarAsync();
+                var count = Convert.ToInt32(result ?? 0);
+                if (count > 0)
+                    return "This UTR / Transaction No. is already used. Please use a different one.";
+            }
+        }
+        catch
+        {
+            // If the master table isn't reachable for any reason, fall through —
+            // we still check our own Payments ledger below. Production should log this.
+        }
+
+        // 2. Our own Payments table
+        var existsHere = await _db.Payments
+            .AsNoTracking()
+            .AnyAsync(p => p.UTRNumber == trimmed);
+        if (existsHere)
+            return "This UTR / Transaction No. is already used. Please use a different one.";
+
+        return null;
+    }
+
+    /// <summary>
+    /// AJAX: real-time UTR availability check (called from the form on blur).
+    /// </summary>
+    [HttpGet]
+    public async Task<IActionResult> CheckUtr(string utr)
+    {
+        if (string.IsNullOrWhiteSpace(utr))
+            return Json(new { available = true });
+
+        var reason = await CheckUtrDuplicateAsync(utr.Trim());
+        return Json(new
+        {
+            available = reason == null,
+            message   = reason ?? "UTR is available."
+        });
     }
 
     // GET: Upload Documents — DEPRECATED route, kept for backward compatibility.
@@ -350,13 +566,73 @@ public class SolarRequestController : Controller
         // Compute per-project payment totals so the table can show
         // Total Amount / Total Paid / Remaining columns.
         // Sequential awaits — EF Core forbids concurrent ops on the same DbContext.
-        var paidMap = new Dictionary<int, decimal>();
+        var paidMap   = new Dictionary<int, decimal>();
+        var imagesMap = new Dictionary<int, List<(string url, string label)>>();
+
         foreach (var p in projects)
         {
             paidMap[p.Id] = await _paymentService.GetTotalPaidAsync(p.Id);
+
+            // Collect all images attached to this request — payment receipts,
+            // site survey photos, KYC/PM docs — so the row can show a thumbnail
+            // strip and clicking opens a lightbox.
+            var imgs = new List<(string url, string label)>();
+
+            // Payment receipts
+            var payments = await _db.Payments
+                                    .Where(x => x.SolarRequestId == p.Id)
+                                    .ToListAsync();
+            foreach (var pay in payments)
+            {
+                if (!string.IsNullOrWhiteSpace(pay.ReceiptImagePath) && IsImagePath(pay.ReceiptImagePath))
+                {
+                    imgs.Add((NormalizeUrl(pay.ReceiptImagePath), $"Payment Receipt — ₹{pay.Amount:N0}"));
+                }
+            }
+
+            // Site Survey roof + GPS photos
+            var surveys = await _db.SiteSurveys
+                                   .Where(x => x.SolarRequestId == p.Id)
+                                   .ToListAsync();
+            foreach (var s in surveys)
+            {
+                if (!string.IsNullOrWhiteSpace(s.RoofPhotoPath) && IsImagePath(s.RoofPhotoPath))
+                    imgs.Add((NormalizeUrl(s.RoofPhotoPath), "Roof Photo"));
+                if (!string.IsNullOrWhiteSpace(s.GpsPhotoPath) && IsImagePath(s.GpsPhotoPath))
+                    imgs.Add((NormalizeUrl(s.GpsPhotoPath), "GPS / Location Photo"));
+            }
+
+            // KYC / generic Documents
+            var docs = await _db.Documents
+                                .Where(x => x.SolarRequestId == p.Id)
+                                .ToListAsync();
+            foreach (var d in docs)
+            {
+                if (!string.IsNullOrWhiteSpace(d.FilePath) && IsImagePath(d.FilePath))
+                    imgs.Add((NormalizeUrl(d.FilePath), d.DocumentType.ToString()));
+            }
+
+            imagesMap[p.Id] = imgs;
         }
-        ViewBag.PaidMap = paidMap;
+        ViewBag.PaidMap   = paidMap;
+        ViewBag.ImagesMap = imagesMap;
         return View(projects);
+    }
+
+    // --- helpers for the project image column ---
+    private static bool IsImagePath(string? p)
+    {
+        if (string.IsNullOrWhiteSpace(p)) return false;
+        var lower = p.ToLowerInvariant();
+        return lower.EndsWith(".jpg") || lower.EndsWith(".jpeg") ||
+               lower.EndsWith(".png") || lower.EndsWith(".gif") ||
+               lower.EndsWith(".webp");
+    }
+    private static string NormalizeUrl(string p)
+    {
+        // Stored paths may be "uploads/x.jpg" or "/uploads/x.jpg" — normalize to a leading slash.
+        var u = p.Replace('\\', '/').TrimStart('/');
+        return "/" + u;
     }
 
     // GET: Project detail + status flow
@@ -394,6 +670,16 @@ public class SolarRequestController : Controller
 
         if (dto.Amount <= 0)
             return Json(new { success = false, message = "Amount must be greater than zero." });
+
+        // UTR duplicate check — fail fast before any other validation so the
+        // user sees the exact reason and doesn't lose the receipt upload to a
+        // generic error.
+        if (!string.IsNullOrWhiteSpace(dto.UTRNumber))
+        {
+            var dupReason = await CheckUtrDuplicateAsync(dto.UTRNumber.Trim());
+            if (dupReason != null)
+                return Json(new { success = false, message = dupReason });
+        }
 
         // Look up the project to know its total amount
         var reqResult = await _solarRequestService.GetByIdAsync(dto.SolarRequestId);

@@ -2,105 +2,289 @@
     ViewData["Title"] = "Site Survey";
     var req = (SolarPortal.Domain.Entities.SolarRequest)ViewBag.Request;
     var latest = (SolarPortal.Domain.Entities.SiteSurvey?)ViewBag.LatestSurvey;
+
+    // Three states determine button visibility + form lock:
+    //   • Approved  → form locked, no button (admin has verified)
+    //   • Rejected  → form unlocked, button visible (user must re-submit)
+    //   • Pending   → form locked, no button (waiting for admin)
+    //   • No survey → form unlocked, button visible (first submission)
+    var isApproved = latest != null && latest.IsCompleted;
+    var isRejected = latest != null && !latest.IsCompleted
+                     && !string.IsNullOrWhiteSpace(latest.OperationsRemark);
+    var isPending  = latest != null && !latest.IsCompleted && !isRejected;
+
+    // Form is locked when either Approved OR Pending — user cannot edit/submit then.
+    var formLocked = isApproved || isPending;
 }
 
-<div class="page-header" style="padding:16px">
-    <h2>Site Survey — @req.RequestNumber</h2>
-    <p class="text-muted">Download the form, fill it on site, then upload the filled form along with photos.</p>
-</div>
+<style>
+    .survey-card { background:#fff; padding:24px; border-radius:8px; box-shadow:0 1px 3px rgba(0,0,0,.08); margin-bottom:18px }
+    .survey-section { margin-bottom:22px }
+    .survey-section-title { font-size:15px; font-weight:600; color:#1f6e3e; border-bottom:2px solid #1f6e3e; padding-bottom:6px; margin-bottom:14px; display:flex; align-items:center; gap:8px }
+    .survey-section-num { background:#1f6e3e; color:#fff; width:24px; height:24px; border-radius:50%; display:inline-flex; align-items:center; justify-content:center; font-size:13px }
+    .fr { display:flex; gap:14px; flex-wrap:wrap; margin-bottom:12px }
+    .fc { flex:1; min-width:220px }
+    .fl { display:block; font-size:13px; color:#475569; margin-bottom:5px; font-weight:500 }
+    .fl.req::after { content:" *"; color:#dc2626 }
+    .fi { width:100%; padding:8px 10px; border:1px solid #cbd5e1; border-radius:6px; font-size:14px }
+    .fi:focus { outline:none; border-color:#1f6e3e; box-shadow:0 0 0 2px rgba(31,110,62,.15) }
+    .radio-row { display:flex; gap:14px; flex-wrap:wrap; padding:6px 0 }
+    .radio-opt { display:inline-flex; align-items:center; gap:6px; font-size:14px; cursor:pointer }
+    .radio-opt input[type=radio], .radio-opt input[type=checkbox] { cursor:pointer }
+    .submit-bar { background:#f1f5f9; padding:16px; border-radius:8px; margin-top:18px; display:flex; justify-content:flex-end; gap:10px }
+    .btn-submit { background:#1f6e3e; color:#fff; border:none; padding:10px 22px; border-radius:6px; font-weight:600; cursor:pointer }
+    .btn-submit:hover { background:#155029 }
+    .btn-submit:disabled { background:#94a3b8; cursor:not-allowed }
+    .file-row { padding:10px; border:2px dashed #cbd5e1; border-radius:6px; background:#f8fafc; text-align:center }
+    .alert-locked { background:#dcfce7; padding:14px; border-radius:8px; border-left:4px solid #16a34a; margin-bottom:18px }
+    .alert-pending { background:#fef3c7; padding:14px; border-radius:8px; border-left:4px solid #d97706; margin-bottom:18px }
+</style>
 
-<div class="container-fluid">
-    <div class="row g-3">
-        <div class="col-md-5">
-            <div class="card h-100">
-                <div class="card-header bg-warning">Step 1 — Download Survey Form</div>
-                <div class="card-body">
-                    <p>The form is pre-filled with your project details. Print it or save it as PDF, fill onsite, take photos of the roof + GPS location, then come back to upload.</p>
-                    <a class="btn btn-warning" asp-action="DownloadForm" asp-route-id="@req.Id">
-                        ⬇ Download Survey Form
-                    </a>
-                </div>
+<div style="padding:18px;max-width:1100px;margin:0 auto">
+    <h2 style="margin:0 0 4px">📋 Rooftop Solar Site Survey — @req.RequestNumber</h2>
+    <p style="color:#64748b;margin:0 0 18px">Fill in all details about your site so our team can plan the installation.</p>
+
+    @if (isApproved)
+    {
+        <div class="alert-locked">
+            <strong>✅ Survey Approved &amp; Locked.</strong>
+            Submitted on @latest!.CreatedAt.ToLocalTime().ToString("dd MMM yyyy HH:mm") — verified by admin.
+            No further changes can be made to this survey.
+        </div>
+    }
+    else if (isRejected)
+    {
+        <div class="alert-pending" style="background:#fee2e2;border-left-color:#dc2626">
+            <strong>❌ Survey Rejected by Admin.</strong>
+            <div style="margin-top:6px">
+                <strong>Reason:</strong> @latest!.OperationsRemark
+            </div>
+            <div style="margin-top:6px;font-size:13px;color:#7f1d1d">
+                Please correct the issues and re-submit your survey below.
             </div>
         </div>
-        <div class="col-md-7">
-            <div class="card h-100">
-                <div class="card-header bg-success text-white">Step 2 — Upload Filled Form & Photos</div>
-                <div class="card-body">
-                    @{
-                        // Lock the upload form once the latest submission has been approved.
-                        // User can still see the audit row above; no replace / re-submit allowed.
-                        var isSurveyLocked = latest != null && latest.IsCompleted;
-                    }
-                    @if (latest != null)
-                    {
-                        <div class="alert @(isSurveyLocked ? "alert-success" : "alert-info")">
-                            Last submission on @latest.CreatedAt.ToLocalTime().ToString("dd MMM yyyy HH:mm")
-                            — @(latest.IsCompleted ? "✅ Approved by admin" : "⏳ Awaiting admin approval")
-                        </div>
-                    }
+    }
+    else if (isPending)
+    {
+        <div class="alert-pending">
+            <strong>⏳ Awaiting admin verification.</strong>
+            Submitted on @latest!.CreatedAt.ToLocalTime().ToString("dd MMM yyyy HH:mm").
+            You cannot edit or re-submit until the admin verifies (or rejects) this survey.
+        </div>
+    }
 
-                    @if (isSurveyLocked)
-                    {
-                        <div class="alert alert-success" style="margin-top:14px">
-                            <span style="font-size:18px">✅</span>
-                            <strong>Survey Approved & Locked.</strong>
-                            Your site survey has been verified by admin. This stage is complete — no further upload is needed.
-                            @if (!string.IsNullOrEmpty(latest!.SurveyPhotoPath))
-                            {
-                                <div style="margin-top:8px">
-                                    <a href="~/@latest.SurveyPhotoPath" target="_blank" class="btn btn-sm btn-outline-success">📄 View Submitted Form</a>
-                                </div>
-                            }
-                        </div>
-                    }
-                    else
-                    {
-                        <form id="surveyForm" enctype="multipart/form-data">
-                            @Html.AntiForgeryToken()
-                            <input type="hidden" name="requestId" value="@req.Id" />
+    <form id="surveyForm" method="post" enctype="multipart/form-data"
+          asp-action="Upload" asp-controller="SiteSurvey" asp-area="SolarPanelUserPanel">
+        @Html.AntiForgeryToken()
+        <input type="hidden" name="requestId" value="@req.Id" />
 
-                            <div class="mb-2">
-                                <label class="form-label">Filled Form (PDF / Image) *</label>
-                                <input type="file" class="form-control" name="filledForm" accept=".pdf,.png,.jpg,.jpeg" required />
-                            </div>
-                            <div class="mb-2">
-                                <label class="form-label">Roof Photo</label>
-                                <input type="file" class="form-control" name="roofPhoto" accept="image/*" />
-                            </div>
-                            <div class="mb-2">
-                                <label class="form-label">GPS Photo</label>
-                                <input type="file" class="form-control" name="gpsPhoto" accept="image/*" />
-                            </div>
-                            <div class="mb-2">
-                                <label class="form-label">Notes</label>
-                                <textarea class="form-control" name="surveyNotes" rows="3"></textarea>
-                            </div>
-                            <button type="submit" class="btn btn-success">Submit Survey</button>
-                        </form>
-                    }
+        <fieldset @(formLocked ? "disabled" : "")>
+        <div class="survey-card">
+
+            <!-- Section 1: General -->
+            <div class="survey-section">
+                <div class="survey-section-title">
+                    <span class="survey-section-num">1</span> General Information
+                </div>
+
+                <div class="fr">
+                    <div class="fc">
+                        <label class="fl req">Connection Type</label>
+                        <div class="radio-row">
+                            <label class="radio-opt"><input type="radio" name="PropertyType" value="Residential" @(latest?.PropertyType == "Residential" ? "checked" : "") required /> Residential</label>
+                            <label class="radio-opt"><input type="radio" name="PropertyType" value="Commercial" @(latest?.PropertyType == "Commercial" ? "checked" : "") /> Commercial</label>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="fr">
+                    <div class="fc">
+                        <label class="fl req">Roof Available?</label>
+                        <div class="radio-row">
+                            <label class="radio-opt"><input type="radio" name="RoofAvailable" value="Yes" @(latest?.RoofAvailable == "Yes" ? "checked" : "") required /> Yes</label>
+                            <label class="radio-opt"><input type="radio" name="RoofAvailable" value="No" @(latest?.RoofAvailable == "No" ? "checked" : "") /> No</label>
+                            <label class="radio-opt"><input type="radio" name="RoofAvailable" value="Partial" @(latest?.RoofAvailable == "Partial" ? "checked" : "") /> Partial</label>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="fr">
+                    <div class="fc">
+                        <label class="fl req">Roof Type</label>
+                        <div class="radio-row">
+                            <label class="radio-opt"><input type="radio" name="RoofType" value="RCC" @(latest?.RoofType == "RCC" ? "checked" : "") required /> RCC</label>
+                            <label class="radio-opt"><input type="radio" name="RoofType" value="TinShed" @(latest?.RoofType == "TinShed" ? "checked" : "") /> Tin Shed</label>
+                            <label class="radio-opt"><input type="radio" name="RoofType" value="TileRoof" @(latest?.RoofType == "TileRoof" ? "checked" : "") /> Tile Roof</label>
+                            <label class="radio-opt"><input type="radio" name="RoofType" value="Other" @(latest?.RoofType == "Other" ? "checked" : "") /> Other</label>
+                        </div>
+                    </div>
+                    <div class="fc">
+                        <label class="fl">If Other, specify</label>
+                        <input class="fi" name="RoofTypeOther" value="@latest?.RoofTypeOther" placeholder="e.g., Asbestos sheet" />
+                    </div>
+                </div>
+
+                <div class="fr">
+                    <div class="fc">
+                        <label class="fl req">Roof Total Area (Sq. ft)</label>
+                        <input class="fi" name="RoofTotalAreaSqft" type="number" step="0.01" min="0"
+                               value="@(latest?.RoofTotalAreaSqft?.ToString() ?? "")" placeholder="e.g., 500" required />
+                    </div>
                 </div>
             </div>
+
+            <!-- Section 2: Electrical -->
+            <div class="survey-section">
+                <div class="survey-section-title">
+                    <span class="survey-section-num">2</span> Electrical / Connection Details
+                </div>
+
+                <div class="fr">
+                    <div class="fc">
+                        <label class="fl req">DISCOM Name</label>
+                        <input class="fi" name="DiscomName" value="@latest?.DiscomName" placeholder="e.g., JVVNL, BSES, Adani" required />
+                    </div>
+                    <div class="fc">
+                        <label class="fl req">Consumer Number</label>
+                        <input class="fi" name="ConsumerNumber" value="@latest?.ConsumerNumber" placeholder="From your electricity bill" required />
+                    </div>
+                </div>
+
+                <div class="fr">
+                    <div class="fc">
+                        <label class="fl req">Meter Type</label>
+                        <div class="radio-row">
+                            <label class="radio-opt"><input type="radio" name="MeterType" value="SinglePhase" @(latest?.MeterType == "SinglePhase" ? "checked" : "") required /> Single Phase</label>
+                            <label class="radio-opt"><input type="radio" name="MeterType" value="ThreePhase" @(latest?.MeterType == "ThreePhase" ? "checked" : "") /> Three Phase</label>
+                        </div>
+                    </div>
+                    <div class="fc">
+                        <label class="fl req">Grid Connection Type</label>
+                        <div class="radio-row">
+                            <label class="radio-opt"><input type="radio" name="GridType" value="OnGrid" @(latest?.GridType == "OnGrid" ? "checked" : "") required /> On-Grid</label>
+                            <label class="radio-opt"><input type="radio" name="GridType" value="OffGrid" @(latest?.GridType == "OffGrid" ? "checked" : "") /> Off-Grid</label>
+                            <label class="radio-opt"><input type="radio" name="GridType" value="Hybrid" @(latest?.GridType == "Hybrid" ? "checked" : "") /> Hybrid</label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Section 3: Site Conditions -->
+            <div class="survey-section">
+                <div class="survey-section-title">
+                    <span class="survey-section-num">3</span> Site Conditions
+                </div>
+
+                <div class="fr">
+                    <div class="fc">
+                        <label class="fl req">Shadow on Roof?</label>
+                        <div class="radio-row">
+                            <label class="radio-opt"><input type="radio" name="ShadowOnRoof" value="No" @(latest?.ShadowOnRoof == "No" ? "checked" : "") required /> No</label>
+                            <label class="radio-opt"><input type="radio" name="ShadowOnRoof" value="Partial" @(latest?.ShadowOnRoof == "Partial" ? "checked" : "") /> Partial</label>
+                            <label class="radio-opt"><input type="radio" name="ShadowOnRoof" value="Yes" @(latest?.ShadowOnRoof == "Yes" ? "checked" : "") /> Yes</label>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="fr">
+                    <div class="fc">
+                        <label class="fl">Obstructions / Nearby Structures (tick all that apply)</label>
+                        @{
+                            var obs = (latest?.Obstructions ?? "").Split(',', StringSplitOptions.RemoveEmptyEntries);
+                        }
+                        <div class="radio-row">
+                            <label class="radio-opt"><input type="checkbox" name="Obstructions" value="PaaniTanki" @(obs.Contains("PaaniTanki") ? "checked" : "") /> Paani Tanki (Water Tank)</label>
+                            <label class="radio-opt"><input type="checkbox" name="Obstructions" value="Makan" @(obs.Contains("Makan") ? "checked" : "") /> Makan (Building)</label>
+                            <label class="radio-opt"><input type="checkbox" name="Obstructions" value="MeterArea" @(obs.Contains("MeterArea") ? "checked" : "") /> Meter Area</label>
+                            <label class="radio-opt"><input type="checkbox" name="Obstructions" value="Tree" @(obs.Contains("Tree") ? "checked" : "") /> Trees</label>
+                            <label class="radio-opt"><input type="checkbox" name="Obstructions" value="Pole" @(obs.Contains("Pole") ? "checked" : "") /> Electric Pole</label>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="fr">
+                    <div class="fc">
+                        <label class="fl req">Roof Facing Direction</label>
+                        <div class="radio-row">
+                            <label class="radio-opt"><input type="radio" name="RoofDirection" value="South" @(latest?.RoofDirection == "South" ? "checked" : "") required /> South</label>
+                            <label class="radio-opt"><input type="radio" name="RoofDirection" value="EastWest" @(latest?.RoofDirection == "EastWest" ? "checked" : "") /> East-West</label>
+                            <label class="radio-opt"><input type="radio" name="RoofDirection" value="Other" @(latest?.RoofDirection == "Other" ? "checked" : "") /> Other</label>
+                        </div>
+                    </div>
+                    <div class="fc">
+                        <label class="fl">If Other, specify direction</label>
+                        <input class="fi" name="RoofDirectionOther" value="@latest?.RoofDirectionOther" placeholder="e.g., South-East" />
+                    </div>
+                </div>
+
+                <div class="fr">
+                    <div class="fc">
+                        <label class="fl req">Earthing Available?</label>
+                        <div class="radio-row">
+                            <label class="radio-opt"><input type="radio" name="EarthingAvailable" value="Yes" @(latest?.EarthingAvailable == "Yes" ? "checked" : "") required /> Available</label>
+                            <label class="radio-opt"><input type="radio" name="EarthingAvailable" value="No" @(latest?.EarthingAvailable == "No" ? "checked" : "") /> Not Available</label>
+                        </div>
+                    </div>
+                    <div class="fc">
+                        <label class="fl req">Internet / WiFi Available?</label>
+                        <div class="radio-row">
+                            <label class="radio-opt"><input type="radio" name="InternetAvailable" value="Yes" @(latest?.InternetAvailable == "Yes" ? "checked" : "") required /> Yes</label>
+                            <label class="radio-opt"><input type="radio" name="InternetAvailable" value="No" @(latest?.InternetAvailable == "No" ? "checked" : "") /> No</label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Section 4: Photos -->
+            <div class="survey-section">
+                <div class="survey-section-title">
+                    <span class="survey-section-num">4</span> Photos &amp; Additional Notes
+                </div>
+
+                <div class="fr">
+                    <div class="fc">
+                        <label class="fl">Roof Photo</label>
+                        <div class="file-row">
+                            <input type="file" name="roofPhoto" accept="image/*" />
+                            <div style="font-size:11px;color:#94a3b8;margin-top:4px">JPG / PNG • Max 5 MB</div>
+                        </div>
+                    </div>
+                    <div class="fc">
+                        <label class="fl">GPS / Location Photo</label>
+                        <div class="file-row">
+                            <input type="file" name="gpsPhoto" accept="image/*" />
+                            <div style="font-size:11px;color:#94a3b8;margin-top:4px">JPG / PNG • Max 5 MB</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="fr">
+                    <div class="fc">
+                        <label class="fl">Additional Notes / Remarks</label>
+                        <textarea class="fi" name="surveyNotes" rows="3" placeholder="Anything else our team should know about your site...">@latest?.SurveyNotes</textarea>
+                    </div>
+                </div>
+            </div>
+
         </div>
-    </div>
+
+        @if (!formLocked)
+        {
+            <div class="submit-bar">
+                <button type="submit" class="btn-submit" id="submitBtn">
+                    @(isRejected ? "🔄 Re-Submit Site Survey" : "✓ Submit Site Survey")
+                </button>
+            </div>
+        }
+        </fieldset>
+    </form>
 </div>
 
 @section Scripts {
-<script>
-$('#surveyForm').on('submit', function (e) {
-    e.preventDefault();
-    const fd = new FormData(this);
-    $.ajax({
-        url: '@Url.Action("Upload", "SiteSurvey")',
-        type: 'POST',
-        data: fd,
-        processData: false,
-        contentType: false,
-        success: function (r) {
-            alert(r.message);
-            if (r.success) window.location.href = '@Url.Action("Status", "SolarRequest", new { id = req.Id })';
-        },
-        error: function () { alert('Upload error'); }
-    });
-});
-</script>
+    <script>
+        document.getElementById('surveyForm')?.addEventListener('submit', function (e) {
+            const btn = document.getElementById('submitBtn');
+            if (btn) { btn.disabled = true; btn.textContent = 'Submitting...'; }
+        });
+    </script>
 }

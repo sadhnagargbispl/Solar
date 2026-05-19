@@ -1,7 +1,7 @@
 namespace SolarPortal.Domain.Entities;
 
 /// <summary>
-/// READ-ONLY mapping to existing m_membermaster table in live SolfitEnergy DB.
+/// READ-ONLY mapping to existing m_membermaster table in live solfitenergy DB.
 /// Used as source of truth for USER credentials. Never altered by EF migrations.
 /// </summary>
 public class MMemberMaster

@@ -100,18 +100,28 @@ public class SolarRequestService : ISolarRequestService
 
         entity.ApprovalStatus = ApprovalStatus.Approved;
         entity.AdminNotes = notes;
-        entity.CurrentStage = ProjectStatus.ProductSelection;
+        // Do NOT rewind the stage. If user is already at Payment / PMSurvey / etc.,
+        // approval should leave them where they are. Only nudge forward from the
+        // initial stages.
+        if (entity.CurrentStage == ProjectStatus.Registration)
+            entity.CurrentStage = ProjectStatus.ProductSelection;
+
         _uow.SolarRequests.Update(entity);
         await _uow.SaveChangesAsync();
 
-        await _notificationService.CreateAsync(new CreateNotificationDto
+        // Notification is best-effort — never let it break the approve flow.
+        try
         {
-            UserId = entity.UserId,
-            SolarRequestId = entity.Id,
-            Title = "Application Approved! ✅",
-            Message = $"Your request {entity.RequestNumber} has been approved. Please proceed with product selection.",
-            NotificationType = "StatusUpdate"
-        });
+            await _notificationService.CreateAsync(new CreateNotificationDto
+            {
+                UserId = entity.UserId,
+                SolarRequestId = entity.Id,
+                Title = "Application Approved",
+                Message = "Your request " + entity.RequestNumber + " has been approved. Please proceed with the next step.",
+                NotificationType = "StatusUpdate"
+            });
+        }
+        catch { /* swallow — approve already succeeded */ }
 
         return ServiceResult<bool>.Success(true, "Request approved");
     }
@@ -127,14 +137,18 @@ public class SolarRequestService : ISolarRequestService
         _uow.SolarRequests.Update(entity);
         await _uow.SaveChangesAsync();
 
-        await _notificationService.CreateAsync(new CreateNotificationDto
+        try
         {
-            UserId = entity.UserId,
-            SolarRequestId = entity.Id,
-            Title = "Application Rejected",
-            Message = $"Your request {entity.RequestNumber} was rejected. Reason: {reason}",
-            NotificationType = "StatusUpdate"
-        });
+            await _notificationService.CreateAsync(new CreateNotificationDto
+            {
+                UserId = entity.UserId,
+                SolarRequestId = entity.Id,
+                Title = "Application Rejected",
+                Message = "Your request " + entity.RequestNumber + " was rejected. Reason: " + reason,
+                NotificationType = "StatusUpdate"
+            });
+        }
+        catch { /* swallow — reject already succeeded */ }
 
         return ServiceResult<bool>.Success(true, "Request rejected");
     }

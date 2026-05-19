@@ -68,11 +68,31 @@
                     <div class="fr">
                         <div class="fg">
                             <label asp-for="KVCapacity">Solar Type <span class="req">*</span></label>
+                            @{
+                                // Build the dropdown from the actual DB plans so the
+                                // KV value the user picks always matches a real
+                                // SolarProject row — otherwise the auto-amount lookup
+                                // silently fails and saves PlanAmount = 0.
+                                var plansList = ViewBag.Projects as IEnumerable<SolarPortal.Application.DTOs.SolarProjectDto>
+                                                ?? Enumerable.Empty<SolarPortal.Application.DTOs.SolarProjectDto>();
+                                var uniqueKvs = plansList
+                                    .Select(p => p.SolarTypeKV)
+                                    .Distinct()
+                                    .OrderBy(kv => kv)
+                                    .ToList();
+                            }
                             <select asp-for="KVCapacity" onchange="onKvChange(this.value)">
-                                <option value="1.1">1.1 kV — Domestic Small</option>
-                                <option value="3">3 kV — Standard</option>
-                                <option value="5">5 kV — Commercial Small</option>
-                                <option value="10">10 kV — Commercial Medium</option>
+                                @if (!uniqueKvs.Any())
+                                {
+                                    <option value="">-- No plans available --</option>
+                                }
+                                else
+                                {
+                                    foreach (var kv in uniqueKvs)
+                                    {
+                                        <option value="@kv">@kv kV — @(kv <= 2 ? "Domestic Small" : kv <= 5 ? "Standard" : kv <= 7 ? "Medium" : "Commercial")</option>
+                                    }
+                                }
                             </select>
                         </div>
                         <div class="fg">
@@ -161,12 +181,19 @@
         <div id="mode2Banner" class="card" style="display:none;background:#fef3c7;border-left:4px solid #f59e0b;margin-bottom:12px">
             <div style="display:flex;align-items:flex-start;gap:12px">
                 <span style="font-size:24px">⚡</span>
-                <div>
+                <div style="flex:1">
                     <div style="font-weight:600;color:#92400e;margin-bottom:4px">Only Solar — Without Activation</div>
                     <div style="color:var(--text2);font-size:13px">
-                        Project selection is skipped for this mode. Submit your details and payment — admin will
-                        approve and assign the appropriate project plan. <strong>Please select the project information
-                        from your main portal after admin approval.</strong>
+                        Pick your Solar Type and Connection Type — total amount auto-fills from the
+                        matching plan. Admin must verify your payment before the workflow advances.
+                    </div>
+                    <div id="mode2AmountBox" style="margin-top:10px;padding:10px 14px;background:#fff;border-radius:6px;border:1px solid #fcd34d;display:none">
+                        <div style="font-size:12px;color:#92400e;font-weight:500">Matched Plan</div>
+                        <div id="mode2PlanName" style="font-weight:600;color:#0f172a;margin-top:2px">—</div>
+                        <div style="display:flex;justify-content:space-between;align-items:center;margin-top:8px">
+                            <span style="font-size:12px;color:var(--text2)">Total Amount</span>
+                            <span id="mode2Amount" style="font-size:18px;font-weight:700;color:#0f172a">₹0</span>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -201,15 +228,15 @@
                                     <div class="rc"
                                          data-id="@p.Id"
                                          data-name="@p.Name"
-                                         data-amount="@p.TotalAmount"
+                                         data-amount="@p.ProjectAmount"
                                          data-kv="@p.SolarTypeKV"
                                          data-conn="@((int)p.ConnectionType)"
                                          onclick="selectPlanFromMaster(this)"
                                          style="text-align:left;display:flex;align-items:center;gap:12px;padding:12px">
                                         <span style="font-size:22px">@(p.ConnectionType == SolarPortal.Domain.Enums.ConnectionType.Domestic ? "🏠" : "🏢")</span>
                                         <div style="flex:1">
-                                            <div class="rcl">@p.Name — ₹@p.TotalAmount.ToString("N0")</div>
-                                            <div class="rcs">@p.SolarTypeKV kV • @p.ConnectionType • BV @p.BV → @p.FinalBV</div>
+                                            <div class="rcl">@p.Name — ₹@p.ProjectAmount.ToString("N0")</div>
+                                            <div class="rcs">@p.SolarTypeKV kV • @p.ConnectionType</div>
                                         </div>
                                     </div>
                                 }
@@ -286,7 +313,9 @@
                     </div>
                     <div class="fg">
                         <label asp-for="PaymentUTR">UTR / Transaction No. <span class="req">*</span></label>
-                        <input asp-for="PaymentUTR" maxlength="50" placeholder="UTR / TXN ID" />
+                        <input asp-for="PaymentUTR" id="paymentUtrInput" maxlength="50" placeholder="UTR / TXN ID" autocomplete="off" />
+                        <span asp-validation-for="PaymentUTR" class="hint" style="color:var(--danger)"></span>
+                        <div id="utrCheckMsg" class="hint" style="margin-top:4px;font-size:12px"></div>
                     </div>
                 </div>
                 <div class="fr">
@@ -392,13 +421,17 @@
             // Sync the kv + connection-type form fields too
             const kvSel = document.querySelector('[name="KVCapacity"]');
             if (kvSel) kvSel.value = kv;
-            const connSel = document.querySelector('[name="ConnectionType"]');
-            if (connSel) connSel.value = conn;
+            // NOTE: Intentionally do NOT overwrite ConnectionType when a plan is
+            // clicked — the user has already made an explicit choice (Domestic /
+            // Commercial). Overwriting it would silently change their selection.
             // Update summary card
             document.getElementById('planAmountDisplay').textContent = '₹' + amount.toLocaleString('en-IN');
             document.getElementById('selectedPlanDisplay').textContent = name;
             document.getElementById('kvDisplay').textContent = kv + ' kV';
-            document.getElementById('connTypeDisplay').textContent = conn === '1' ? 'Domestic' : 'Commercial';
+            // Reflect the user's chosen ConnectionType (not the plan's) since we no
+            // longer overwrite the dropdown when a plan card is clicked.
+            const curConn = document.querySelector('[name="ConnectionType"]')?.value || conn;
+            document.getElementById('connTypeDisplay').textContent = curConn === '1' ? 'Domestic' : 'Commercial';
         }
 
         // === Plans master data embedded for client-side amount lookup ===
@@ -407,7 +440,7 @@
         const PLANS = [
 @foreach (var p in projects)
 {
-            <text>{ id: @p.Id, name: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(p.Name)), kv: @p.SolarTypeKV.ToString(System.Globalization.CultureInfo.InvariantCulture), conn: @((int)p.ConnectionType), amount: @p.TotalAmount.ToString(System.Globalization.CultureInfo.InvariantCulture) },</text>
+            <text>{ id: @p.Id, name: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(p.Name)), kv: @p.SolarTypeKV.ToString(System.Globalization.CultureInfo.InvariantCulture), conn: @((int)p.ConnectionType), amount: @p.ProjectAmount.ToString(System.Globalization.CultureInfo.InvariantCulture) },</text>
 }
         ];
 
@@ -424,7 +457,12 @@
 
         function applyFetchedPlan() {
             const m = fetchMatchingPlan();
-            if (!m) return;
+            if (!m) {
+                // Nothing matched — clear the Mode 2 live amount box if visible
+                const m2box = document.getElementById('mode2AmountBox');
+                if (m2box) m2box.style.display = 'none';
+                return;
+            }
             // Update hidden inputs so backend gets the correct values
             document.getElementById('solarProjectIdInput').value = m.id;
             document.getElementById('selectedPlanInput').value = m.name;
@@ -442,6 +480,16 @@
             // Update payment max
             const payAmt = document.getElementById('paymentAmountInput');
             if (payAmt) payAmt.setAttribute('max', m.amount);
+
+            // Mode 2 live amount box
+            const m2box  = document.getElementById('mode2AmountBox');
+            const m2name = document.getElementById('mode2PlanName');
+            const m2amt  = document.getElementById('mode2Amount');
+            if (m2box) {
+                m2box.style.display = 'block';
+                if (m2name) m2name.textContent = m.name + (m.conn === 1 ? ' (Domestic)' : ' (Commercial)');
+                if (m2amt)  m2amt.textContent  = '₹' + Number(m.amount).toLocaleString('en-IN');
+            }
         }
 
         function onKvChange(kv) {
@@ -544,6 +592,52 @@
             // Fire once at startup so Project Amount populates even when user
             // hasn't touched the KV / Connection Type selectors yet.
             applyFetchedPlan();
+
+            // ── UTR real-time availability check ─────────────────────────
+            // When the user types a UTR and tabs away, ping the server. If the
+            // UTR exists in walletreq.chqno or Payments.UTRNumber, show an
+            // inline error so they can fix it before submit.
+            const utrInput = document.getElementById('paymentUtrInput');
+            const utrMsg   = document.getElementById('utrCheckMsg');
+            let utrTimer   = null;
+
+            function runUtrCheck() {
+                if (!utrInput || !utrMsg) return;
+                const v = (utrInput.value || '').trim();
+                if (!v) { utrMsg.textContent = ''; utrInput.style.borderColor = ''; return; }
+
+                utrMsg.style.color = '#64748b';
+                utrMsg.textContent = 'Checking UTR…';
+
+                fetch('@Url.Action("CheckUtr", "SolarRequest", new { area = "SolarPanelUserPanel" })?utr=' + encodeURIComponent(v))
+                    .then(r => r.json())
+                    .then(data => {
+                        if (data.available) {
+                            utrMsg.style.color = '#16a34a';
+                            utrMsg.textContent = '✓ UTR is available.';
+                            utrInput.style.borderColor = '#16a34a';
+                        } else {
+                            utrMsg.style.color = '#dc2626';
+                            utrMsg.textContent = '✗ ' + (data.message || 'This UTR is already used. Please use a different one.');
+                            utrInput.style.borderColor = '#dc2626';
+                        }
+                    })
+                    .catch(() => {
+                        utrMsg.textContent = '';
+                        utrInput.style.borderColor = '';
+                    });
+            }
+
+            if (utrInput) {
+                // Run on blur (when user tabs away) and 600ms after typing stops
+                utrInput.addEventListener('blur', runUtrCheck);
+                utrInput.addEventListener('input', () => {
+                    clearTimeout(utrTimer);
+                    utrMsg.textContent = '';
+                    utrInput.style.borderColor = '';
+                    utrTimer = setTimeout(runUtrCheck, 600);
+                });
+            }
         });
     </script>
 }

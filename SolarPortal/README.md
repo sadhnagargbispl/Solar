@@ -18,7 +18,7 @@ try-catch so the app won't crash; you'll just see warnings.
 
 # SolarPortal — User Site (Hybrid Live DB Login)
 
-Standalone User deploy. Logs users in from your live SolfitEnergy
+Standalone User deploy. Logs users in from your live solfitenergy
 database via a bridge layer; everything else works as before.
 
 ## Login

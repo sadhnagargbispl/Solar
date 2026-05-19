@@ -1,8 +1,10 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using SolarPortal.Application.Interfaces.Services;
 using SolarPortal.Domain.Entities;
+using SolarPortal.Infrastructure.Data;
 using SolarPortal.Web.ViewModels;
 
 namespace SolarPortal.Web.Controllers;
@@ -13,17 +15,20 @@ public class AccountController : Controller
     private readonly UserManager<ApplicationUser> _userManager;
     private readonly SignInManager<ApplicationUser> _signInManager;
     private readonly ILiveDbAuthBridge _liveDbBridge;
+    private readonly ApplicationDbContext _db;
     private readonly ILogger<AccountController> _logger;
 
     public AccountController(
         UserManager<ApplicationUser> userManager,
         SignInManager<ApplicationUser> signInManager,
         ILiveDbAuthBridge liveDbBridge,
+        ApplicationDbContext db,
         ILogger<AccountController> logger)
     {
         _userManager = userManager;
         _signInManager = signInManager;
         _liveDbBridge = liveDbBridge;
+        _db = db;
         _logger = logger;
     }
 
@@ -45,44 +50,50 @@ public class AccountController : Controller
             return View(model);
 
         // ─── LiveDB bridge ────────────────────────────────────────────────
-        // If the user typed an IdNo from m_membermaster, the bridge will:
-        //   1) verify credentials against the live table
-        //   2) auto-create / refresh an Identity user with the same password
-        //   3) return the synthetic email we should use to sign in
-        // If the bridge returns null, we fall through to the existing Identity
-        // path (so demo/legacy accounts still work).
-        var bridgedEmail = await _liveDbBridge.TryBridgeUserAsync(model.Email, model.Password);
+        // Bridge verifies against m_membermaster and returns a loaded
+        // ApplicationUser (via raw ADO.NET) or null. We DO NOT call
+        // UserManager.FindByEmailAsync because EF Core's model cache can
+        // produce stale SQL that fails against the live DB schema.
+        var bridgedUser = await _liveDbBridge.TryBridgeUserAsync(model.Email, model.Password);
 
         ApplicationUser? user;
-        Microsoft.AspNetCore.Identity.SignInResult result;
 
-        if (bridgedEmail != null)
+        if (bridgedUser != null)
         {
             // Bridge already verified credentials against m_membermaster.
-            // Sign the user in DIRECTLY (no PasswordSignInAsync) to avoid the
-            // Identity ArgumentOutOfRangeException(millisecondsDelay) bug that
-            // can be thrown by the anti-timing-attack delay on first login.
-            user = await _userManager.FindByEmailAsync(bridgedEmail);
-            if (user == null)
-            {
-                ModelState.AddModelError(string.Empty, "Sign-in failed. Try again.");
-                return View(model);
-            }
+            // Sign the user in DIRECTLY (no PasswordSignInAsync).
+            user = bridgedUser;
             await _signInManager.SignInAsync(user, isPersistent: model.RememberMe);
-            result = Microsoft.AspNetCore.Identity.SignInResult.Success;
-        }
-        else
-        {
-            // Fall back to standard Identity flow for non-live-DB accounts.
-            user = await _userManager.FindByEmailAsync(model.Email);
-            if (user == null || !user.IsActive)
+
+            _logger.LogInformation("User {Email} logged in via live DB bridge.", model.Email);
+
+            // Auto-create a SolarRequest on first login.
+            // The user is registered in m_membermaster, so Registration is
+            // marked as already done. CurrentStage is set to ProductSelection
+            // so the user picks their solar plan as the next step. Remaining
+            // stages (Payment, Site Survey, etc.) are completed manually.
+            var hasAnyRequest = await _db.SolarRequests
+                .AsNoTracking()
+                .AnyAsync(r => r.UserId == user.Id);
+
+            if (!hasAnyRequest)
             {
-                ModelState.AddModelError(string.Empty, "Invalid login attempt.");
-                return View(model);
+                await AutoCreateSolarRequestAsync(user.Id, model.Email);
             }
-            result = await _signInManager.PasswordSignInAsync(
-                model.Email, model.Password, model.RememberMe, lockoutOnFailure: false);
+
+            return RedirectToAction("Index", "Dashboard", new { area = "SolarPanelUserPanel" });
         }
+
+        // ─── Fallback to standard Identity flow for legacy demo accounts ──
+        user = await _userManager.FindByEmailAsync(model.Email);
+        if (user == null || !user.IsActive)
+        {
+            ModelState.AddModelError(string.Empty, "Invalid login attempt.");
+            return View(model);
+        }
+
+        var result = await _signInManager.PasswordSignInAsync(
+            model.Email, model.Password, model.RememberMe, lockoutOnFailure: false);
 
         if (result.Succeeded)
         {
@@ -194,4 +205,72 @@ public class AccountController : Controller
 
     [HttpGet]
     public IActionResult AccessDenied() => View();
+
+    // ────────────────────────────────────────────────────────────────────
+    // Auto-create SolarRequest on first login.
+    // Registration data comes from m_membermaster (already filled), so
+    // the new request starts at the ProductSelection stage. The user then
+    // continues through Payment, Site Survey, etc. manually.
+    // ────────────────────────────────────────────────────────────────────
+    private async Task AutoCreateSolarRequestAsync(string userId, string idNo)
+    {
+        try
+        {
+            // 1. Fetch member profile from m_membermaster.
+            //    Do NOT call .Trim() inside LINQ — EF Core translates it to SQL
+            //    TRIM() which fails on older SQL Server. Match on the raw value
+            //    using a pre-trimmed local variable.
+            var idNoTrimmed = idNo?.Trim() ?? string.Empty;
+            var member = await _db.Members
+                .AsNoTracking()
+                .FirstOrDefaultAsync(m => m.IdNo != null && m.IdNo == idNoTrimmed);
+
+            if (member == null)
+            {
+                _logger.LogWarning("Auto-create skipped — no m_membermaster row for {IdNo}", idNo);
+                return;
+            }
+
+            // 2. Generate a request number (SCR-001, SCR-002, ...)
+            var existingCount = await _db.SolarRequests.CountAsync();
+            var requestNumber = $"SCR-{(existingCount + 1):D3}";
+
+            // 3. Build the SolarRequest with Payment stage (skip Registration + ProductSelection)
+            var request = new SolarPortal.Domain.Entities.SolarRequest
+            {
+                RequestNumber  = requestNumber,
+                UserId         = userId,
+                ApplicantName  = member.FullName,
+                MobileNumber   = member.Mobl?.ToString() ?? string.Empty,
+                Email          = member.EMail ?? string.Empty,
+                Address        = member.Address1 ?? string.Empty,
+                City           = member.City ?? string.Empty,
+                State          = "Rajasthan",  // adjust if you have state mapping
+                PinCode        = member.PinCode ?? string.Empty,
+                AadharNumber   = member.AadharNo,
+                PANNumber      = member.PanNo,
+                RequestType    = SolarPortal.Domain.Enums.RequestType.WithActivation,
+                ConnectionType = SolarPortal.Domain.Enums.ConnectionType.Domestic,
+                KVCapacity     = 0m,
+                PlanAmount     = 0m,
+                CurrentStage   = SolarPortal.Domain.Enums.ProjectStatus.ProductSelection,   // ← Registration done, user does Product Selection next
+                ApprovalStatus = SolarPortal.Domain.Enums.ApprovalStatus.Pending,
+                CreatedAt      = DateTime.UtcNow,
+                CreatedBy      = userId,
+                IsDeleted      = false
+            };
+
+            _db.SolarRequests.Add(request);
+            await _db.SaveChangesAsync();
+
+            _logger.LogInformation(
+                "Auto-created SolarRequest {Num} for user {IdNo} at Payment stage.",
+                requestNumber, idNo);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Auto-create SolarRequest failed for {IdNo}", idNo);
+            // Non-fatal — user is signed in regardless. They can create a request manually.
+        }
+    }
 }

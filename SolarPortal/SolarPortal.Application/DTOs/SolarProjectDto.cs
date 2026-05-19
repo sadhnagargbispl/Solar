@@ -15,6 +15,7 @@ public class SolarProjectDto
     public decimal SCZMenue { get; set; }
     public decimal SportainTeam { get; set; }
     public decimal TotalAmount { get; set; }
+    public decimal ProjectAmount { get; set; }   // shown to user (e.g., 1 kW = ₹10,000)
     public bool IsActive { get; set; }
     public DateTime CreatedAt { get; set; }
 }
@@ -31,5 +32,6 @@ public class CreateSolarProjectDto
     public decimal SCZMenue { get; set; }
     public decimal SportainTeam { get; set; }
     public decimal TotalAmount { get; set; }
+    public decimal ProjectAmount { get; set; }
     public bool IsActive { get; set; } = true;
 }

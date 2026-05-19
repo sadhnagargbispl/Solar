@@ -55,6 +55,10 @@ else
                         {
                             case SolarPortal.Domain.Enums.ProjectStatus.Registration:
                             case SolarPortal.Domain.Enums.ProjectStatus.ProductSelection:
+                                <h6>🛒 Select Plan & Make Payment</h6>
+                                <p class="text-muted" style="font-size:13px">Choose your solar kit (1 kW, 2 kW, etc.) and submit your first payment. <strong>Admin must verify</strong> before workflow advances.</p>
+                                <a class="btn btn-p btn-full" asp-action="Create">Solar Request & Payment</a>
+                                break;
                             case SolarPortal.Domain.Enums.ProjectStatus.Payment:
                                 <h6>💰 Make a Payment</h6>
                                 <p class="text-muted" style="font-size:13px">Submit at least ₹@minVal.ToString("N0") cumulative. <strong>Admin must verify</strong> before workflow advances.</p>
@@ -129,7 +133,21 @@ else
                     <div class="sr"><span class="srk">Plan</span><span class="srv">@Model.SelectedPlan</span></div>
                     <div class="sr"><span class="srk">Capacity</span><span class="srv">@Model.KVCapacity kV</span></div>
                     <div class="sr"><span class="srk">Connection</span><span class="srv">@Model.ConnectionType</span></div>
-                    <div class="sr"><span class="srk">Total Amount</span><span class="srv">₹@Model.RequestedAmount.ToString("N0")</span></div>
+                    @{
+                        decimal paidVerified  = 0m;
+                        decimal submittedTotal = 0m;
+                        try { paidVerified  = (decimal)(ViewBag.VerifiedPaid   ?? 0m); } catch { }
+                        try { submittedTotal = (decimal)(ViewBag.TotalSubmitted ?? 0m); } catch { }
+                        var totalAmt  = Model.RequestedAmount;
+                        var remaining = totalAmt > paidVerified ? totalAmt - paidVerified : 0m;
+                    }
+                    <div class="sr"><span class="srk">Total Amount</span><span class="srv">₹@totalAmt.ToString("N0")</span></div>
+                    <div class="sr"><span class="srk">Paid (Verified)</span><span class="srv" style="color:var(--green)">₹@paidVerified.ToString("N0")</span></div>
+                    @if (submittedTotal > paidVerified)
+                    {
+                        <div class="sr"><span class="srk">Submitted (Pending)</span><span class="srv" style="color:#d97706">₹@((submittedTotal - paidVerified).ToString("N0"))</span></div>
+                    }
+                    <div class="sr"><span class="srk">Remaining Balance</span><span class="srv" style="color:#d97706;font-weight:600">₹@remaining.ToString("N0")</span></div>
                     <div class="sr"><span class="srk">Stage</span><span class="srv"><span class="sts @StageStsClass(Model.CurrentStage)">@Model.CurrentStage</span></span></div>
                     <div class="sr"><span class="srk">Approval</span><span class="srv"><span class="sts @ApprovalStsClass(Model.ApprovalStatus)">@Model.ApprovalStatus</span></span></div>
                 </div>

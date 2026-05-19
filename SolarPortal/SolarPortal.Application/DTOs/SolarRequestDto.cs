@@ -14,6 +14,8 @@ public class SolarRequestDto
     public string City { get; set; } = string.Empty;
     public string State { get; set; } = string.Empty;
     public string PinCode { get; set; } = string.Empty;
+    public string? AadharNumber { get; set; }
+    public string? PANNumber { get; set; }
     public RequestType RequestType { get; set; }
     public ConnectionType ConnectionType { get; set; }
     public decimal KVCapacity { get; set; }
@@ -26,6 +28,7 @@ public class SolarRequestDto
     public ApprovalStatus ApprovalStatus { get; set; }
     public DateTime CreatedAt { get; set; }
     public string? UserFullName { get; set; }
+    public string? MemberFullName { get; set; }   // Live from m_membermaster (MemFirstName + MemLastName)
     public decimal TotalPaid { get; set; }
     public decimal TotalDue { get; set; }
     public List<DocumentDto> Documents { get; set; } = new();

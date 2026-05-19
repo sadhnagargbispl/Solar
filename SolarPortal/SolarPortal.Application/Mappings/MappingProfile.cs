@@ -13,6 +13,7 @@ public class MappingProfile : Profile
         CreateMap<SolarRequest, SolarRequestDto>()
             .ForMember(d => d.UserFullName,
                 o => o.MapFrom(s => s.User != null ? s.User.FullName : string.Empty))
+            .ForMember(d => d.MemberFullName, o => o.Ignore())   // populated by admin controllers via EnrichMemberNamesAsync
             .ForMember(d => d.RequestedAmount, o => o.MapFrom(s => s.PlanAmount))
             .ForMember(d => d.ApprovedAmount,
                 o => o.MapFrom(s => s.ApprovalStatus == ApprovalStatus.Approved ? s.PlanAmount : 0m))

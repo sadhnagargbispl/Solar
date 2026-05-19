@@ -37,6 +37,8 @@
 
             @{
                 var paidMap = (Dictionary<int, decimal>)(ViewBag.PaidMap ?? new Dictionary<int, decimal>());
+                var imagesMap = (Dictionary<int, List<(string url, string label)>>)(ViewBag.ImagesMap
+                                ?? new Dictionary<int, List<(string url, string label)>>());
                 var sumTotal   = Model.Sum(p => p.RequestedAmount);
                 var sumPaid    = paidMap.Values.Sum();
                 var sumDue     = Math.Max(0, sumTotal - sumPaid);
@@ -74,6 +76,7 @@
                             <th>Type</th>
                             <th>kV</th>
                             <th>Plan</th>
+                            <th>Images</th>
                             <th style="text-align:right">Total Amount</th>
                             <th style="text-align:right">Total Paid</th>
                             <th style="text-align:right">Remaining</th>
@@ -96,6 +99,31 @@
                                 <td>@p.ConnectionType</td>
                                 <td>@p.KVCapacity kV</td>
                                 <td style="font-size:12.5px">@(p.SelectedPlan ?? "—")</td>
+                                <td>
+                                    @{
+                                        var imgs = imagesMap.TryGetValue(p.Id, out var li) ? li : new List<(string url, string label)>();
+                                    }
+                                    @if (imgs.Count == 0)
+                                    {
+                                        <span style="color:#94a3b8;font-size:12px">—</span>
+                                    }
+                                    else
+                                    {
+                                        <div style="display:flex;gap:4px;align-items:center">
+                                            @foreach (var (url, label) in imgs.Take(3))
+                                            {
+                                                <img src="@url" alt="@label" title="@label"
+                                                     class="proj-thumb"
+                                                     data-url="@url" data-label="@label"
+                                                     style="width:36px;height:36px;object-fit:cover;border-radius:4px;border:1px solid #cbd5e1;cursor:pointer" />
+                                            }
+                                            @if (imgs.Count > 3)
+                                            {
+                                                <span style="font-size:11px;color:#64748b;background:#f1f5f9;padding:2px 6px;border-radius:10px">+@(imgs.Count - 3)</span>
+                                            }
+                                        </div>
+                                    }
+                                </td>
                                 <td style="text-align:right;color:var(--accent);font-weight:600">₹@p.RequestedAmount.ToString("N0")</td>
                                 <td style="text-align:right;color:var(--green);font-weight:600">₹@paid.ToString("N0")</td>
                                 <td style="text-align:right;color:@(due > 0 ? "var(--danger)" : "var(--green)");font-weight:600">
@@ -146,3 +174,43 @@
         </div>
     }
 </div>
+
+<!-- Image lightbox modal -->
+<div id="imgLightbox" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.82);z-index:9999;align-items:center;justify-content:center;padding:24px"
+     onclick="closeImgLightbox(event)">
+    <div style="max-width:96vw;max-height:96vh;display:flex;flex-direction:column;align-items:center;gap:10px">
+        <div id="imgLightboxLabel" style="color:#fff;font-size:14px;font-weight:500;background:rgba(0,0,0,.4);padding:6px 14px;border-radius:14px"></div>
+        <img id="imgLightboxImg" src="" alt="" style="max-width:96vw;max-height:84vh;object-fit:contain;border-radius:6px;background:#fff" />
+        <button onclick="closeImgLightbox(event)" style="background:#fff;color:#0f172a;border:none;padding:6px 18px;border-radius:18px;font-weight:600;cursor:pointer">✕ Close</button>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        document.querySelectorAll('.proj-thumb').forEach(el => {
+            el.addEventListener('click', function () {
+                const url   = this.getAttribute('data-url');
+                const label = this.getAttribute('data-label') || '';
+                const lb    = document.getElementById('imgLightbox');
+                document.getElementById('imgLightboxImg').src    = url;
+                document.getElementById('imgLightboxLabel').textContent = label;
+                lb.style.display = 'flex';
+            });
+        });
+
+        function closeImgLightbox(e) {
+            // Only close when clicking the backdrop / close button, not the image itself
+            if (e && e.target && (e.target.tagName === 'IMG' && e.target.id !== 'imgLightboxImg' === false)) {
+                if (e.target.id === 'imgLightboxImg') return;
+            }
+            document.getElementById('imgLightbox').style.display = 'none';
+        }
+
+        // Esc key closes lightbox
+        document.addEventListener('keydown', function (e) {
+            if (e.key === 'Escape') {
+                document.getElementById('imgLightbox').style.display = 'none';
+            }
+        });
+    </script>
+}

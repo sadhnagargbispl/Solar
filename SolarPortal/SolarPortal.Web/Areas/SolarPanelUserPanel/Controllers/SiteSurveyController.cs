@@ -85,31 +85,60 @@ public class SiteSurveyController : Controller
         return File(bytes, "text/html", fileName);
     }
 
-    // POST: /User/SiteSurvey/Upload (AJAX)
+    // POST: /User/SiteSurvey/Upload — saves filled SOLFIT survey form
     [HttpPost]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Upload(
         int requestId,
+        // ── Section 1: General ──
+        string? PropertyType,
+        string? RoofAvailable,
+        string? RoofType,
+        string? RoofTypeOther,
+        decimal? RoofTotalAreaSqft,
+        // ── Section 2: Electrical ──
+        string? DiscomName,
+        string? ConsumerNumber,
+        string? MeterType,
+        string? GridType,
+        // ── Section 3: Site Conditions ──
+        string? ShadowOnRoof,
+        string[]? Obstructions,
+        string? RoofDirection,
+        string? RoofDirectionOther,
+        string? EarthingAvailable,
+        string? InternetAvailable,
+        // ── Section 4: Photos & Notes ──
         string? surveyNotes,
-        IFormFile? filledForm,
         IFormFile? roofPhoto,
         IFormFile? gpsPhoto)
     {
         var userId = _userManager.GetUserId(User)!;
         var req = await _uow.SolarRequests.GetByIdAsync(requestId);
         if (req == null || req.UserId != userId)
-            return Json(new { success = false, message = "Request not found" });
-
-        if (filledForm == null && roofPhoto == null && gpsPhoto == null)
-            return Json(new { success = false, message = "Please attach at least the filled form." });
-
-        string? formPath = null, roofPath = null, gpsPath = null;
-
-        if (filledForm != null)
         {
-            var (ok, path, _) = await _fileUpload.UploadAsync(filledForm, $"sitesurvey/{requestId}");
-            if (ok) formPath = path;
+            TempData["Error"] = "Request not found.";
+            return RedirectToAction("Index");
         }
+
+        // Required-field server-side check (defence-in-depth alongside HTML required)
+        if (string.IsNullOrWhiteSpace(PropertyType) ||
+            string.IsNullOrWhiteSpace(RoofAvailable) ||
+            string.IsNullOrWhiteSpace(RoofType) ||
+            string.IsNullOrWhiteSpace(DiscomName) ||
+            string.IsNullOrWhiteSpace(ConsumerNumber) ||
+            string.IsNullOrWhiteSpace(MeterType) ||
+            string.IsNullOrWhiteSpace(GridType) ||
+            string.IsNullOrWhiteSpace(ShadowOnRoof) ||
+            string.IsNullOrWhiteSpace(RoofDirection) ||
+            string.IsNullOrWhiteSpace(EarthingAvailable) ||
+            string.IsNullOrWhiteSpace(InternetAvailable))
+        {
+            TempData["Error"] = "Please fill in all required fields before submitting the survey.";
+            return RedirectToAction("Index", new { id = requestId });
+        }
+
+        string? roofPath = null, gpsPath = null;
         if (roofPhoto != null)
         {
             var (ok, path, _) = await _fileUpload.UploadAsync(roofPhoto, $"sitesurvey/{requestId}/roof");
@@ -121,21 +150,74 @@ public class SiteSurveyController : Controller
             if (ok) gpsPath = path;
         }
 
-        // Combine photo paths into SurveyPhotoPath (semicolon separated) and notes
-        var combinedPhotoPath = string.Join(";",
-            new[] { formPath, roofPath, gpsPath }.Where(p => !string.IsNullOrWhiteSpace(p))!);
+        var obstructionsCsv = Obstructions != null && Obstructions.Length > 0
+            ? string.Join(",", Obstructions)
+            : null;
 
-        var survey = new SiteSurvey
+        // Upsert pattern — if a non-approved survey already exists for this request,
+        // update it; otherwise create a new row.
+        var existing = (await _uow.SiteSurveys
+                            .FindAsync(s => s.SolarRequestId == requestId && !s.IsCompleted))
+                       .OrderByDescending(s => s.CreatedAt)
+                       .FirstOrDefault();
+
+        if (existing != null)
         {
-            SolarRequestId = requestId,
-            AssignedToUserId = userId,
-            SurveyDate = DateTime.UtcNow,
-            SurveyNotes = surveyNotes,
-            SurveyPhotoPath = combinedPhotoPath,
-            IsCompleted = false // admin must approve
-        };
-        await _uow.SiteSurveys.AddAsync(survey);
-        await _uow.SaveChangesAsync();
+            existing.PropertyType        = PropertyType;
+            existing.RoofAvailable       = RoofAvailable;
+            existing.RoofType            = RoofType;
+            existing.RoofTypeOther       = RoofTypeOther;
+            existing.RoofTotalAreaSqft   = RoofTotalAreaSqft;
+            existing.DiscomName          = DiscomName;
+            existing.ConsumerNumber      = ConsumerNumber;
+            existing.MeterType           = MeterType;
+            existing.GridType            = GridType;
+            existing.ShadowOnRoof        = ShadowOnRoof;
+            existing.Obstructions        = obstructionsCsv;
+            existing.RoofDirection       = RoofDirection;
+            existing.RoofDirectionOther  = RoofDirectionOther;
+            existing.EarthingAvailable   = EarthingAvailable;
+            existing.InternetAvailable   = InternetAvailable;
+            existing.SurveyNotes         = surveyNotes;
+            if (roofPath != null) existing.RoofPhotoPath = roofPath;
+            if (gpsPath  != null) existing.GpsPhotoPath  = gpsPath;
+            existing.OperationsRemark    = null;  // clear prior reject reason — this is a fresh re-submission
+            existing.UpdatedAt           = DateTime.UtcNow;
+            existing.UpdatedBy           = userId;
+            await _uow.SaveChangesAsync();
+        }
+        else
+        {
+            var survey = new SiteSurvey
+            {
+                SolarRequestId       = requestId,
+                AssignedToUserId     = userId,
+                SurveyDate           = DateTime.UtcNow,
+                PropertyType         = PropertyType,
+                RoofAvailable        = RoofAvailable,
+                RoofType             = RoofType,
+                RoofTypeOther        = RoofTypeOther,
+                RoofTotalAreaSqft    = RoofTotalAreaSqft,
+                DiscomName           = DiscomName,
+                ConsumerNumber       = ConsumerNumber,
+                MeterType            = MeterType,
+                GridType             = GridType,
+                ShadowOnRoof         = ShadowOnRoof,
+                Obstructions         = obstructionsCsv,
+                RoofDirection        = RoofDirection,
+                RoofDirectionOther   = RoofDirectionOther,
+                EarthingAvailable    = EarthingAvailable,
+                InternetAvailable    = InternetAvailable,
+                SurveyNotes          = surveyNotes,
+                RoofPhotoPath        = roofPath,
+                GpsPhotoPath         = gpsPath,
+                IsCompleted          = false,  // admin must approve
+                CreatedAt            = DateTime.UtcNow,
+                CreatedBy            = userId
+            };
+            await _uow.SiteSurveys.AddAsync(survey);
+            await _uow.SaveChangesAsync();
+        }
 
         await _notifications.CreateAsync(new CreateNotificationDto
         {
@@ -146,7 +228,8 @@ public class SiteSurveyController : Controller
             NotificationType = "SiteSurvey"
         });
 
-        return Json(new { success = true, message = "Survey submitted. Awaiting admin approval." });
+        TempData["Success"] = "Site survey submitted successfully. Awaiting admin approval.";
+        return RedirectToAction("Index", "Dashboard");
     }
 
     private static string BuildSurveyFormHtml(SolarRequest req)

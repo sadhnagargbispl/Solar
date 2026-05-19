@@ -60,3 +60,11 @@ wwwroot\lib\jquery\LICENSE.txt
 wwwroot\lib\jquery\dist\jquery.js
 wwwroot\lib\jquery\dist\jquery.min.js
 wwwroot\lib\jquery\dist\jquery.min.map
+wwwroot\uploads\payments\b12b5b85-fa66-48d9-8ca5-43996624ae60.jpg
+wwwroot\uploads\pmsurya\5\075fe29d-9595-4f7a-8eb6-5958df965a4f.jpg
+wwwroot\uploads\pmsurya\5\1d09c08c-446a-4a3e-9f7e-925fdebe2e37.jpg
+wwwroot\uploads\pmsurya\5\23bf2095-57c0-4e33-b913-0364a7f5c4cc.jpg
+wwwroot\uploads\pmsurya\5\2c61d322-c78d-4f81-bd3b-c4af92951227.jpg
+wwwroot\uploads\pmsurya\5\6ad0851d-2fd3-4d1a-b0f4-3c9ada6e04bd.jpg
+wwwroot\uploads\pmsurya\5\a391dd61-23d9-4114-95b3-c25dc1bb110a.jpg
+wwwroot\uploads\pmsurya\5\c21e17e3-d50a-4b28-b649-cef07a954a9a.jpg

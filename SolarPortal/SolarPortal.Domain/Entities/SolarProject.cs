@@ -14,7 +14,8 @@ public class SolarProject : BaseEntity
     public decimal DealClose { get; set; }                 // ₹1500
     public decimal SCZMenue { get; set; }                  // ₹3000
     public decimal SportainTeam { get; set; }              // ₹3000
-    public decimal TotalAmount { get; set; }               // computed total / sale price
+    public decimal TotalAmount { get; set; }               // computed total / sale price (internal, not shown to user)
+    public decimal ProjectAmount { get; set; }             // amount shown to user as "Project Amount" (e.g., 1 kW = ₹10,000)
     public bool IsActive { get; set; } = true;
 
     public virtual ICollection<SolarRequest> Requests { get; set; } = new List<SolarRequest>();
