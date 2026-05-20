@@ -54,7 +54,22 @@ builder.Services.ConfigureApplicationCookie(options =>
 
 var app = builder.Build();
 
-if (!app.Environment.IsDevelopment())
+// Per-environment exception handling.
+//
+// In Development we use ASP.NET's built-in DeveloperExceptionPage so the
+// developer sees the full stack trace, source code, route values, etc.
+// Our custom ExceptionHandlingMiddleware is for Production — it shows a
+// friendly error page and tries to keep the user inside the app.
+//
+// Putting custom middleware in front of DeveloperExceptionPage was masking
+// the underlying error and (worse) trying to set headers after the response
+// had started — producing "Headers are read-only" / "StatusCode cannot be
+// set" exceptions in the logs.
+if (app.Environment.IsDevelopment())
+{
+    app.UseDeveloperExceptionPage();
+}
+else
 {
     app.UseExceptionHandler("/Home/Error");
     app.UseHsts();
@@ -68,8 +83,14 @@ app.UseAuthentication();
 app.UseAuthorization();
 app.UseSession();
 
-// Custom error handling middleware
-app.UseMiddleware<SolarPortal.Web.Middleware.ExceptionHandlingMiddleware>();
+// Custom error handling middleware — only meaningful in Production.
+// In Dev the DeveloperExceptionPage above wins and this is a no-op for
+// unhandled exceptions (it still catches anything that slips through and
+// has its own HasStarted-guarded fallback).
+if (!app.Environment.IsDevelopment())
+{
+    app.UseMiddleware<SolarPortal.Web.Middleware.ExceptionHandlingMiddleware>();
+}
 
 app.MapControllerRoute(
     name: "areas",

@@ -52,8 +52,13 @@
     </div>
 
     <!-- Progress bar -->
+    @* Inline color is set explicitly because Bootstrap's .progress-bar inherits
+       text color from the parent in some custom themes, which on a green
+       background can render the percentage text as black or invisible.
+       Forcing color:#fff + a font-weight guarantees readability. *@
     <div class="progress mb-4" style="height:24px;border-radius:12px">
-        <div class="progress-bar bg-success" role="progressbar" style="width:@(progress)%">
+        <div class="progress-bar bg-success" role="progressbar"
+             style="width:@(progress)%;color:#ffffff;font-weight:600;text-shadow:0 1px 2px rgba(0,0,0,0.25)">
             @progress% Complete
         </div>
     </div>

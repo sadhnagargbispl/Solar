@@ -18,7 +18,13 @@
     <title>@ViewData["Title"] — Solar Portal</title>
     <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
-    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    @*
+       Bootstrap CSS — local first, CDN fallback. Keeps the user-panel design
+       intact when wwwroot/lib was stripped from a deployment zip (libman
+       restore is the proper long-term fix).
+    *@
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css"
+          onerror="this.onerror=null;this.href='https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.2/css/bootstrap.min.css'" />
     <link rel="stylesheet" href="~/css/solar-theme.css" asp-append-version="true" />
     @await RenderSectionAsync("Styles", required: false)
 </head>
@@ -72,7 +78,12 @@
     <!-- Scripts -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/sweetalert2/11.10.5/sweetalert2.all.min.js"></script>
-    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    @*
+       Bootstrap JS bundle — local first, CDN fallback for modal/dropdown
+       support when wwwroot/lib was stripped.
+    *@
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"
+            onerror="this.onerror=null;var s=document.createElement('script');s.src='https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.2/js/bootstrap.bundle.min.js';document.head.appendChild(s);"></script>
     <script src="~/js/solar-portal.js" asp-append-version="true"></script>
     @await RenderSectionAsync("Scripts", required: false)
 

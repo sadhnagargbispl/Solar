@@ -5,54 +5,72 @@ namespace SolarPortal.Web.ViewModels;
 
 public class CreateSolarRequestViewModel
 {
-    // Step 1 - Personal
-    [Required, MaxLength(100)]
+    // === Profile-fed & legacy-data fields ===
+    // Per spec (multiple iterations):
+    //   "User n blank detail h to sab blank jaani chahiye"
+    //   "Aadhaar 12 se jyada bhi ho to le le, email PAN sab valid form mein nahi ho to bhi le le"
+    //
+    // User cannot edit these on the form (readonly from profile) and legacy data
+    // may not match any strict format. So we accept ANYTHING — blank, malformed,
+    // wrong length, invalid format. No [Required], no [Phone], no [EmailAddress],
+    // no [RegularExpression], no [MaxLength] tight bound.
+    //
+    // The MaxLength caps below are loose ceilings purely as a DB-column safety
+    // guard (so a 10,000-char paste doesn't overflow the column). They are NOT
+    // validations the user will ever hit in normal use.
+
+    [MaxLength(200)]
     [Display(Name = "Applicant Full Name")]
     public string ApplicantName { get; set; } = string.Empty;
 
-    [Required, Phone]
+    [MaxLength(30)]
     [Display(Name = "Mobile Number")]
     public string MobileNumber { get; set; } = string.Empty;
 
-    [Phone]
+    [MaxLength(30)]
     [Display(Name = "Alternate Mobile")]
     public string? AlternateMobile { get; set; }
 
-    [Required, EmailAddress]
+    [MaxLength(200)]
+    [Display(Name = "Email")]
     public string Email { get; set; } = string.Empty;
 
-    [Required]
+    [MaxLength(1000)]
     public string Address { get; set; } = string.Empty;
 
-    [Required]
+    [MaxLength(150)]
     public string City { get; set; } = string.Empty;
 
-    [Required]
+    [MaxLength(150)]
     public string State { get; set; } = string.Empty;
 
-    [Required, RegularExpression(@"^\d{6}$", ErrorMessage = "Enter valid 6-digit pin code")]
+    // No regex — empty OK, weird values OK, too-long OK (capped at MaxLength only)
+    [MaxLength(30)]
     [Display(Name = "Pin Code")]
     public string PinCode { get; set; } = string.Empty;
 
-    [RegularExpression(@"^\d{12}$", ErrorMessage = "Aadhar must be 12 digits")]
+    // Aadhaar / PAN: UI inputs removed. Hidden inputs round-trip whatever the
+    // auto-stub had. Bumped MaxLength so 12+ digit Aadhaar or non-standard PAN
+    // can pass through without error.
+    [MaxLength(50)]
     [Display(Name = "Aadhar Number")]
     public string? AadharNumber { get; set; }
 
-    [RegularExpression(@"^[A-Za-z]{5}[0-9]{4}[A-Za-z]{1}$", ErrorMessage = "Enter valid PAN (5 letters + 4 digits + 1 letter, e.g. ABCDE1234F)")]
+    [MaxLength(50)]
     [Display(Name = "PAN Number")]
     public string? PANNumber { get; set; }
 
-    // Activation Type
+    // === Activation Type ===
     [Display(Name = "Request Type")]
     public RequestType RequestType { get; set; } = RequestType.WithActivation;
 
-    // Step 2 - Product
+    // === Step 2 — Product ===
     public ConnectionType ConnectionType { get; set; } = ConnectionType.Domestic;
 
     [Display(Name = "Solar Project")]
     public int? SolarProjectId { get; set; }
 
-    [Range(0.1, 100)]
+    [Range(0, 100)]   // 0 allowed for Already Active mode where capacity is irrelevant
     [Display(Name = "KV Capacity")]
     public decimal KVCapacity { get; set; } = 1.1m;
 
@@ -63,12 +81,16 @@ public class CreateSolarRequestViewModel
     [Display(Name = "Plan Amount")]
     public decimal PlanAmount { get; set; }
 
-    // GPS Photo
+    // Legacy basic-product picker (V#SpProductDetail.ProdId). Populated by the
+    // With Activation card UI; controller re-fetches DP server-side from this id.
+    [Display(Name = "Basic Product")]
+    public int? ExternalProductId { get; set; }
+
     public IFormFile? GPSPhoto { get; set; }
 
     // === First Payment (submitted together with the request per spec) ===
-    // Payment fields are required for all 3 modes. Server enforces the effective
-    // minimum (= min(₹20,000, project amount)) and the upper cap (≤ project total).
+    // Payment fields ARE actively validated — these are user-entered values the
+    // user CAN fix. Different from the profile fields above.
     [Display(Name = "Payment Amount")]
     [Range(typeof(decimal), "1", "10000000",
         ErrorMessage = "Enter a valid payment amount.")]

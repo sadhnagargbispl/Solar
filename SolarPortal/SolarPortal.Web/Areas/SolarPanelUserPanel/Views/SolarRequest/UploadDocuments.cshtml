@@ -32,7 +32,7 @@
             {
                 <div class="fg">
                     <label>@label @if (required) { <span class="req">*</span> }</label>
-                    <div class="upload-area" onclick="triggerFile('@inputId')">
+                    <div class="upload-area">
                         <input type="file" id="@inputId" accept="image/*,.pdf"
                                onchange="previewDoc('@inputId','prev-@inputId','@docType.ToLower()')" />
                         <div class="upload-icon">@icon</div>
@@ -58,7 +58,7 @@
                 <label>Property Document <span class="req">*</span>
                     <span style="font-size:10px;color:var(--text3)">(Farad / पट्टा / Registry)</span>
                 </label>
-                <div class="upload-area" onclick="triggerFile('doc-prop')">
+                <div class="upload-area">
                     <input type="file" id="doc-prop" accept="image/*,.pdf"
                            onchange="previewSingle('doc-prop','prev-prop')" />
                     <div class="upload-icon">🏠</div>
@@ -75,7 +75,7 @@
 
             <div class="fg">
                 <label>GPS Photo <span class="req">*</span></label>
-                <div class="upload-area" onclick="triggerFile('doc-gps')">
+                <div class="upload-area">
                     <input type="file" id="doc-gps" accept="image/*"
                            onchange="previewSingle('doc-gps','prev-gps')" />
                     <div class="upload-icon">📍</div>
@@ -97,7 +97,7 @@
                     <div class="alert alert-s" style="margin-bottom:10px">
                         <span class="ai">✅</span>DCR document is required for Domestic connection.
                     </div>
-                    <div class="upload-area" onclick="triggerFile('doc-dcr')">
+                    <div class="upload-area">
                         <input type="file" id="doc-dcr" accept="image/*,.pdf"
                                onchange="previewSingle('doc-dcr','prev-dcr')" />
                         <div class="upload-icon">📄</div>

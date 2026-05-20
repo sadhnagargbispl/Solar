@@ -44,26 +44,34 @@
                     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
                         <div>
                             <div style="font-size:11px;color:#6EE7B7">Total Payable</div>
-                            <div style="font-family:Rajdhani,sans-serif;font-size:32px;font-weight:700;color:var(--green)">
+                            @* The .pay-card has a dark green background, so the big amount and
+                               row values must be WHITE / light-green — `var(--green)` here is
+                               the same dark green as the card and would render invisible. *@
+                            <div style="font-family:Rajdhani,sans-serif;font-size:32px;font-weight:700;color:#ffffff;text-shadow:0 1px 2px rgba(0,0,0,0.3)">
                                 ₹@dueAmt.ToString("N0")
                             </div>
                         </div>
                         <span style="font-size:28px">☀️</span>
                     </div>
-                    <div class="pay-row"><span class="prk">Project Amount</span><span class="prv">₹@Model.RequestedAmount.ToString("N0")</span></div>
-                    <div class="pay-row"><span class="prk">Already Submitted</span><span class="prv">₹@totalPaid.ToString("N0")</span></div>
-                    <div class="pay-row"><span class="prk" style="color:#86efac">Admin Verified</span><span class="prv" style="color:#bbf7d0">₹@verified.ToString("N0")</span></div>
-                    <div class="pay-row"><span class="prk">Minimum to Advance</span><span class="prv">₹@minimum.ToString("N0") @if(remaining > 0){<small style="color:#fecaca">(₹@remaining.ToString("N0") more)</small>}else{<small style="color:#bbf7d0">(met ✓)</small>}</span></div>
-                    <div class="pay-row" style="border-top:1px solid rgba(255,255,255,.05);padding-top:10px">
+                    <div class="pay-row">
+                        <span class="prk" style="color:#bbf7d0">Project Amount</span>
+                        <span class="prv" style="color:#ffffff;font-weight:600">₹@Model.RequestedAmount.ToString("N0")</span>
+                    </div>
+                    @* Already Submitted / Admin Verified / Minimum to Advance rows removed
+                       per spec — these were confusing the user with intermediate counters.
+                       The Due row below already shows the actionable balance. *@
+                    <div class="pay-row" style="border-top:1px solid rgba(255,255,255,.15);padding-top:10px">
                         <span class="prk" style="color:#6EE7B7;font-weight:700">Due</span>
-                        <span class="prv" style="color:var(--green);font-size:18px">₹@dueAmt.ToString("N0")</span>
+                        <span class="prv" style="color:#ffffff;font-size:18px;font-weight:700">₹@dueAmt.ToString("N0")</span>
                     </div>
                 </div>
             </div>
 
             <div class="card">
                 <div class="ct"><span class="ct-dot"></span>Add Payment</div>
-                <div class="alert alert-w"><span class="ai">⚠</span>Minimum ₹20,000 of <strong>admin-verified</strong> payment is required before the workflow advances to PM Surya Ghar. Submit your payment and admin will verify.</div>
+                @* Per spec: the "Minimum ₹20,000 admin-verified" warning was removed.
+                   The new rule (in PaymentsController) is full-payment-required for
+                   stage advance, so showing a partial-amount minimum is misleading. *@
                 <form id="paymentForm" enctype="multipart/form-data">
                     @Html.AntiForgeryToken()
                     <input type="hidden" name="SolarRequestId" value="@Model.Id" />
@@ -95,20 +103,23 @@
                         </div>
                     </div>
 
-                    <div class="fr">
-                        <div class="fg">
-                            <label>UTR / Transaction No.</label>
-                            <input type="text" name="UTRNumber" id="payUTR" placeholder="UTR / Txn ID" />
-                        </div>
-                        <div class="fg">
-                            <label>Reference Number</label>
-                            <input type="text" name="ReferenceNumber" placeholder="Cheque/DD reference" />
-                        </div>
+                    @* UTR field given full width since the Reference Number partner
+                       field was removed per spec. *@
+                    <div class="fg">
+                        <label>UTR / Transaction No.</label>
+                        <input type="text" name="UTRNumber" id="payUTR" placeholder="UTR / Txn ID" />
                     </div>
 
                     <div class="fg">
                         <label>Payment Receipt (Image / PDF) <span class="req">*</span></label>
-                        <div class="upload-area" onclick="triggerFile('payReceipt')">
+                        @* The file input is positioned absolutely over the entire
+                           upload-area (see .upload-area input[type=file] in CSS).
+                           Native click on the area picks the file. We must NOT
+                           also wire onclick=triggerFile on the parent: that would
+                           fire the picker twice (once via input bubble, once via
+                           onclick), which on some browsers makes the dialog open,
+                           close, and require a SECOND click to actually pick. *@
+                        <div class="upload-area">
                             <input type="file" name="receiptImage" id="payReceipt" accept="image/*,.pdf"
                                    onchange="previewSingle('payReceipt','pay-prev')" />
                             <div class="upload-icon">🖼️</div>

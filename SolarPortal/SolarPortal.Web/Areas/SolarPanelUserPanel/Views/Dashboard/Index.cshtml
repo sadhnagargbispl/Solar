@@ -170,8 +170,16 @@
                         <div class="sr"><span class="srk">Total Amount</span><span class="srv">@(Model.LatestProject.RequestedAmount > 0 ? "₹" + Model.LatestProject.RequestedAmount.ToString("N0") : "—")</span></div>
                     }
 
+                    @{
+                        // Per spec: jab project Completed stage pe pahunch jaaye, Approval bhi
+                        // automatically Approved dikhna chahiye — Pending nahi (kyunki project
+                        // ho hi gaya hai). This is a display-layer fix; we don't mutate DB.
+                        var lpEffectiveApproval = Model.LatestProject.CurrentStage == Domain.Enums.ProjectStatus.Completed
+                            ? Domain.Enums.ApprovalStatus.Approved
+                            : Model.LatestProject.ApprovalStatus;
+                    }
                     <div class="sr"><span class="srk">Stage</span><span class="srv"><span class="sts @StageStsClass(Model.LatestProject.CurrentStage)">@Model.LatestProject.CurrentStage</span></span></div>
-                    <div class="sr"><span class="srk">Approval</span><span class="srv"><span class="sts @ApprovalStsClass(Model.LatestProject.ApprovalStatus)">@Model.LatestProject.ApprovalStatus</span></span></div>
+                    <div class="sr"><span class="srk">Approval</span><span class="srv"><span class="sts @ApprovalStsClass(lpEffectiveApproval)">@lpEffectiveApproval</span></span></div>
                 </div>
             </div>
         </div>
@@ -188,6 +196,9 @@
                         <tbody>
                             @foreach (var p in Model.MyProjects)
                             {
+                                var pEffectiveApproval = p.CurrentStage == Domain.Enums.ProjectStatus.Completed
+                                    ? Domain.Enums.ApprovalStatus.Approved
+                                    : p.ApprovalStatus;
                                 <tr>
                                     <td class="td-b">
                                         <a asp-area="SolarPanelUserPanel" asp-controller="SolarRequest" asp-action="Details" asp-route-id="@p.Id" style="color:var(--accent)">@p.RequestNumber</a>
@@ -195,7 +206,7 @@
                                     <td>@p.ConnectionType</td>
                                     <td>@p.KVCapacity kV</td>
                                     <td><span class="sts @StageStsClass(p.CurrentStage)">@p.CurrentStage</span></td>
-                                    <td><span class="sts @ApprovalStsClass(p.ApprovalStatus)">@p.ApprovalStatus</span></td>
+                                    <td><span class="sts @ApprovalStsClass(pEffectiveApproval)">@pEffectiveApproval</span></td>
                                 </tr>
                             }
                         </tbody>
