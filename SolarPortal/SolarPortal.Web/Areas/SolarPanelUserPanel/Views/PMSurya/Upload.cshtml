@@ -55,7 +55,7 @@
                                 }
                                 @if (uploaded != null)
                                 {
-                                    <a href="~/@uploaded.FilePath" target="_blank" class="btn btn-sm btn-link">View</a>
+                                    <a href="javascript:void(0)" onclick="openFileModal('@uploaded.FilePath')" class="btn btn-sm btn-link">View</a>
                                 }
                             </div>
                         </div>
@@ -174,3 +174,6 @@ $(function () {
 </script>
 @Html.AntiForgeryToken()
 }
+
+@* In-page file preview modal (no new tab) *@
+@await Html.PartialAsync("_FileModal")

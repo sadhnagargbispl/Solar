@@ -209,6 +209,13 @@
                         </div>
                         <div class="fg">
                             <label asp-for="State">State <span class="req">*</span></label>
+                            @{
+                                // States from the legacy M_StateDivMaster table so the
+                                // dropdown matches the old SolFit system (per spec).
+                                var stateList = ViewBag.States
+                                    as List<SolarPortal.Application.Services.StateDto>
+                                    ?? new List<SolarPortal.Application.Services.StateDto>();
+                            }
                             @if (roProfile && !string.IsNullOrWhiteSpace(Model.State))
                             {
                                 <input asp-for="State" readonly="readonly" style="@roStyle" />
@@ -217,12 +224,10 @@
                             {
                                 <select asp-for="State">
                                     <option value="">Select</option>
-                                    <option>Rajasthan</option>
-                                    <option>Gujarat</option>
-                                    <option>Maharashtra</option>
-                                    <option>Uttar Pradesh</option>
-                                    <option>Madhya Pradesh</option>
-                                    <option>Delhi</option>
+                                    @foreach (var st in stateList)
+                                    {
+                                        <option value="@st.StateName" data-code="@st.StateCode">@st.StateName</option>
+                                    }
                                 </select>
                             }
                         </div>
@@ -271,11 +276,23 @@
         <div id="mode3Banner" class="card" style="display:none;background:var(--accent-light);border-left:4px solid var(--accent);margin-bottom:12px">
             <div style="display:flex;align-items:flex-start;gap:12px">
                 <span style="font-size:24px">✅</span>
-                <div>
+                <div style="flex:1">
                     <div style="font-weight:600;color:var(--accent-dark);margin-bottom:4px">Already Active — Only Request mode</div>
                     <div style="color:var(--text2);font-size:13px">
                         You already have an active Solar Account. Project selection is skipped — just submit your
                         details and payment. Admin will approve the request and link it to your existing account.
+                    </div>
+                    @* Per spec: Already Active mode bhi Without Activation jaisa
+                       Matched Plan (project name + connection + amount) dikhaye.
+                       The amount + name auto-fill from the matching kV master plan,
+                       exactly like Mode 2. populated by applyFetchedPlan(). *@
+                    <div id="mode3AmountBox" style="margin-top:10px;padding:10px 14px;background:#fff;border-radius:6px;border:1px solid var(--accent);display:none">
+                        <div style="font-size:12px;color:var(--accent-dark);font-weight:500">Matched Plan</div>
+                        <div id="mode3PlanName" style="font-weight:600;color:#0f172a;margin-top:2px">—</div>
+                        <div style="display:flex;justify-content:space-between;align-items:center;margin-top:6px">
+                            <span style="font-size:12px;color:var(--text2)">Total Amount</span>
+                            <span id="mode3Amount" style="font-size:18px;font-weight:700;color:#0f172a">₹0</span>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -312,34 +329,169 @@
                 </div>
                 @if (basicProducts.Any())
                 {
-                    <div style="display:flex;flex-direction:column;gap:8px;margin-top:6px">
+                    <div class="bp-grid">
                         @foreach (var p in basicProducts)
                         {
                             var outOfStock = p.Stock <= 0;
-                            <div class="rc basic-product-card @(outOfStock ? "out-of-stock" : "")"
+                            var saving = p.MRP - p.DP;
+                            var pct = p.MRP > 0 ? (int)Math.Round((double)(saving) / (double)p.MRP * 100) : 0;
+                            <div class="bp-card basic-product-card @(outOfStock ? "out-of-stock" : "")"
                                  data-prodid="@p.ProdId"
                                  data-name="@p.ProductName"
                                  data-dp="@p.DP.ToString(System.Globalization.CultureInfo.InvariantCulture)"
                                  data-mrp="@p.MRP.ToString(System.Globalization.CultureInfo.InvariantCulture)"
-                                 onclick="@(outOfStock ? "" : "selectBasicProduct(this)")"
-                                 style="text-align:left;display:flex;align-items:center;gap:12px;padding:12px;@(outOfStock ? "opacity:.5;cursor:not-allowed" : "")">
-                                <span style="font-size:24px">🔆</span>
-                                <div style="flex:1">
-                                    <div class="rcl">@p.ProductName</div>
-                                    <div class="rcs" style="margin-top:2px">
-                                        <span style="color:var(--text2);text-decoration:line-through;font-size:12px">MRP ₹@p.MRP.ToString("N0")</span>
-                                        <span style="color:var(--green);font-weight:700;margin-left:8px">DP ₹@p.DP.ToString("N0")</span>
-                                        @if (outOfStock)
-                                        {
-                                            <span style="color:#dc2626;margin-left:8px;font-size:11px">Out of stock</span>
-                                        }
-                                    </div>
+                                 onclick="@(outOfStock ? "" : "selectBasicProduct(this)")">
+                                @if (!outOfStock && pct > 0)
+                                {
+                                    <span class="bp-badge">@pct% OFF</span>
+                                }
+                                <div class="bp-tick basic-product-tick">✓</div>
+                                <div class="bp-icon">🔆</div>
+                                <div class="bp-name">@p.ProductName</div>
+                                <div class="bp-prices">
+                                    <span class="bp-mrp">₹@p.MRP.ToString("N0")</span>
+                                    <span class="bp-dp">₹@p.DP.ToString("N0")</span>
                                 </div>
-                                <div class="basic-product-tick" style="font-size:20px;color:var(--green);display:none">✓</div>
+                                @if (!outOfStock && saving > 0)
+                                {
+                                    <div class="bp-save">You save ₹@saving.ToString("N0")</div>
+                                }
+                                @if (outOfStock)
+                                {
+                                    <div class="bp-oos">Out of stock</div>
+                                }
                             </div>
                         }
                     </div>
                     <span asp-validation-for="ExternalProductId" class="hint" style="color:var(--danger);margin-top:6px;display:block"></span>
+
+                    <style>
+                        /* ── Basic-product premium cards ── */
+                        .bp-grid {
+                            display: grid;
+                            grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+                            gap: 14px;
+                            margin-top: 10px;
+                        }
+                        .bp-card {
+                            position: relative;
+                            background: #fff;
+                            border: 2px solid #e5e7eb;
+                            border-radius: 14px;
+                            padding: 20px 16px 16px;
+                            text-align: center;
+                            cursor: pointer;
+                            transition: transform .15s ease, box-shadow .15s ease, border-color .15s ease;
+                            overflow: hidden;
+                        }
+                        .bp-card::before {
+                            content: "";
+                            position: absolute;
+                            top: 0; left: 0; right: 0;
+                            height: 4px;
+                            background: linear-gradient(90deg, #16a34a, #22c55e, #4ade80);
+                            opacity: 0;
+                            transition: opacity .15s ease;
+                        }
+                        .bp-card:hover {
+                            transform: translateY(-4px);
+                            box-shadow: 0 10px 24px rgba(22,163,74,.15);
+                            border-color: #bbf7d0;
+                        }
+                        .bp-card:hover::before { opacity: 1; }
+                        /* Selected state (JS toggles .sel) */
+                        .bp-card.sel {
+                            border-color: #16a34a;
+                            box-shadow: 0 8px 24px rgba(22,163,74,.25);
+                            background: linear-gradient(180deg, #f0fdf4 0%, #ffffff 60%);
+                        }
+                        .bp-card.sel::before { opacity: 1; }
+                        .bp-badge {
+                            position: absolute;
+                            top: 10px; left: 10px;
+                            background: #dc2626;
+                            color: #fff;
+                            font-size: 11px;
+                            font-weight: 700;
+                            padding: 3px 8px;
+                            border-radius: 20px;
+                            letter-spacing: .3px;
+                        }
+                        .bp-tick {
+                            position: absolute;
+                            top: 8px; right: 10px;
+                            width: 26px; height: 26px;
+                            border-radius: 50%;
+                            background: #16a34a;
+                            color: #fff;
+                            font-size: 15px;
+                            line-height: 26px;
+                            text-align: center;
+                            display: none;
+                            box-shadow: 0 2px 6px rgba(22,163,74,.4);
+                        }
+                        .bp-card.sel .bp-tick { display: block; }
+                        .bp-icon {
+                            font-size: 40px;
+                            margin: 6px 0 10px;
+                            line-height: 1;
+                        }
+                        .bp-name {
+                            font-weight: 600;
+                            font-size: 13px;
+                            color: #111827;
+                            min-height: 34px;
+                            display: flex;
+                            align-items: center;
+                            justify-content: center;
+                            line-height: 1.3;
+                        }
+                        .bp-prices {
+                            margin-top: 10px;
+                            display: flex;
+                            align-items: baseline;
+                            justify-content: center;
+                            gap: 8px;
+                        }
+                        .bp-mrp {
+                            color: #9ca3af;
+                            text-decoration: line-through;
+                            font-size: 13px;
+                        }
+                        .bp-dp {
+                            color: #16a34a;
+                            font-weight: 800;
+                            font-size: 22px;
+                            font-family: Rajdhani, sans-serif;
+                        }
+                        .bp-save {
+                            margin-top: 6px;
+                            display: inline-block;
+                            background: #dcfce7;
+                            color: #15803d;
+                            font-size: 11px;
+                            font-weight: 600;
+                            padding: 3px 10px;
+                            border-radius: 20px;
+                        }
+                        .bp-oos {
+                            margin-top: 8px;
+                            color: #dc2626;
+                            font-size: 12px;
+                            font-weight: 600;
+                        }
+                        .bp-card.out-of-stock {
+                            opacity: .55;
+                            cursor: not-allowed;
+                            filter: grayscale(.4);
+                        }
+                        .bp-card.out-of-stock:hover {
+                            transform: none;
+                            box-shadow: none;
+                            border-color: #e5e7eb;
+                        }
+                        .bp-card.out-of-stock:hover::before { opacity: 0; }
+                    </style>
                 }
                 else
                 {
@@ -355,13 +507,16 @@
                     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
                         <div>
                             <div style="font-size:11px;color:#6EE7B7">Total Payable (DP)</div>
-                            <div id="planAmountDisplay" style="font-family:Rajdhani,sans-serif;font-size:32px;font-weight:700;color:var(--green)">
+                            @* Amount color forced to white — the pay-card has a green
+                               background, and the old color:var(--green) rendered green
+                               text on green, making ₹30,000 nearly invisible. *@
+                            <div id="planAmountDisplay" style="font-family:Rajdhani,sans-serif;font-size:32px;font-weight:700;color:#ffffff">
                                 ₹0
                             </div>
                         </div>
                         <span style="font-size:28px">☀️</span>
                     </div>
-                    <div class="pay-row"><span class="prk">Selected Product</span><span class="prv" id="selectedPlanDisplay">—</span></div>
+                    <div class="pay-row"><span class="prk">Solar Project</span><span class="prv" id="selectedPlanDisplay">—</span></div>
                     <div class="pay-row"><span class="prk">Connection Type</span><span class="prv" id="connTypeDisplay">Domestic</span></div>
                     <div class="pay-row"><span class="prk">Capacity</span><span class="prv" id="kvDisplay">— kV</span></div>
                 </div>
@@ -402,14 +557,20 @@
                     <div class="fg">
                         @* Payment Method made mandatory per spec: "Payment Method mandatory karo." *@
                         <label asp-for="PaymentMethod">Payment Method <span class="req">*</span></label>
+                        @{
+                            // Same legacy M_PayModeMaster source as the standalone
+                            // Payment page, so the With Activation inline payment uses
+                            // identical options.
+                            var createPayModes = ViewBag.PayModes
+                                as List<SolarPortal.Application.Services.PayModeDto>
+                                ?? new List<SolarPortal.Application.Services.PayModeDto>();
+                        }
                         <select asp-for="PaymentMethod" id="paymentMethodInput" required>
                             <option value="">Select method</option>
-                            <option value="UPI">UPI</option>
-                            <option value="Bank Transfer">Bank Transfer</option>
-                            <option value="NEFT/RTGS">NEFT / RTGS</option>
-                            <option value="Cash">Cash</option>
-                            <option value="Cheque">Cheque</option>
-                            <option value="Online">Online</option>
+                            @foreach (var pm in createPayModes)
+                            {
+                                <option value="@pm.Paymode" data-pid="@pm.Pid">@pm.Paymode</option>
+                            }
                         </select>
                         <span asp-validation-for="PaymentMethod" class="hint" style="color:var(--danger)"></span>
                     </div>
@@ -491,17 +652,15 @@
             const v = parseInt(val, 10);
 
             if (v === 2 || v === 3) {
-                // Already Active (3) and Only Solar (2): user is not picking a product,
-                // so hide both the basic-products picker AND the payment summary card.
-                // Modes 2/3 don't have a product/payable to show here; their banners
-                // explain the flow instead.
+                // Already Active (3) and Only Solar (2): user is not picking a basic
+                // product, so hide the product picker + the big payment-summary card.
+                // BUT per spec the project amount + plan still come from the kV master
+                // plan — so we DON'T zero it out. applyFetchedPlan() (called below)
+                // fills the mode's own Matched-Plan box and the hidden inputs from the
+                // selected Solar Type + Connection Type.
                 if (basicCard)  basicCard.style.display  = 'none';
                 if (paySumCard) paySumCard.style.display = 'none';
-                document.getElementById('solarProjectIdInput').value = '';
                 document.getElementById('externalProductIdInput').value = '';
-                document.getElementById('selectedPlanInput').value =
-                    v === 3 ? 'Already Active — Only Request' : 'Only Solar — Without Activation';
-                document.getElementById('planAmountInput').value = '0';
             } else {
                 // Mode 1: With Activation — show both sections so user can pick a product
                 // and see the payable amount.
@@ -512,6 +671,11 @@
 
             if (banner2) banner2.style.display = (v === 2) ? 'block' : 'none';
             if (banner3) banner3.style.display = (v === 3) ? 'block' : 'none';
+
+            // Fill the matched-plan box (and hidden inputs) from the current Solar
+            // Type + Connection Type for the active mode. Runs for all modes so the
+            // project amount is always the kV master-plan amount.
+            applyFetchedPlan();
         }
 
         // === Basic Product picker ===
@@ -530,25 +694,43 @@
             if (tick) tick.style.display = '';
 
             const prodId = el.dataset.prodid;
-            const name   = el.dataset.name;
-            const dp     = parseFloat(el.dataset.dp || '0');
 
+            // Per spec: "With activation ho ya without ya already active — sabhi
+            // mein project amount 1 kW / 2 kW (KV master plan) se hi hoga."
+            //
+            // So the basic product the user picks here is ONLY recorded as the
+            // legacy-bridge product (ExternalProductId) — it does NOT set the
+            // project amount. The project amount + capacity always come from the
+            // KV master plan the user chose in "Solar Type" (handled by
+            // applyFetchedPlan / selectPlanFromMaster). We therefore do NOT touch
+            // planAmountInput, selectedPlanInput, the amount display, or kvDisplay.
             document.getElementById('externalProductIdInput').value = prodId;
-            document.getElementById('selectedPlanInput').value      = name;
-            document.getElementById('planAmountInput').value        = dp;
-            // SolarProjectId is intentionally NOT set here — basic products are a
-            // separate concept tracked via ExternalProductId.
-            document.getElementById('solarProjectIdInput').value = '';
 
-            // Update Payment Summary card
+            // Re-apply the KV master plan so the summary reflects the kW amount,
+            // not the product DP. (applyFetchedPlan now skips when ExternalProductId
+            // is set, so we call the master-plan lookup directly here instead.)
+            applyKvMasterPlanToSummary();
+        }
+
+        // Sets the Payment Summary (amount / plan name / capacity) from the KV
+        // master plan currently chosen in the Solar Type dropdown. Used by the
+        // basic-product picker so picking a product never overrides the kW amount.
+        function applyKvMasterPlanToSummary() {
+            const m = fetchMatchingPlan();
+            if (!m) return;
+            document.getElementById('solarProjectIdInput').value = m.id;
+            document.getElementById('planAmountInput').value     = m.amount;
+            // selectedPlanInput keeps the kW plan name as the project's plan.
+            document.getElementById('selectedPlanInput').value   = m.name;
+
             const disp = document.getElementById('planAmountDisplay');
-            if (disp) disp.textContent = '₹' + dp.toLocaleString('en-IN');
+            if (disp) disp.textContent = '₹' + Number(m.amount).toLocaleString('en-IN');
             const planLbl = document.getElementById('selectedPlanDisplay');
-            if (planLbl) planLbl.textContent = name;
-
-            // Update payment max cap
+            if (planLbl) planLbl.textContent = m.name;
+            const kvDisp = document.getElementById('kvDisplay');
+            if (kvDisp) kvDisp.textContent = m.kv + ' kV';
             const payAmt = document.getElementById('paymentAmountInput');
-            if (payAmt) payAmt.setAttribute('max', dp);
+            if (payAmt) payAmt.setAttribute('max', m.amount);
         }
 
         function selectPlanFromMaster(el) {
@@ -600,11 +782,18 @@
         }
 
         function applyFetchedPlan() {
+            // Project amount always comes from the KV master plan — in every mode
+            // (With Activation, Without, Already Active). The basic product picker
+            // only records ExternalProductId for the legacy bridge; it never sets
+            // the amount. So this lookup runs normally regardless of whether a
+            // product is selected.
             const m = fetchMatchingPlan();
             if (!m) {
-                // Nothing matched — clear the Mode 2 live amount box if visible
+                // Nothing matched — clear the Mode 2 / Mode 3 live amount boxes
                 const m2box = document.getElementById('mode2AmountBox');
                 if (m2box) m2box.style.display = 'none';
+                const m3box = document.getElementById('mode3AmountBox');
+                if (m3box) m3box.style.display = 'none';
                 return;
             }
             // Update hidden inputs so backend gets the correct values
@@ -633,6 +822,17 @@
                 m2box.style.display = 'block';
                 if (m2name) m2name.textContent = m.name + (m.conn === 1 ? ' (Domestic)' : ' (Commercial)');
                 if (m2amt)  m2amt.textContent  = '₹' + Number(m.amount).toLocaleString('en-IN');
+            }
+
+            // Mode 3 (Already Active) live amount box — same content as Mode 2 so
+            // the user sees the matched plan name + connection + amount here too.
+            const m3box  = document.getElementById('mode3AmountBox');
+            const m3name = document.getElementById('mode3PlanName');
+            const m3amt  = document.getElementById('mode3Amount');
+            if (m3box) {
+                m3box.style.display = 'block';
+                if (m3name) m3name.textContent = m.name + (m.conn === 1 ? ' (Domestic)' : ' (Commercial)');
+                if (m3amt)  m3amt.textContent  = '₹' + Number(m.amount).toLocaleString('en-IN');
             }
         }
 

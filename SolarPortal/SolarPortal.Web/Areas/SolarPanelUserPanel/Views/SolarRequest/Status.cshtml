@@ -3,7 +3,7 @@
     ViewData["Title"] = "Project Status";
     var subTotal = (decimal)(ViewBag.TotalSubmitted ?? 0m);
     var verTotal = (decimal)(ViewBag.VerifiedPaid ?? 0m);
-    var minVal   = (decimal)(ViewBag.Minimum ?? 20000m);
+    var minVal = (decimal)(ViewBag.Minimum ?? 20000m);
 
     string StageStsClass(SolarPortal.Domain.Enums.ProjectStatus s) => s switch
     {
@@ -18,6 +18,19 @@
         SolarPortal.Domain.Enums.ApprovalStatus.Rejected => "sts-rej",
         _ => "sts-pend"
     };
+
+    // "Unfilled stub" = user registered (account exists) but hasn't picked a
+    // plan/product or entered any amount yet. The timeline still shows
+    // (Registration done, rest pending) but plan/capacity/amount rows are hidden
+    // until they actually select a plan — per spec: "registration ho gaya hai,
+    // baaki details abhi nahi dikhni chahiye."
+    var isUnfilledStub = Model != null
+        && !Model.SolarProjectId.HasValue
+        && !Model.ExternalProductId.HasValue
+        && Model.KVCapacity == 0m
+        && Model.PlanAmount == 0m
+        && Model.RequestedAmount == 0m
+        && Model.CurrentStage != SolarPortal.Domain.Enums.ProjectStatus.Completed;
 }
 
 @if (Model == null)
@@ -75,97 +88,125 @@ else
                         }
                         else
                         {
-                        switch (Model.CurrentStage)
-                        {
-                            case SolarPortal.Domain.Enums.ProjectStatus.Registration:
-                            case SolarPortal.Domain.Enums.ProjectStatus.ProductSelection:
-                                <h6>🛒 Select Plan & Make Payment</h6>
-                                <p class="text-muted" style="font-size:13px">Choose your solar kit (1 kW, 2 kW, etc.) and submit your first payment. <strong>Admin must verify</strong> before workflow advances.</p>
-                                <a class="btn btn-p btn-full" asp-action="Create">Solar Request & Payment</a>
-                                break;
-                            case SolarPortal.Domain.Enums.ProjectStatus.Payment:
-                                <h6>💰 Make a Payment</h6>
-                                <p class="text-muted" style="font-size:13px">Submit at least ₹@minVal.ToString("N0") cumulative. <strong>Admin must verify</strong> before workflow advances.</p>
-                                if (subTotal > 0 || verTotal > 0)
-                                {
-                                    <div class="card" style="background:var(--bg);padding:10px;margin:10px 0;font-size:12.5px;box-shadow:none">
-                                        <div class="sr"><span class="srk">Submitted</span><span class="srv">₹@subTotal.ToString("N0")</span></div>
-                                        <div class="sr"><span class="srk" style="color:var(--green)">Admin Verified</span><span class="srv" style="color:var(--green)">₹@verTotal.ToString("N0")</span></div>
-                                        <div class="sr"><span class="srk">Minimum to Advance</span><span class="srv">₹@minVal.ToString("N0")</span></div>
-                                    </div>
-                                    if (verTotal >= minVal)
+                            switch (Model.CurrentStage)
+                            {
+                                case SolarPortal.Domain.Enums.ProjectStatus.Registration:
+                                case SolarPortal.Domain.Enums.ProjectStatus.ProductSelection:
+                                    <h6>🛒 Select Plan & Make Payment</h6>
+                                    <p class="text-muted" style="font-size:13px">Choose your solar kit (1 kW, 2 kW, etc.) and submit your first payment. <strong>Admin must verify</strong> before workflow advances.</p>
+                                    <a class="btn btn-p btn-full" asp-action="Create">Solar Request & Payment</a>
+                                    break;
+                                case SolarPortal.Domain.Enums.ProjectStatus.Payment:
+                                    <h6>💰 Make a Payment</h6>
+                                    <p class="text-muted" style="font-size:13px">Submit at least ₹@minVal.ToString("N0") cumulative. <strong>Admin must verify</strong> before workflow advances.</p>
+                                    if (subTotal > 0 || verTotal > 0)
                                     {
-                                        <div class="alert alert-s" style="font-size:12px"><span class="ai">✅</span>Verified total meets minimum. Refresh if stage hasn't advanced.</div>
+                                        <div class="card" style="background:var(--bg);padding:10px;margin:10px 0;font-size:12.5px;box-shadow:none">
+                                            <div class="sr"><span class="srk">Submitted</span><span class="srv">₹@subTotal.ToString("N0")</span></div>
+                                            <div class="sr"><span class="srk" style="color:var(--green)">Admin Verified</span><span class="srv" style="color:var(--green)">₹@verTotal.ToString("N0")</span></div>
+                                            <div class="sr"><span class="srk">Minimum to Advance</span><span class="srv">₹@minVal.ToString("N0")</span></div>
+                                        </div>
+                                        if (verTotal >= minVal)
+                                        {
+                                            <div class="alert alert-s" style="font-size:12px"><span class="ai">✅</span>Verified total meets minimum. Refresh if stage hasn't advanced.</div>
+                                        }
+                                        else if (subTotal >= minVal)
+                                        {
+                                            <div class="alert alert-w" style="font-size:12px"><span class="ai">⏳</span>Awaiting admin to verify ₹@((minVal - verTotal).ToString("N0")) more.</div>
+                                        }
+                                        else
+                                        {
+                                            <div class="alert alert-i" style="font-size:12px"><span class="ai">ℹ</span>Need ₹@((minVal - subTotal).ToString("N0")) more in submitted payments.</div>
+                                        }
                                     }
-                                    else if (subTotal >= minVal)
-                                    {
-                                        <div class="alert alert-w" style="font-size:12px"><span class="ai">⏳</span>Awaiting admin to verify ₹@((minVal - verTotal).ToString("N0")) more.</div>
-                                    }
-                                    else
-                                    {
-                                        <div class="alert alert-i" style="font-size:12px"><span class="ai">ℹ</span>Need ₹@((minVal - subTotal).ToString("N0")) more in submitted payments.</div>
-                                    }
-                                }
-                                <a class="btn btn-p btn-full" asp-action="Payment" asp-route-id="@Model.Id">Go to Payment</a>
-                                break;
-                            case SolarPortal.Domain.Enums.ProjectStatus.PMSurvey:
-                                <h6>📋 Upload PM Surya Ghar Documents</h6>
-                                <p class="text-muted" style="font-size:13px">Upload required scheme documents for admin verification.</p>
-                                <a class="btn btn-p btn-full" asp-controller="PMSurya" asp-action="Upload" asp-route-id="@Model.Id">Upload Documents</a>
-                                break;
-                            case SolarPortal.Domain.Enums.ProjectStatus.SiteSurvey:
-                                <h6>📐 Site Survey</h6>
-                                <p class="text-muted" style="font-size:13px">Download form, fill on site, then upload back with photos.</p>
-                                <a class="btn btn-p btn-full" asp-controller="SiteSurvey" asp-action="Index" asp-route-id="@Model.Id">Go to Site Survey</a>
-                                break;
-                            case SolarPortal.Domain.Enums.ProjectStatus.MeterDispatch:
-                                <h6>⚡ Awaiting Meter Dispatch</h6>
-                                <p class="text-muted" style="font-size:13px">Admin is preparing your meter. Check back for updates.</p>
-                                break;
-                            case SolarPortal.Domain.Enums.ProjectStatus.MaterialDispatch:
-                                <h6>📦 Awaiting Material Dispatch</h6>
-                                <p class="text-muted" style="font-size:13px">Solar material is being dispatched to your address.</p>
-                                break;
-                            case SolarPortal.Domain.Enums.ProjectStatus.Installation:
-                                <h6>🔧 Installation In Progress</h6>
-                                <p class="text-muted" style="font-size:13px">An installer (INC) has been assigned. They'll update progress here.</p>
-                                break;
-                            case SolarPortal.Domain.Enums.ProjectStatus.DCRUpdate:
-                                <h6>📄 Upload DCR Document</h6>
-                                <p class="text-muted" style="font-size:13px">Final step — upload your DCR document for admin verification.</p>
-                                <a class="btn btn-p btn-full" asp-controller="DCR" asp-action="Upload" asp-route-id="@Model.Id">Upload DCR</a>
-                                break;
-                            case SolarPortal.Domain.Enums.ProjectStatus.Completed:
-                                <h6>✅ Project Complete</h6>
-                                <p style="color:var(--green);font-size:13px">Your solar installation is fully complete!</p>
-                                break;
+                                    <a class="btn btn-p btn-full" asp-action="Payment" asp-route-id="@Model.Id">Go to Payment</a>
+                                    break;
+                                case SolarPortal.Domain.Enums.ProjectStatus.PMSurvey:
+                                    <h6>📋 Upload PM Surya Ghar Documents</h6>
+                                    <p class="text-muted" style="font-size:13px">Upload required scheme documents for admin verification.</p>
+                                    <a class="btn btn-p btn-full" asp-controller="PMSurya" asp-action="Upload" asp-route-id="@Model.Id">Upload Documents</a>
+                                    break;
+                                case SolarPortal.Domain.Enums.ProjectStatus.SiteSurvey:
+                                    <h6>📐 Site Survey</h6>
+                                    <p class="text-muted" style="font-size:13px">Download form, fill on site, then upload back with photos.</p>
+                                    <a class="btn btn-p btn-full" asp-controller="SiteSurvey" asp-action="Index" asp-route-id="@Model.Id">Go to Site Survey</a>
+                                    break;
+                                case SolarPortal.Domain.Enums.ProjectStatus.MeterDispatch:
+                                    <h6>⚡ Awaiting Meter Dispatch</h6>
+                                    <p class="text-muted" style="font-size:13px">Admin is preparing your meter. Check back for updates.</p>
+                                    break;
+                                case SolarPortal.Domain.Enums.ProjectStatus.MaterialDispatch:
+                                    <h6>📦 Awaiting Material Dispatch</h6>
+                                    <p class="text-muted" style="font-size:13px">Solar material is being dispatched to your address.</p>
+                                    break;
+                                case SolarPortal.Domain.Enums.ProjectStatus.Installation:
+                                    <h6>🔧 Installation In Progress</h6>
+                                    <p class="text-muted" style="font-size:13px">An installer (INC) has been assigned. They'll update progress here.</p>
+                                    break;
+                                case SolarPortal.Domain.Enums.ProjectStatus.DCRUpdate:
+                                    <h6>📄 Upload DCR Document</h6>
+                                    <p class="text-muted" style="font-size:13px">Final step — upload your DCR document for admin verification.</p>
+                                    <a class="btn btn-p btn-full" asp-controller="DCR" asp-action="Upload" asp-route-id="@Model.Id">Upload DCR</a>
+                                    break;
+                                case SolarPortal.Domain.Enums.ProjectStatus.Completed:
+                                    <h6>✅ Project Complete</h6>
+                                    <p style="color:var(--green);font-size:13px">Your solar installation is fully complete!</p>
+                                    break;
+                            }
                         }
-                        }  @* end of else (non-rejected) *@
+                        @* end of else (non-rejected) *@
                     }
                 </div>
 
                 <div class="card">
                     <div class="ct"><span class="ct-dot"></span>Project Info</div>
                     <div class="sr"><span class="srk">Project</span><span class="srv">@Model.RequestNumber</span></div>
-                    <div class="sr"><span class="srk">Mode</span><span class="srv">
-                        @switch (Model.RequestType)
-                        {
-                            case SolarPortal.Domain.Enums.RequestType.WithActivation: <text>🔌 With Activation</text>; break;
-                            case SolarPortal.Domain.Enums.RequestType.OnlySolarWithoutActivation: <text>⚡ Only Solar</text>; break;
-                            case SolarPortal.Domain.Enums.RequestType.AlreadyActiveOnlyRequest: <text>✅ Already Active</text>; break;
-                        }
-                    </span></div>
+                    @if (isUnfilledStub)
+                    {
+                        @* Registered but no plan picked yet — show "Not selected yet"
+                           for everything except the project number, exactly like the
+                           Dashboard card. Mode/Plan/Connection/amounts are all hidden
+                           until the user actually picks a plan. *@
+                        <div class="sr"><span class="srk">Mode</span><span class="srv" style="color:#94a3b8;font-style:italic">Not selected yet</span></div>
+                        <div class="sr"><span class="srk">Plan</span><span class="srv" style="color:#94a3b8;font-style:italic">Not selected yet</span></div>
+                        <div class="sr"><span class="srk">Capacity</span><span class="srv" style="color:#94a3b8;font-style:italic">—</span></div>
+                        <div class="sr"><span class="srk">Connection</span><span class="srv" style="color:#94a3b8;font-style:italic">Not selected yet</span></div>
+                        <div class="sr" style="margin-top:6px">
+                            <span class="srv" style="color:var(--text2);font-size:13px">
+                                Select a plan and make your first payment to see the full project details here.
+                            </span>
+                        </div>
+                    }
+                    else
+                    {
+                        decimal paidVerified = 0m;
+                        decimal submittedTotal = 0m;
+                        try { paidVerified = (decimal)(ViewBag.VerifiedPaid ?? 0m); } catch { }
+                        try { submittedTotal = (decimal)(ViewBag.TotalSubmitted ?? 0m); } catch { }
+                        var totalAmt = Model.RequestedAmount;
+                        var remaining = totalAmt > paidVerified ? totalAmt - paidVerified : 0m;
+
+                        <div class="sr">
+                            <span class="srk">Mode</span><span class="srv">
+                            @switch (Model.RequestType)
+                            {
+                                case SolarPortal.Domain.Enums.RequestType.WithActivation:
+                                    <text>🔌 With Activation</text>
+                                    ; break;
+                                case SolarPortal.Domain.Enums.RequestType.OnlySolarWithoutActivation:
+
+                                    <text>⚡ Only Solar</text>
+                                    ; break;
+                                case SolarPortal.Domain.Enums.RequestType.AlreadyActiveOnlyRequest:
+
+                                    <text>✅ Already Active</text>
+                                    ; break;
+                            }
+                        </span>
+                    </div>
                     <div class="sr"><span class="srk">Plan</span><span class="srv">@Model.SelectedPlan</span></div>
                     <div class="sr"><span class="srk">Capacity</span><span class="srv">@Model.KVCapacity kV</span></div>
                     <div class="sr"><span class="srk">Connection</span><span class="srv">@Model.ConnectionType</span></div>
-                    @{
-                        decimal paidVerified  = 0m;
-                        decimal submittedTotal = 0m;
-                        try { paidVerified  = (decimal)(ViewBag.VerifiedPaid   ?? 0m); } catch { }
-                        try { submittedTotal = (decimal)(ViewBag.TotalSubmitted ?? 0m); } catch { }
-                        var totalAmt  = Model.RequestedAmount;
-                        var remaining = totalAmt > paidVerified ? totalAmt - paidVerified : 0m;
-                    }
                     <div class="sr"><span class="srk">Total Amount</span><span class="srv">₹@totalAmt.ToString("N0")</span></div>
                     <div class="sr"><span class="srk">Paid (Verified)</span><span class="srv" style="color:var(--green)">₹@paidVerified.ToString("N0")</span></div>
                     @if (submittedTotal > paidVerified)
@@ -173,15 +214,16 @@ else
                         <div class="sr"><span class="srk">Submitted (Pending)</span><span class="srv" style="color:#d97706">₹@((submittedTotal - paidVerified).ToString("N0"))</span></div>
                     }
                     <div class="sr"><span class="srk">Remaining Balance</span><span class="srv" style="color:#d97706;font-weight:600">₹@remaining.ToString("N0")</span></div>
-                    <div class="sr"><span class="srk">Stage</span><span class="srv"><span class="sts @StageStsClass(Model.CurrentStage)">@Model.CurrentStage</span></span></div>
-                    @{
-                        var effectiveApproval = Model.CurrentStage == SolarPortal.Domain.Enums.ProjectStatus.Completed
-                            ? SolarPortal.Domain.Enums.ApprovalStatus.Approved
-                            : Model.ApprovalStatus;
-                    }
-                    <div class="sr"><span class="srk">Approval</span><span class="srv"><span class="sts @ApprovalStsClass(effectiveApproval)">@effectiveApproval</span></span></div>
-                </div>
+                }
+                <div class="sr"><span class="srk">Stage</span><span class="srv"><span class="sts @StageStsClass(Model.CurrentStage)">@Model.CurrentStage</span></span></div>
+                @{
+                    var effectiveApproval = Model.CurrentStage == SolarPortal.Domain.Enums.ProjectStatus.Completed
+                        ? SolarPortal.Domain.Enums.ApprovalStatus.Approved
+                        : Model.ApprovalStatus;
+                }
+                <div class="sr"><span class="srk">Approval</span><span class="srv"><span class="sts @ApprovalStsClass(effectiveApproval)">@effectiveApproval</span></span></div>
             </div>
         </div>
     </div>
+</div>
 }

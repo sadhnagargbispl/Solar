@@ -33,7 +33,19 @@ public class AccountController : Controller
     {
         var userId = _userManager.GetUserId(User)!;
         var result = await _solarRequestService.GetByUserIdAsync(userId);
-        var projects = result.Data?.ToList() ?? new List<SolarRequestDto>();
+        // Per spec: jab tak user request submit na kare, Solar Account pe koi
+        // record nahi dikhna chahiye. Filter out the unfilled auto-stub (no plan/
+        // product picked, KV 0, amount 0, not completed) — same rule used on the
+        // Dashboard / My Projects / Status pages.
+        var projects = (result.Data ?? Enumerable.Empty<SolarRequestDto>())
+                        .Where(p => !(
+                            !p.SolarProjectId.HasValue &&
+                            !p.ExternalProductId.HasValue &&
+                            p.KVCapacity == 0m &&
+                            p.PlanAmount == 0m &&
+                            p.RequestedAmount == 0m &&
+                            p.CurrentStage != ProjectStatus.Completed))
+                        .ToList();
 
         // === Mode 2 redirect rule ===
         // If the user's most-recent request was created under "Only Solar — Without Activation"

@@ -1,0 +1,70 @@
+@*
+   Reusable file-preview modal (user panel).
+   ──────────────────────────────────────────
+   Drop ONCE per page (near the bottom):
+       @await Html.PartialAsync("_FileModal")
+
+   Trigger from any link/button:
+       <a href="javascript:void(0)" onclick="openFileModal('/uploads/payments/abc.jpg')">📷 View</a>
+
+   The user panel serves its own wwwroot, so the stored path is used directly
+   (no cross-panel controller needed). Images render as <img>, PDFs in an
+   <iframe>. Opens in-page — never a new browser tab.
+*@
+
+<div id="filePreviewModal"
+     style="display:none;position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.75);
+            align-items:center;justify-content:center;padding:24px"
+     onclick="if(event.target===this) closeFileModal()">
+    <div style="background:#fff;border-radius:12px;max-width:90vw;max-height:90vh;
+                display:flex;flex-direction:column;overflow:hidden;box-shadow:0 10px 40px rgba(0,0,0,.4)">
+        <div style="display:flex;justify-content:space-between;align-items:center;
+                    padding:12px 16px;border-bottom:1px solid #e5e7eb;background:#f9fafb">
+            <span style="font-weight:600;font-size:14px;color:#111">Document Preview</span>
+            <button onclick="closeFileModal()"
+                    style="border:none;background:#ef4444;color:#fff;border-radius:6px;
+                           width:28px;height:28px;cursor:pointer;font-size:16px;line-height:1">×</button>
+        </div>
+        <div id="fileModalBody"
+             style="padding:0;overflow:auto;display:flex;align-items:center;justify-content:center;
+                    min-width:320px;min-height:240px;background:#1f2937">
+            <!-- img or iframe injected here -->
+        </div>
+    </div>
+</div>
+
+<script>
+    // Normalise a stored path to a web URL the user panel can serve directly.
+    function userFileSrc(storedPath) {
+        var p = (storedPath || '').replace(/\\/g, '/');
+        if (/^wwwroot\//i.test(p)) p = p.substring('wwwroot/'.length);
+        if (p.charAt(0) !== '/') p = '/' + p;
+        return p;
+    }
+
+    function openFileModal(storedPath) {
+        if (!storedPath) return;
+        var src  = userFileSrc(storedPath);
+        var body = document.getElementById('fileModalBody');
+        var isPdf = /\.pdf(\?|$)/i.test(storedPath);
+
+        if (isPdf) {
+            body.innerHTML = '<iframe src="' + src + '" ' +
+                'style="width:80vw;height:80vh;border:0;background:#fff"></iframe>';
+        } else {
+            body.innerHTML = '<img src="' + src + '" ' +
+                'style="max-width:88vw;max-height:80vh;display:block" ' +
+                'onerror="this.parentNode.innerHTML=\'<div style=\\\'color:#fff;padding:40px;text-align:center\\\'>⚠ File not found on the server.</div>\'" />';
+        }
+        document.getElementById('filePreviewModal').style.display = 'flex';
+    }
+
+    function closeFileModal() {
+        document.getElementById('filePreviewModal').style.display = 'none';
+        document.getElementById('fileModalBody').innerHTML = '';
+    }
+
+    document.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape') closeFileModal();
+    });
+</script>

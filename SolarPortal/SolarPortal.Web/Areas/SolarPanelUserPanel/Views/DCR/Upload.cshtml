@@ -2,6 +2,13 @@
     ViewData["Title"] = "DCR Upload";
     var req = (SolarPortal.Domain.Entities.SolarRequest)ViewBag.Request;
     var existing = (SolarPortal.Domain.Entities.DCRDocument?)ViewBag.Existing;
+
+    // Per spec: agar user ne submit kar diya hai aur status pending/approved hai,
+    // form read-only mode mein dikhna chahiye (no edit). Only if Rejected, user
+    // can re-upload (clear form + re-show inputs).
+    var status        = existing?.ApprovalStatus ?? SolarPortal.Domain.Enums.ApprovalStatus.Pending;
+    var hasSubmission = existing != null;
+    var canEdit       = !hasSubmission || status == SolarPortal.Domain.Enums.ApprovalStatus.Rejected;
 }
 
 <div class="page-header" style="padding:16px">
@@ -15,41 +22,99 @@
             <div class="card">
                 <div class="card-header bg-primary text-white">DCR Document</div>
                 <div class="card-body">
-                    @if (existing != null)
+                    @if (hasSubmission)
                     {
-                        <div class="alert alert-info">
-                            Submitted on @existing.CreatedAt.ToLocalTime().ToString("dd MMM yyyy HH:mm")
-                            — @(existing.IsVerified ? "✅ Verified" : "⏳ Awaiting admin verification")
-                            (DCR #@existing.DCRNumber)
-                            @if (!string.IsNullOrEmpty(existing.DocumentPath))
-                            {
-                                <a href="~/@existing.DocumentPath" target="_blank" class="ms-2">View document</a>
-                            }
-                        </div>
+                        <!-- Status banner -->
+                        @switch (status)
+                        {
+                            case SolarPortal.Domain.Enums.ApprovalStatus.Approved:
+                                <div class="alert alert-success">
+                                    ✅ <strong>Approved</strong> by admin on
+                                    @(existing!.ApprovedAt?.ToLocalTime().ToString("dd MMM yyyy HH:mm") ?? "—").
+                                    Project will be marked Completed.
+                                </div>
+                                break;
+                            case SolarPortal.Domain.Enums.ApprovalStatus.Rejected:
+                                <div class="alert alert-danger">
+                                    ❌ <strong>Rejected</strong> by admin.
+                                    @if (!string.IsNullOrWhiteSpace(existing!.RejectionReason))
+                                    {
+                                        <div class="mt-1"><strong>Reason:</strong> @existing.RejectionReason</div>
+                                    }
+                                    <div class="mt-2">Please correct and re-upload below.</div>
+                                </div>
+                                break;
+                            default:
+                                <div class="alert alert-warning">
+                                    ⏳ <strong>Awaiting admin verification.</strong>
+                                    Submitted on @existing!.CreatedAt.ToLocalTime().ToString("dd MMM yyyy HH:mm")
+                                </div>
+                                break;
+                        }
                     }
 
-                    <form id="dcrForm" enctype="multipart/form-data">
-                        @Html.AntiForgeryToken()
-                        <input type="hidden" name="requestId" value="@req.Id" />
+                    @if (!canEdit)
+                    {
+                        @* READ-ONLY DISPLAY — submission exists and not rejected.
+                           Per spec: user can no longer edit; admin reviews from admin panel. *@
+                        <dl class="row mb-0">
+                            <dt class="col-sm-4">DCR Number</dt>
+                            <dd class="col-sm-8">@existing!.DCRNumber</dd>
 
-                        <div class="mb-2">
-                            <label class="form-label">DCR Number *</label>
-                            <input type="text" class="form-control" name="dcrNumber" required maxlength="50" />
-                        </div>
-                        <div class="mb-2">
-                            <label class="form-label">DCR Date</label>
-                            <input type="date" class="form-control" name="dcrDate" value="@DateTime.Today.ToString("yyyy-MM-dd")" />
-                        </div>
-                        <div class="mb-2">
-                            <label class="form-label">DCR Document (PDF / Image) *</label>
-                            <input type="file" class="form-control" name="dcrDoc" accept=".pdf,.png,.jpg,.jpeg" required />
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label">Remarks</label>
-                            <textarea class="form-control" name="remark" rows="2"></textarea>
-                        </div>
-                        <button type="submit" class="btn btn-success">Submit DCR</button>
-                    </form>
+                            <dt class="col-sm-4">DCR Date</dt>
+                            <dd class="col-sm-8">@(existing.DCRDate?.ToLocalTime().ToString("dd MMM yyyy") ?? "—")</dd>
+
+                            <dt class="col-sm-4">Document</dt>
+                            <dd class="col-sm-8">
+                                @if (!string.IsNullOrWhiteSpace(existing.DocumentPath))
+                                {
+                                    <a href="javascript:void(0)" onclick="openFileModal('@existing.DocumentPath')" class="btn btn-sm btn-outline-primary">📄 View Document</a>
+                                }
+                                else
+                                {
+                                    <span class="text-muted">—</span>
+                                }
+                            </dd>
+
+                            <dt class="col-sm-4">Remarks</dt>
+                            <dd class="col-sm-8">@(string.IsNullOrWhiteSpace(existing.Remark) ? "—" : existing.Remark)</dd>
+
+                            <dt class="col-sm-4">Submitted</dt>
+                            <dd class="col-sm-8">@existing.CreatedAt.ToLocalTime().ToString("dd MMM yyyy HH:mm")</dd>
+                        </dl>
+                    }
+                    else
+                    {
+                        @* EDITABLE FORM — first-time upload OR re-upload after rejection. *@
+                        <form id="dcrForm" enctype="multipart/form-data">
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" name="requestId" value="@req.Id" />
+
+                            <div class="mb-2">
+                                <label class="form-label">DCR Number *</label>
+                                <input type="text" class="form-control" name="dcrNumber" required maxlength="50"
+                                       value="@(existing?.DCRNumber ?? "")" />
+                            </div>
+                            <div class="mb-2">
+                                <label class="form-label">DCR Date</label>
+                                <input type="date" class="form-control" name="dcrDate"
+                                       value="@(existing?.DCRDate?.ToString("yyyy-MM-dd") ?? DateTime.Today.ToString("yyyy-MM-dd"))" />
+                            </div>
+                            <div class="mb-2">
+                                <label class="form-label">DCR Document (PDF / Image) *</label>
+                                <input type="file" class="form-control" name="dcrDoc" accept=".pdf,.png,.jpg,.jpeg" required />
+                                @if (status == SolarPortal.Domain.Enums.ApprovalStatus.Rejected && !string.IsNullOrWhiteSpace(existing?.DocumentPath))
+                                {
+                                    <small class="text-muted">Previous file: <a href="javascript:void(0)" onclick="openFileModal('@existing.DocumentPath')">view</a> — upload a new one to replace it.</small>
+                                }
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Remarks</label>
+                                <textarea class="form-control" name="remark" rows="2">@(existing?.Remark ?? "")</textarea>
+                            </div>
+                            <button type="submit" class="btn btn-success">Submit DCR</button>
+                        </form>
+                    }
                 </div>
             </div>
         </div>
@@ -61,6 +126,8 @@
 $('#dcrForm').on('submit', function (e) {
     e.preventDefault();
     const fd = new FormData(this);
+    const $btn = $(this).find('button[type="submit"]');
+    $btn.prop('disabled', true).text('Submitting…');
     $.ajax({
         url: '@Url.Action("Submit", "DCR")',
         type: 'POST',
@@ -70,8 +137,16 @@ $('#dcrForm').on('submit', function (e) {
         success: function (r) {
             alert(r.message);
             if (r.success) window.location.href = '@Url.Action("Status", "SolarRequest", new { id = req.Id })';
+            else $btn.prop('disabled', false).text('Submit DCR');
+        },
+        error: function () {
+            alert('Server error. Please try again.');
+            $btn.prop('disabled', false).text('Submit DCR');
         }
     });
 });
 </script>
 }
+
+@* In-page file preview modal (no new tab) *@
+@await Html.PartialAsync("_FileModal")

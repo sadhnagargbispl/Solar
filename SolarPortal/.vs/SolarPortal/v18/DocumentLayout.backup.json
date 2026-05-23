@@ -1,12 +1,36 @@
 {
   "Version": 1,
-  "WorkspaceRootPath": "\\\\localhost\\Sadhna\\New folder (12)\\SolarPortal_FINAL\\UserPanel\\SolarPortal\\SolarPortal\\",
-  "Documents": [],
+  "WorkspaceRootPath": "\\\\localhost\\Sadhna\\New folder (6)\\files\\SolarPortal_FINAL\\UserPanel\\SolarPortal\\SolarPortal\\",
+  "Documents": [
+    {
+      "AbsoluteMoniker": "D:0:0:{44444444-4444-4444-4444-444444444444}|SolarPortal.Web\\SolarPortal.Web.csproj|\\\\localhost\\sadhna\\new folder (6)\\files\\solarportal_final\\userpanel\\solarportal\\solarportal\\solarportal.web\\areas\\solarpaneluserpanel\\views\\solarrequest\\status.cshtml||{40D31677-CBC0-4297-A9EF-89D907823A98}"
+    }
+  ],
   "DocumentGroupContainers": [
     {
       "Orientation": 0,
       "VerticalTabListWidth": 256,
-      "DocumentGroups": []
+      "DocumentGroups": [
+        {
+          "DockedWidth": 200,
+          "SelectedChildIndex": 0,
+          "Children": [
+            {
+              "$type": "Document",
+              "DocumentIndex": 0,
+              "Title": "Status.cshtml",
+              "DocumentMoniker": "\\\\localhost\\Sadhna\\New folder (6)\\files\\SolarPortal_FINAL\\UserPanel\\SolarPortal\\SolarPortal\\SolarPortal.Web\\Areas\\SolarPanelUserPanel\\Views\\SolarRequest\\Status.cshtml",
+              "RelativeDocumentMoniker": "SolarPortal.Web\\Areas\\SolarPanelUserPanel\\Views\\SolarRequest\\Status.cshtml",
+              "ToolTip": "\\\\localhost\\Sadhna\\New folder (6)\\files\\SolarPortal_FINAL\\UserPanel\\SolarPortal\\SolarPortal\\SolarPortal.Web\\Areas\\SolarPanelUserPanel\\Views\\SolarRequest\\Status.cshtml",
+              "RelativeToolTip": "SolarPortal.Web\\Areas\\SolarPanelUserPanel\\Views\\SolarRequest\\Status.cshtml",
+              "ViewState": "AgIAAJgAAAAAAAAAAAAswNYAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000759|",
+              "WhenOpened": "2026-05-23T09:23:17.62Z",
+              "EditorCaption": ""
+            }
+          ]
+        }
+      ]
     }
   ]
 }

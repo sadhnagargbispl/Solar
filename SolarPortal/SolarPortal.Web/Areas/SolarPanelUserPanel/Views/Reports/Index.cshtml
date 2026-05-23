@@ -1,0 +1,490 @@
+@{
+    ViewData["Title"] = "My Reports";
+    var f          = (ViewBag.Filter as string) ?? "all";
+    var requests   = ViewBag.Requests    as List<SolarPortal.Domain.Entities.SolarRequest> ?? new();
+    var payments   = ViewBag.Payments    as List<SolarPortal.Domain.Entities.Payment>       ?? new();
+    var pmDocs     = ViewBag.PMDocs      as List<SolarPortal.Domain.Entities.PMDocument>    ?? new();
+    var surveys    = ViewBag.SiteSurveys as List<SolarPortal.Domain.Entities.SiteSurvey>    ?? new();
+    var meters     = ViewBag.Meters      as List<SolarPortal.Domain.Entities.MeterDispatch>    ?? new();
+    var materials  = ViewBag.Materials   as List<SolarPortal.Domain.Entities.MaterialDispatch> ?? new();
+    var installs   = ViewBag.Installations as List<SolarPortal.Domain.Entities.Installation>  ?? new();
+    var dcrDocs    = ViewBag.DcrDocs     as List<SolarPortal.Domain.Entities.DCRDocument>   ?? new();
+    var reqLookup  = ViewBag.RequestLookup as Dictionary<int, string> ?? new();
+
+    string ReqNum(int id) => reqLookup.TryGetValue(id, out var n) ? n : $"#{id}";
+
+    string Cls(string name) => f == name ? "btn btn-p" : "btn btn-outline";
+
+    // File-existence map: controller pre-checked every stored path against
+    // wwwroot/. If a file is missing on disk we render "Missing" inline
+    // instead of a link that 404s. Records can have stale paths when test
+    // data was created against a different deployment or files were wiped.
+    var fileExists = ViewBag.FileExists as Dictionary<string, bool> ?? new();
+    bool Has(string? p) => !string.IsNullOrWhiteSpace(p) && fileExists.TryGetValue(p!, out var ok) && ok;
+
+
+    // Status pill helpers used across all sections
+    string PaymentBadge(SolarPortal.Domain.Enums.PaymentStatus s) => s switch
+    {
+        SolarPortal.Domain.Enums.PaymentStatus.Completed => "<span class='sts sts-act'>✅ Verified</span>",
+        SolarPortal.Domain.Enums.PaymentStatus.Rejected => "<span class='sts sts-rej'>❌ Rejected</span>",
+        _                                               => "<span class='sts sts-pen'>⏳ Pending</span>"
+    };
+    string ApprovalBadge(SolarPortal.Domain.Enums.ApprovalStatus s) => s switch
+    {
+        SolarPortal.Domain.Enums.ApprovalStatus.Approved => "<span class='sts sts-act'>✅ Approved</span>",
+        SolarPortal.Domain.Enums.ApprovalStatus.Rejected => "<span class='sts sts-rej'>❌ Rejected</span>",
+        _                                                => "<span class='sts sts-pen'>⏳ Pending</span>"
+    };
+}
+
+<div class="page-header" style="padding:16px">
+    <h2>My Reports</h2>
+    <p class="text-muted">Your full history across all modules — payments, documents, surveys, dispatch, DCR.</p>
+</div>
+
+<div class="container-fluid">
+    @* Filter tabs (4-state, same as admin) *@
+    <div class="mb-3" style="display:flex;gap:8px;flex-wrap:wrap">
+        <a class="@Cls("all")"      asp-action="Index" asp-route-filter="all">📋 All</a>
+        <a class="@Cls("pending")"  asp-action="Index" asp-route-filter="pending">⏳ Pending</a>
+        <a class="@Cls("approved")" asp-action="Index" asp-route-filter="approved">✅ Approved</a>
+        <a class="@Cls("rejected")" asp-action="Index" asp-route-filter="rejected">❌ Rejected</a>
+    </div>
+
+    @if (!requests.Any())
+    {
+        <div class="card">
+            <div class="card-body text-center text-muted" style="padding:32px">
+                You don't have any solar requests yet.
+                <br />
+                <a class="btn btn-success mt-3"
+                   asp-area="SolarPanelUserPanel" asp-controller="SolarRequest" asp-action="Create">
+                    ➕ Start a New Request
+                </a>
+            </div>
+        </div>
+    }
+    else
+    {
+        @* ─── 1. Solar Requests ───────────────────────────────────────── *@
+        <div class="card" style="margin-bottom:14px">
+            <div class="ct"><span class="ct-dot"></span>Solar Requests (@requests.Count)</div>
+            <div class="tbl-wrap">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Request #</th>
+                            <th>Plan</th>
+                            <th>Capacity</th>
+                            <th>Connection</th>
+                            <th>Project Amount</th>
+                            <th>Stage</th>
+                            <th>Approval</th>
+                            <th>Submitted</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var r in requests)
+                        {
+                            // Per spec: a Completed project is implicitly Approved
+                            // regardless of any stale ApprovalStatus on the record.
+                            var effectiveApproval = r.CurrentStage == SolarPortal.Domain.Enums.ProjectStatus.Completed
+                                ? SolarPortal.Domain.Enums.ApprovalStatus.Approved
+                                : r.ApprovalStatus;
+
+                            <tr>
+                                <td class="td-b">
+                                    <a asp-action="Status" asp-controller="SolarRequest"
+                                       asp-area="SolarPanelUserPanel" asp-route-id="@r.Id"
+                                       style="color:var(--green)">@r.RequestNumber</a>
+                                </td>
+                                <td>@r.SelectedPlan</td>
+                                <td>@r.KVCapacity kV</td>
+                                <td>@r.ConnectionType</td>
+                                <td>₹@r.PlanAmount.ToString("N0")</td>
+                                <td><span class="sts sts-disp">@r.CurrentStage.ToString().Replace("_", " ")</span></td>
+                                <td>@Html.Raw(ApprovalBadge(effectiveApproval))</td>
+                                <td>@r.CreatedAt.ToLocalTime().ToString("dd MMM yyyy")</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        @* ─── 2. Payments ────────────────────────────────────────────── *@
+        @if (payments.Any())
+        {
+            <div class="card" style="margin-bottom:14px">
+                <div class="ct"><span class="ct-dot"></span>Payments (@payments.Count)</div>
+                <div class="tbl-wrap">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Request #</th>
+                                <th>Amount</th>
+                                <th>UTR / Txn</th>
+                                <th>Method</th>
+                                <th>Date</th>
+                                <th>Status</th>
+                                <th>Receipt</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var p in payments)
+                            {
+                                @* Normalize the stored receipt path the same way the admin
+                                   Payment Verification view does — older records sometimes
+                                   carried a stray "wwwroot/" prefix or Windows backslashes
+                                   because of how the upload service used to write them.
+                                   We strip both and prefix "/" so the URL resolves under
+                                   the web root regardless of which format was saved. *@
+                                string? receiptUrl = null;
+                                if (!string.IsNullOrEmpty(p.ReceiptImagePath))
+                                {
+                                    var rel = p.ReceiptImagePath.Replace("\\", "/").TrimStart('/');
+                                    if (rel.StartsWith("wwwroot/", StringComparison.OrdinalIgnoreCase))
+                                        rel = rel.Substring("wwwroot/".Length);
+                                    receiptUrl = "/" + rel;
+                                }
+                                <tr>
+                                    <td>@ReqNum(p.SolarRequestId)</td>
+                                    <td>₹@p.Amount.ToString("N0")</td>
+                                    <td><code style="font-size:11px">@(p.UTRNumber ?? "—")</code></td>
+                                    <td>@(p.PaymentMethod ?? "—")</td>
+                                    <td>@p.PaymentDate.ToLocalTime().ToString("dd MMM yyyy")</td>
+                                    <td>@Html.Raw(PaymentBadge(p.Status))</td>
+                                    <td>
+                                        @if (!string.IsNullOrWhiteSpace(receiptUrl) && Has(p.ReceiptImagePath))
+                                        {
+                                            <a href="javascript:void(0)" onclick="openFileModal('@receiptUrl')" style="color:var(--sun)">📷 View</a>
+                                        }
+                                        else if (!string.IsNullOrWhiteSpace(p.ReceiptImagePath))
+                                        {
+                                            <span class="text-muted" style="font-size:11px"
+                                                  title="@p.ReceiptImagePath">⚠ File missing</span>
+                                        }
+                                        else { <span class="text-muted">—</span> }
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        }
+
+        @* ─── 3. PM Surya Ghar Documents ─────────────────────────────── *@
+        @if (pmDocs.Any())
+        {
+            <div class="card" style="margin-bottom:14px">
+                <div class="ct"><span class="ct-dot"></span>PM Surya Ghar Documents (@pmDocs.Count)</div>
+                <div class="tbl-wrap">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Request #</th>
+                                <th>Document Type</th>
+                                <th>Uploaded</th>
+                                <th>Status</th>
+                                <th>Reject Reason</th>
+                                <th>File</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var d in pmDocs)
+                            {
+                                <tr>
+                                    <td>@ReqNum(d.SolarRequestId)</td>
+                                    <td>@d.DocumentType</td>
+                                    <td>@d.CreatedAt.ToLocalTime().ToString("dd MMM yyyy")</td>
+                                    <td>@Html.Raw(ApprovalBadge(d.Status))</td>
+                                    <td>
+                                        @if (d.Status == SolarPortal.Domain.Enums.ApprovalStatus.Rejected
+                                             && !string.IsNullOrWhiteSpace(d.Remarks))
+                                        {
+                                            <span style="color:#dc3545;font-size:12px">@d.Remarks</span>
+                                        }
+                                        else { <span class="text-muted">—</span> }
+                                    </td>
+                                    <td>
+                                        @{
+                                            string? pmDocUrl = null;
+                                            if (!string.IsNullOrEmpty(d.FilePath))
+                                            {
+                                                var rel = d.FilePath.Replace("\\", "/").TrimStart('/');
+                                                if (rel.StartsWith("wwwroot/", StringComparison.OrdinalIgnoreCase))
+                                                    rel = rel.Substring("wwwroot/".Length);
+                                                pmDocUrl = "/" + rel;
+                                            }
+                                        }
+                                        @if (!string.IsNullOrWhiteSpace(pmDocUrl) && Has(d.FilePath))
+                                        {
+                                            <a href="javascript:void(0)" onclick="openFileModal('@pmDocUrl')" style="color:var(--sun)">📄 View</a>
+                                        }
+                                        else if (!string.IsNullOrWhiteSpace(d.FilePath))
+                                        {
+                                            <span class="text-muted" style="font-size:11px" title="@d.FilePath">⚠ File missing</span>
+                                        }
+                                        else { <span class="text-muted">—</span> }
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        }
+
+        @* ─── 4. Site Surveys ─────────────────────────────────────────── *@
+        @if (surveys.Any())
+        {
+            <div class="card" style="margin-bottom:14px">
+                <div class="ct"><span class="ct-dot"></span>Site Surveys (@surveys.Count)</div>
+                <div class="tbl-wrap">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Request #</th>
+                                <th>Property Type</th>
+                                <th>DISCOM</th>
+                                <th>Survey Date</th>
+                                <th>Status</th>
+                                <th>Reject Reason</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var s in surveys)
+                            {
+                                var ss = s.IsCompleted
+                                    ? SolarPortal.Domain.Enums.ApprovalStatus.Approved
+                                    : s.ApprovalStatus;
+                                <tr>
+                                    <td>@ReqNum(s.SolarRequestId)</td>
+                                    <td>@(s.PropertyType ?? "—")</td>
+                                    <td>@(s.DiscomName ?? "—")</td>
+                                    <td>@(s.SurveyDate?.ToLocalTime().ToString("dd MMM yyyy") ?? "—")</td>
+                                    <td>@Html.Raw(ApprovalBadge(ss))</td>
+                                    <td>
+                                        @if (s.ApprovalStatus == SolarPortal.Domain.Enums.ApprovalStatus.Rejected
+                                             && !string.IsNullOrWhiteSpace(s.RejectionReason))
+                                        {
+                                            <span style="color:#dc3545;font-size:12px">@s.RejectionReason</span>
+                                        }
+                                        else { <span class="text-muted">—</span> }
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        }
+
+        @* ─── 5. Meter Dispatch (read-only — admin action) ────────────── *@
+        @if (meters.Any() && (f == "all" || f == "approved"))
+        {
+            <div class="card" style="margin-bottom:14px">
+                <div class="ct"><span class="ct-dot"></span>Meter Dispatch (@meters.Count)</div>
+                <div class="tbl-wrap">
+                    <table>
+                        <thead>
+                            <tr><th>Request #</th><th>Meter #</th><th>Type</th><th>Date</th><th>Remark</th><th>Document</th></tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var m in meters)
+                            {
+                                <tr>
+                                    <td>@ReqNum(m.SolarRequestId)</td>
+                                    <td>@(m.MeterNumber ?? "—")</td>
+                                    <td>@(m.MeterType ?? "—")</td>
+                                    <td>@(m.DispatchDate?.ToLocalTime().ToString("dd MMM yyyy") ?? "—")</td>
+                                    <td>@(m.Remark ?? "—")</td>
+                                    <td>
+                                        @{
+                                            string? mDispUrl = null;
+                                            if (!string.IsNullOrWhiteSpace(m.DispatchDocumentPath))
+                                            {
+                                                var rel = m.DispatchDocumentPath.Replace("\\", "/").TrimStart('/');
+                                                if (rel.StartsWith("wwwroot/", StringComparison.OrdinalIgnoreCase))
+                                                    rel = rel.Substring("wwwroot/".Length);
+                                                mDispUrl = "/" + rel;
+                                            }
+                                        }
+                                        @if (!string.IsNullOrWhiteSpace(mDispUrl) && Has(m.DispatchDocumentPath))
+                                        {
+                                            <a href="javascript:void(0)" onclick="openFileModal('@mDispUrl')" style="color:var(--sun)">📄 View</a>
+                                        }
+                                        else if (!string.IsNullOrWhiteSpace(m.DispatchDocumentPath))
+                                        {
+                                            <span class="text-muted" style="font-size:11px" title="@m.DispatchDocumentPath">⚠ File missing</span>
+                                        }
+                                        else { <span class="text-muted">—</span> }
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        }
+
+        @* ─── 6. Material Dispatch ────────────────────────────────────── *@
+        @if (materials.Any() && (f == "all" || f == "approved"))
+        {
+            <div class="card" style="margin-bottom:14px">
+                <div class="ct"><span class="ct-dot"></span>Material Dispatch (@materials.Count)</div>
+                <div class="tbl-wrap">
+                    <table>
+                        <thead>
+                            <tr><th>Request #</th><th>Material</th><th>Vehicle</th><th>Date</th><th>Remark</th><th>Document</th></tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var m in materials)
+                            {
+                                <tr>
+                                    <td>@ReqNum(m.SolarRequestId)</td>
+                                    <td>@(m.MaterialDetails ?? "—")</td>
+                                    <td>@(m.VehicleDetails ?? "—")</td>
+                                    <td>@(m.DispatchDate?.ToLocalTime().ToString("dd MMM yyyy") ?? "—")</td>
+                                    <td>@(m.Remark ?? "—")</td>
+                                    <td>
+                                        @{
+                                            string? mDispUrl = null;
+                                            if (!string.IsNullOrWhiteSpace(m.DispatchDocumentPath))
+                                            {
+                                                var rel = m.DispatchDocumentPath.Replace("\\", "/").TrimStart('/');
+                                                if (rel.StartsWith("wwwroot/", StringComparison.OrdinalIgnoreCase))
+                                                    rel = rel.Substring("wwwroot/".Length);
+                                                mDispUrl = "/" + rel;
+                                            }
+                                        }
+                                        @if (!string.IsNullOrWhiteSpace(mDispUrl) && Has(m.DispatchDocumentPath))
+                                        {
+                                            <a href="javascript:void(0)" onclick="openFileModal('@mDispUrl')" style="color:var(--sun)">📄 View</a>
+                                        }
+                                        else if (!string.IsNullOrWhiteSpace(m.DispatchDocumentPath))
+                                        {
+                                            <span class="text-muted" style="font-size:11px" title="@m.DispatchDocumentPath">⚠ File missing</span>
+                                        }
+                                        else { <span class="text-muted">—</span> }
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        }
+
+        @* ─── 7. Installation ─────────────────────────────────────────── *@
+        @if (installs.Any() && (f == "all" || f == "approved"))
+        {
+            <div class="card" style="margin-bottom:14px">
+                <div class="ct"><span class="ct-dot"></span>Installation (@installs.Count)</div>
+                <div class="tbl-wrap">
+                    <table>
+                        <thead>
+                            <tr><th>Request #</th><th>Date</th><th>Notes</th><th>Remark</th><th>Photo</th></tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var i in installs)
+                            {
+                                <tr>
+                                    <td>@ReqNum(i.SolarRequestId)</td>
+                                    <td>@(i.InstallationDate?.ToLocalTime().ToString("dd MMM yyyy") ?? "—")</td>
+                                    <td>@(i.Notes ?? "—")</td>
+                                    <td>@(i.Remark ?? "—")</td>
+                                    <td>
+                                        @{
+                                            string? iPhotoUrl = null;
+                                            if (!string.IsNullOrWhiteSpace(i.CompletionPhotoPath))
+                                            {
+                                                var rel = i.CompletionPhotoPath.Replace("\\", "/").TrimStart('/');
+                                                if (rel.StartsWith("wwwroot/", StringComparison.OrdinalIgnoreCase))
+                                                    rel = rel.Substring("wwwroot/".Length);
+                                                iPhotoUrl = "/" + rel;
+                                            }
+                                        }
+                                        @if (!string.IsNullOrWhiteSpace(iPhotoUrl) && Has(i.CompletionPhotoPath))
+                                        {
+                                            <a href="javascript:void(0)" onclick="openFileModal('@iPhotoUrl')" style="color:var(--sun)">📷 View</a>
+                                        }
+                                        else if (!string.IsNullOrWhiteSpace(i.CompletionPhotoPath))
+                                        {
+                                            <span class="text-muted" style="font-size:11px" title="@i.CompletionPhotoPath">⚠ File missing</span>
+                                        }
+                                        else { <span class="text-muted">—</span> }
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        }
+
+        @* ─── 8. DCR Documents ────────────────────────────────────────── *@
+        @if (dcrDocs.Any())
+        {
+            <div class="card" style="margin-bottom:14px">
+                <div class="ct"><span class="ct-dot"></span>DCR Documents (@dcrDocs.Count)</div>
+                <div class="tbl-wrap">
+                    <table>
+                        <thead>
+                            <tr><th>Request #</th><th>DCR #</th><th>DCR Date</th><th>Status</th><th>Reject Reason</th><th>Document</th></tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var d in dcrDocs)
+                            {
+                                <tr>
+                                    <td>@ReqNum(d.SolarRequestId)</td>
+                                    <td>@(d.DCRNumber ?? "—")</td>
+                                    <td>@(d.DCRDate?.ToLocalTime().ToString("dd MMM yyyy") ?? "—")</td>
+                                    <td>@Html.Raw(ApprovalBadge(d.ApprovalStatus))</td>
+                                    <td>
+                                        @* DCRDocument has its own RejectionReason field (we added it earlier
+                                           for the admin approve/reject workflow). PMDocument up above uses
+                                           the generic Remarks field instead — that entity doesn't have a
+                                           dedicated rejection-reason column. *@
+                                        @if (d.ApprovalStatus == SolarPortal.Domain.Enums.ApprovalStatus.Rejected
+                                             && !string.IsNullOrWhiteSpace(d.RejectionReason))
+                                        {
+                                            <span style="color:#dc3545;font-size:12px">@d.RejectionReason</span>
+                                        }
+                                        else { <span class="text-muted">—</span> }
+                                    </td>
+                                    <td>
+                                        @{
+                                            string? dDocUrl = null;
+                                            if (!string.IsNullOrWhiteSpace(d.DocumentPath))
+                                            {
+                                                var rel = d.DocumentPath.Replace("\\", "/").TrimStart('/');
+                                                if (rel.StartsWith("wwwroot/", StringComparison.OrdinalIgnoreCase))
+                                                    rel = rel.Substring("wwwroot/".Length);
+                                                dDocUrl = "/" + rel;
+                                            }
+                                        }
+                                        @if (!string.IsNullOrWhiteSpace(dDocUrl) && Has(d.DocumentPath))
+                                        {
+                                            <a href="javascript:void(0)" onclick="openFileModal('@dDocUrl')" style="color:var(--sun)">📄 View</a>
+                                        }
+                                        else if (!string.IsNullOrWhiteSpace(d.DocumentPath))
+                                        {
+                                            <span class="text-muted" style="font-size:11px" title="@d.DocumentPath">⚠ File missing</span>
+                                        }
+                                        else { <span class="text-muted">—</span> }
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        }
+    }
+</div>
+
+@* In-page file preview modal (no new tab) *@
+@await Html.PartialAsync("_FileModal")

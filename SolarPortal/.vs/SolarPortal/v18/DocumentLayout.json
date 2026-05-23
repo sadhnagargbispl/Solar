@@ -1,12 +1,12 @@
 {
   "Version": 1,
-  "WorkspaceRootPath": "\\\\localhost\\Sadhna\\New folder (12)\\SolarPortal_FINAL\\UserPanel\\SolarPortal\\SolarPortal\\",
+  "WorkspaceRootPath": "\\\\localhost\\Sadhna\\New folder (6)\\files\\SolarPortal_FINAL\\UserPanel\\SolarPortal\\SolarPortal\\",
   "Documents": [
     {
-      "AbsoluteMoniker": "D:0:0:{44444444-4444-4444-4444-444444444444}|SolarPortal.Web\\SolarPortal.Web.csproj|\\\\localhost\\sadhna\\new folder (12)\\solarportal_final\\userpanel\\solarportal\\solarportal\\solarportal.web\\areas\\solarpaneluserpanel\\views\\solarrequest\\payment.cshtml||{40D31677-CBC0-4297-A9EF-89D907823A98}"
+      "AbsoluteMoniker": "D:0:0:{44444444-4444-4444-4444-444444444444}|SolarPortal.Web\\SolarPortal.Web.csproj|\\\\localhost\\sadhna\\new folder (6)\\files\\solarportal_final\\userpanel\\solarportal\\solarportal\\solarportal.web\\areas\\solarpaneluserpanel\\views\\solarrequest\\details.cshtml||{40D31677-CBC0-4297-A9EF-89D907823A98}"
     },
     {
-      "AbsoluteMoniker": "D:0:0:{44444444-4444-4444-4444-444444444444}|SolarPortal.Web\\SolarPortal.Web.csproj|\\\\localhost\\sadhna\\new folder (12)\\solarportal_final\\userpanel\\solarportal\\solarportal\\solarportal.web\\areas\\solarpaneluserpanel\\controllers\\solarrequestcontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+      "AbsoluteMoniker": "D:0:0:{44444444-4444-4444-4444-444444444444}|SolarPortal.Web\\SolarPortal.Web.csproj|\\\\localhost\\sadhna\\new folder (6)\\files\\solarportal_final\\userpanel\\solarportal\\solarportal\\solarportal.web\\areas\\solarpaneluserpanel\\views\\solarrequest\\status.cshtml||{40D31677-CBC0-4297-A9EF-89D907823A98}"
     }
   ],
   "DocumentGroupContainers": [
@@ -21,27 +21,27 @@
             {
               "$type": "Document",
               "DocumentIndex": 0,
-              "Title": "Payment.cshtml",
-              "DocumentMoniker": "\\\\localhost\\Sadhna\\New folder (12)\\SolarPortal_FINAL\\UserPanel\\SolarPortal\\SolarPortal\\SolarPortal.Web\\Areas\\SolarPanelUserPanel\\Views\\SolarRequest\\Payment.cshtml",
-              "RelativeDocumentMoniker": "SolarPortal.Web\\Areas\\SolarPanelUserPanel\\Views\\SolarRequest\\Payment.cshtml",
-              "ToolTip": "\\\\localhost\\Sadhna\\New folder (12)\\SolarPortal_FINAL\\UserPanel\\SolarPortal\\SolarPortal\\SolarPortal.Web\\Areas\\SolarPanelUserPanel\\Views\\SolarRequest\\Payment.cshtml*",
-              "RelativeToolTip": "SolarPortal.Web\\Areas\\SolarPanelUserPanel\\Views\\SolarRequest\\Payment.cshtml*",
-              "ViewState": "AgIAALUAAAAAAAAAAADwv+IAAAAAAAAAAAAAAA==",
+              "Title": "Details.cshtml",
+              "DocumentMoniker": "\\\\localhost\\Sadhna\\New folder (6)\\files\\SolarPortal_FINAL\\UserPanel\\SolarPortal\\SolarPortal\\SolarPortal.Web\\Areas\\SolarPanelUserPanel\\Views\\SolarRequest\\Details.cshtml",
+              "RelativeDocumentMoniker": "SolarPortal.Web\\Areas\\SolarPanelUserPanel\\Views\\SolarRequest\\Details.cshtml",
+              "ToolTip": "\\\\localhost\\Sadhna\\New folder (6)\\files\\SolarPortal_FINAL\\UserPanel\\SolarPortal\\SolarPortal\\SolarPortal.Web\\Areas\\SolarPanelUserPanel\\Views\\SolarRequest\\Details.cshtml",
+              "RelativeToolTip": "SolarPortal.Web\\Areas\\SolarPanelUserPanel\\Views\\SolarRequest\\Details.cshtml",
+              "ViewState": "AgIAAG0AAAAAAAAAAADwv5oAAAA6AAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000759|",
-              "WhenOpened": "2026-05-20T13:33:53.141Z",
+              "WhenOpened": "2026-05-23T09:51:23.627Z",
               "EditorCaption": ""
             },
             {
               "$type": "Document",
               "DocumentIndex": 1,
-              "Title": "SolarRequestController.cs",
-              "DocumentMoniker": "\\\\localhost\\Sadhna\\New folder (12)\\SolarPortal_FINAL\\UserPanel\\SolarPortal\\SolarPortal\\SolarPortal.Web\\Areas\\SolarPanelUserPanel\\Controllers\\SolarRequestController.cs",
-              "RelativeDocumentMoniker": "SolarPortal.Web\\Areas\\SolarPanelUserPanel\\Controllers\\SolarRequestController.cs",
-              "ToolTip": "\\\\localhost\\Sadhna\\New folder (12)\\SolarPortal_FINAL\\UserPanel\\SolarPortal\\SolarPortal\\SolarPortal.Web\\Areas\\SolarPanelUserPanel\\Controllers\\SolarRequestController.cs",
-              "RelativeToolTip": "SolarPortal.Web\\Areas\\SolarPanelUserPanel\\Controllers\\SolarRequestController.cs",
-              "ViewState": "AgIAAAMEAAAAAAAAAAAywC8EAAAAAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-05-20T13:32:58.593Z",
+              "Title": "Status.cshtml",
+              "DocumentMoniker": "\\\\localhost\\Sadhna\\New folder (6)\\files\\SolarPortal_FINAL\\UserPanel\\SolarPortal\\SolarPortal\\SolarPortal.Web\\Areas\\SolarPanelUserPanel\\Views\\SolarRequest\\Status.cshtml",
+              "RelativeDocumentMoniker": "SolarPortal.Web\\Areas\\SolarPanelUserPanel\\Views\\SolarRequest\\Status.cshtml",
+              "ToolTip": "\\\\localhost\\Sadhna\\New folder (6)\\files\\SolarPortal_FINAL\\UserPanel\\SolarPortal\\SolarPortal\\SolarPortal.Web\\Areas\\SolarPanelUserPanel\\Views\\SolarRequest\\Status.cshtml",
+              "RelativeToolTip": "SolarPortal.Web\\Areas\\SolarPanelUserPanel\\Views\\SolarRequest\\Status.cshtml",
+              "ViewState": "AgIAAJ4AAAAAAAAAAAAYwOUAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000759|",
+              "WhenOpened": "2026-05-23T09:23:17.62Z",
               "EditorCaption": ""
             }
           ]

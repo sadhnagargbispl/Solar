@@ -35,18 +35,65 @@
     for (int i = 0; i < visibleSteps.Length; i++)
         if (visibleSteps[i].Stage == effectiveStage) { visibleCurrentIdx = i; break; }
 
-    var progress = visibleCurrentIdx < 0 ? 0 : (int)Math.Round((visibleCurrentIdx + 1) * 100.0 / visibleSteps.Length);
+    // Progress = how many steps are actually DONE, as a % of total.
+    // The CURRENT step is "in progress", not finished, so it must NOT be counted
+    // as complete — only the steps BEFORE it are done. (Earlier this used
+    // visibleCurrentIdx + 1, which counted the in-progress step as done and made
+    // a freshly-registered project read "22% complete" when really only
+    // Registration was finished.) When the whole project is Completed, every
+    // step including the last is done, so we show 100%.
+    int progress;
+    if (visibleCurrentIdx < 0)
+    {
+        progress = 0;
+    }
+    else if (Model.CurrentStage == SolarPortal.Domain.Enums.ProjectStatus.Completed)
+    {
+        progress = 100;
+    }
+    else
+    {
+        // Steps strictly before the current in-progress step are the completed ones.
+        progress = (int)Math.Round(visibleCurrentIdx * 100.0 / visibleSteps.Length);
+    }
 }
 
 <div class="timeline-card" style="background:#fff;border-radius:12px;padding:20px;box-shadow:0 2px 8px rgba(0,0,0,0.08);margin-bottom:16px">
     <div class="d-flex justify-content-between align-items-center mb-3">
         <div>
-            <h5 class="mb-0">@Model.RequestNumber · @Model.SelectedPlan</h5>
-            <small class="text-muted">@Model.ApplicantName · @(isDomestic ? "Domestic" : "Commercial")</small>
+            @{
+                // The auto-stub (created at first login) has no product/plan picked
+                // yet — SelectedPlan is blank and CurrentStage is still
+                // ProductSelection. In that state we must NOT show a connection type:
+                // ConnectionType defaults to Domestic (=1) on a fresh row, which made
+                // the header wrongly read "... · Domestic" before the user chose
+                // anything. So we only show the plan + connection once the request
+                // has actually moved past product selection.
+                var planChosen = !string.IsNullOrWhiteSpace(Model.SelectedPlan);
+                var notStarted = Model.CurrentStage == SolarPortal.Domain.Enums.ProjectStatus.ProductSelection
+                                 && !planChosen;
+                var planText   = planChosen ? Model.SelectedPlan : "Plan not selected yet";
+            }
+            <h5 class="mb-0">@Model.RequestNumber · @planText</h5>
+            <small class="text-muted">
+                @Model.ApplicantName@(notStarted ? "" : " · " + (isDomestic ? "Domestic" : "Commercial"))
+            </small>
         </div>
         <div class="text-end">
-            <span class="badge bg-@(Model.ApprovalStatus == SolarPortal.Domain.Enums.ApprovalStatus.Approved ? "success" : Model.ApprovalStatus == SolarPortal.Domain.Enums.ApprovalStatus.Rejected ? "danger" : "warning") px-3 py-2">
-                @Model.ApprovalStatus
+            @{
+                // Per spec: jab project Completed stage pe pahunch jaaye, badge bhi
+                // "Approved" dikhna chahiye — "Pending" nahi (kyunki project hi ho
+                // gaya hai, ApprovalStatus stale ho sakta hai). Display-only fix —
+                // DB record untouched.
+                var effectiveApproval = Model.CurrentStage == SolarPortal.Domain.Enums.ProjectStatus.Completed
+                    ? SolarPortal.Domain.Enums.ApprovalStatus.Approved
+                    : Model.ApprovalStatus;
+                var badgeClass = effectiveApproval == SolarPortal.Domain.Enums.ApprovalStatus.Approved ? "success"
+                              : effectiveApproval == SolarPortal.Domain.Enums.ApprovalStatus.Rejected ? "danger"
+                              : "warning";
+            }
+            <span class="badge bg-@badgeClass px-3 py-2">
+                @effectiveApproval
             </span>
         </div>
     </div>

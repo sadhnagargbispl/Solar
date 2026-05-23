@@ -68,7 +68,7 @@ public class DCRController : Controller
         }
         if (req.CurrentStage < ProjectStatus.DCRUpdate)
         {
-            TempData["Error"] = "DCR unlocks after Installation is complete.";
+            TempData["Info"] = "DCR unlocks after Installation is complete.";
             return RedirectToAction("Status", "SolarRequest", new { id });
         }
 
@@ -97,21 +97,52 @@ public class DCRController : Controller
         if (dcrDoc == null || dcrDoc.Length == 0)
             return Json(new { success = false, message = "Please attach the DCR document" });
 
-        var (ok, path, error) = await _fileUpload.UploadAsync(dcrDoc, $"dcr/{requestId}");
+        // Organise uploads by project: uploads/SCR-001/dcr/<file>
+        var (ok, path, error) = await _fileUpload.UploadAsync(dcrDoc, $"{req.RequestNumber}/dcr");
         if (!ok)
             return Json(new { success = false, message = error });
 
-        var doc = new DCRDocument
+        // Per spec: if there's an existing record AND it's Rejected, treat this
+        // as a re-upload — update the same row back to Pending so admin can
+        // re-review. If existing is Pending or Approved, block (read-only).
+        // First-time upload → create new row.
+        var existing = (await _uow.DCRDocuments.FindAsync(d => d.SolarRequestId == requestId))
+                       .OrderByDescending(d => d.CreatedAt)
+                       .FirstOrDefault();
+
+        if (existing != null && existing.ApprovalStatus != ApprovalStatus.Rejected)
         {
-            SolarRequestId = requestId,
-            DCRNumber = dcrNumber,
-            DCRDate = dcrDate ?? DateTime.UtcNow,
-            DocumentPath = path,
-            Remark = remark,
-            IsVerified = false // Admin will verify
-        };
-        await _uow.DCRDocuments.AddAsync(doc);
-        await _uow.SaveChangesAsync();
+            return Json(new { success = false, message = "DCR already submitted and locked. Wait for admin review." });
+        }
+
+        if (existing != null && existing.ApprovalStatus == ApprovalStatus.Rejected)
+        {
+            // Re-upload: overwrite the rejected row
+            existing.DCRNumber       = dcrNumber;
+            existing.DCRDate         = dcrDate ?? DateTime.UtcNow;
+            existing.DocumentPath    = path;
+            existing.Remark          = remark;
+            existing.ApprovalStatus  = ApprovalStatus.Pending;
+            existing.RejectionReason = null;
+            existing.IsVerified      = false;
+            existing.UpdatedAt       = DateTime.UtcNow;
+            await _uow.SaveChangesAsync();
+        }
+        else
+        {
+            var doc = new DCRDocument
+            {
+                SolarRequestId  = requestId,
+                DCRNumber       = dcrNumber,
+                DCRDate         = dcrDate ?? DateTime.UtcNow,
+                DocumentPath    = path,
+                Remark          = remark,
+                ApprovalStatus  = ApprovalStatus.Pending,
+                IsVerified      = false
+            };
+            await _uow.DCRDocuments.AddAsync(doc);
+            await _uow.SaveChangesAsync();
+        }
 
         await _notifications.CreateAsync(new CreateNotificationDto
         {

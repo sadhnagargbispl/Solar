@@ -1,5 +1,6 @@
 using SolarPortal.Domain.Common;
 using SolarPortal.Domain.Enums;
+using System.ComponentModel.DataAnnotations.Schema;
 using System.Reflection.Metadata;
 
 namespace SolarPortal.Domain.Entities;
@@ -54,4 +55,13 @@ public class SolarRequest : BaseEntity
     public virtual ICollection<Notification> Notifications { get; set; } = new List<Notification>();
     public virtual Commission? Commission { get; set; }
     public virtual SolarAccount? SolarAccount { get; set; }
+
+    // ─── Display-only field for admin views ──────────────────────────────
+    // Populated by admin controllers via EnrichMemberNamesAsync (or left
+    // null). Admin Razor views fall back to ApplicantName when this is
+    // blank. Marked NotMapped so EF doesn't try to create a DB column.
+    // Keeps the same shape as SolarRequestDto.MemberFullName so the views
+    // can use either.
+    [NotMapped]
+    public string? MemberFullName { get; set; }
 }

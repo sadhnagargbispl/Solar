@@ -62,7 +62,7 @@
                 <div class="ct"><span class="ct-dot"></span>Quick Actions</div>
                 <div class="btn-row">
                     @{
-                        var stage  = Model.CurrentStage;
+                        var stage = Model.CurrentStage;
                         var isDone = stage == Domain.Enums.ProjectStatus.Completed;
                         // PM Surya Ghar docs button: only while the project is at-or-before that stage.
                         // Once we're past PMSurvey (or already Completed), the button is no longer useful.
@@ -137,7 +137,7 @@
                                             }
                                         </td>
                                         <td>
-                                            <a href="@doc.FilePath" target="_blank" class="btn btn-s btn-sm">📥 View</a>
+                                            <a href="javascript:void(0)" onclick="openFileModal('@doc.FilePath')" class="btn btn-s btn-sm">📥 View</a>
                                         </td>
                                     </tr>
                                 }
@@ -150,7 +150,10 @@
 
         <div class="card" style="margin-top:16px">
             <div class="ct"><span class="ct-dot"></span>Project Status Flow</div>
-            <partial name="~/Views/Shared/_StatusFlow.cshtml" model="(int)Model.CurrentStage" />
+            @* Use the same timeline partial as the Dashboard / My Solar Status so
+               the look is identical (progress bar + connected steps, Product
+               Selection folded into the Payment step). *@
+            <partial name="~/Views/Shared/_StatusTimeline.cshtml" model="Model" />
         </div>
     }
     else
@@ -160,3 +163,6 @@
         </div>
     }
 </div>
+
+@* In-page file preview modal (no new tab) *@
+@await Html.PartialAsync("_FileModal")

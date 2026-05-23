@@ -62,7 +62,7 @@ public class SiteSurveyController : Controller
 
         if (req.CurrentStage < ProjectStatus.SiteSurvey)
         {
-            TempData["Error"] = "Site survey unlocks after PM Surya Ghar is approved by admin.";
+            TempData["Info"] = "Site survey unlocks after PM Surya Ghar is approved by admin.";
             return RedirectToAction("Status", "SolarRequest", new { id });
         }
 
@@ -139,14 +139,15 @@ public class SiteSurveyController : Controller
         }
 
         string? roofPath = null, gpsPath = null;
+        // Organise uploads by project: uploads/SCR-001/sitesurvey/roof|gps/<file>
         if (roofPhoto != null)
         {
-            var (ok, path, _) = await _fileUpload.UploadAsync(roofPhoto, $"sitesurvey/{requestId}/roof");
+            var (ok, path, _) = await _fileUpload.UploadAsync(roofPhoto, $"{req.RequestNumber}/sitesurvey/roof");
             if (ok) roofPath = path;
         }
         if (gpsPhoto != null)
         {
-            var (ok, path, _) = await _fileUpload.UploadAsync(gpsPhoto, $"sitesurvey/{requestId}/gps");
+            var (ok, path, _) = await _fileUpload.UploadAsync(gpsPhoto, $"{req.RequestNumber}/sitesurvey/gps");
             if (ok) gpsPath = path;
         }
 

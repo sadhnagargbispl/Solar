@@ -77,7 +77,7 @@ public class PMSuryaController : Controller
         //  - user still owes ₹30,000 but the system would otherwise let them upload PM docs
         if (req.CurrentStage < ProjectStatus.PMSurvey)
         {
-            TempData["Error"] = "PM Surya Ghar upload unlocks after your payment is approved by admin.";
+            TempData["Info"] = "PM Surya Ghar upload unlocks after your payment is approved by admin.";
             return RedirectToAction("Status", "SolarRequest", new { id });
         }
 
@@ -133,7 +133,8 @@ public class PMSuryaController : Controller
         }
 
         // Save the file
-        var (ok, path, error) = await _fileUpload.UploadAsync(file, $"pmsurya/{requestId}");
+        // Organise uploads by project: uploads/SCR-001/pmsurya/<file>
+        var (ok, path, error) = await _fileUpload.UploadAsync(file, $"{req.RequestNumber}/pmsurya");
         if (!ok)
             return Json(new { success = false, message = error });
 
