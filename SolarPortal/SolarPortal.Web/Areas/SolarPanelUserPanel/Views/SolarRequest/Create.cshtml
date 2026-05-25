@@ -294,6 +294,15 @@
                             <span id="mode3Amount" style="font-size:18px;font-weight:700;color:#0f172a">₹0</span>
                         </div>
                     </div>
+                    @* Shown when no active kW master plan matches the selected Solar
+                       Type + Connection — tells the user/admin the plan is missing
+                       instead of silently showing no amount. *@
+                    <div id="noPlanBox" style="margin-top:10px;padding:10px 14px;background:#fff7ed;border-radius:6px;border:1px solid #fdba74;display:none">
+                        <div style="font-size:13px;color:#9a3412">
+                            ⚠ No price is set for this Solar Type + Connection yet.
+                            Please ask the admin to add a matching plan, or pick another Solar Type.
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -591,6 +600,7 @@
                             }
                         </div>
                     </div>
+                    <span asp-validation-for="PaymentReceipt" class="hint" style="color:var(--danger);margin-top:6px;display:block"></span>
                 </div>
             </div>
 
@@ -617,6 +627,24 @@
                     ' Plan=' + (document.getElementById('selectedPlanInput')?.value || '(empty)') +
                     ' Amount=' + (document.getElementById('planAmountInput')?.value || '(empty)'));
             });
+
+            // On first load, the Solar Type / mode are ALREADY selected (e.g. an
+            // active member is locked to "Already Active" with 2 kV pre-chosen).
+            // Run the plan match right away so the matched amount shows without the
+            // user having to re-click the dropdown. We use the already-set
+            // RequestType to decide which mode box to fill.
+            const reqType = parseInt(document.getElementById('reqTypeInput')?.value || '0', 10);
+            const banner2 = document.getElementById('mode2Banner');
+            const banner3 = document.getElementById('mode3Banner');
+            if (reqType === 2 && banner2) banner2.style.display = 'block';
+            if (reqType === 3 && banner3) banner3.style.display = 'block';
+            // Fill the matched-plan box + hidden inputs from the current Solar Type
+            // + Connection Type (works for every mode).
+            if (typeof applyFetchedPlan === 'function') applyFetchedPlan();
+            // Keep the kV display label in sync too.
+            const kvSel = document.querySelector('[name="KVCapacity"]');
+            const kvDisp = document.getElementById('kvDisplay');
+            if (kvSel && kvDisp) kvDisp.textContent = kvSel.value + ' kV';
         });
     </script>
     <script>
@@ -629,8 +657,8 @@
         // to click the locked With Activation / Only Solar cards. Show a toast and
         // do nothing else — the hidden RequestType input stays at 3 (Already Active).
         function blockedByActiveMember() {
-            if (typeof showError === 'function') {
-                showError('Aap pehle se active solar member hain. Sirf "Already Active — Only Request" mode allowed hai.');
+            if (typeof showWarning === 'function') {
+                showWarning('Aap pehle se active solar member hain. Sirf "Already Active — Only Request" mode allowed hai.');
             } else {
                 alert('Aap pehle se active solar member hain. Sirf "Already Active — Only Request" mode allowed hai.');
             }
@@ -774,9 +802,11 @@
             const kv = parseFloat(document.querySelector('[name="KVCapacity"]')?.value || '0');
             const conn = parseInt(document.querySelector('[name="ConnectionType"]')?.value || '1', 10);
             if (!kv) return null;
+            // Tolerant kV compare (2 vs 2.00 vs 2.0) — avoid exact-float mismatch.
+            const sameKv = (a, b) => Math.abs(parseFloat(a) - parseFloat(b)) < 0.001;
             // Exact KV+conn, else KV only, else conn only
-            return PLANS.find(p => p.kv === kv && p.conn === conn)
-                ?? PLANS.find(p => p.kv === kv)
+            return PLANS.find(p => sameKv(p.kv, kv) && p.conn === conn)
+                ?? PLANS.find(p => sameKv(p.kv, kv))
                 ?? PLANS.find(p => p.conn === conn)
                 ?? null;
         }
@@ -788,14 +818,20 @@
             // the amount. So this lookup runs normally regardless of whether a
             // product is selected.
             const m = fetchMatchingPlan();
+            const noPlanBox = document.getElementById('noPlanBox');
             if (!m) {
                 // Nothing matched — clear the Mode 2 / Mode 3 live amount boxes
                 const m2box = document.getElementById('mode2AmountBox');
                 if (m2box) m2box.style.display = 'none';
                 const m3box = document.getElementById('mode3AmountBox');
                 if (m3box) m3box.style.display = 'none';
+                // Tell the user no price is configured (instead of showing nothing).
+                if (noPlanBox) noPlanBox.style.display = 'block';
+                // Also clear the amount so a stale value isn't submitted.
+                document.getElementById('planAmountInput').value = '';
                 return;
             }
+            if (noPlanBox) noPlanBox.style.display = 'none';
             // Update hidden inputs so backend gets the correct values
             document.getElementById('solarProjectIdInput').value = m.id;
             document.getElementById('selectedPlanInput').value = m.name;
@@ -863,7 +899,7 @@
             const reqType = parseInt(document.getElementById('reqTypeInput').value, 10);
             const extProdId = (document.getElementById('externalProductIdInput')?.value || '').trim();
             if (reqType === 1 && !extProdId) {
-                showError('Please pick one of the basic products in the "Select Basic Product" section.');
+                showWarning('Please pick one of the basic products in the "Select Basic Product" section.');
                 return false;
             }
 
@@ -892,17 +928,17 @@
                 const label = (planAmt > 0 && planAmt < hardMin)
                     ? `Payment must be the full project amount of ₹${effMin.toLocaleString('en-IN')}.`
                     : `Minimum payment is ₹${hardMin.toLocaleString('en-IN')}. Please enter a valid amount.`;
-                showError(label);
+                showWarning(label);
                 return false;
             }
             if (planAmt > 0 && payAmt > planAmt) {
-                showError(`Payment ₹${payAmt.toLocaleString('en-IN')} cannot exceed project amount ₹${planAmt.toLocaleString('en-IN')}.`);
+                showWarning(`Payment ₹${payAmt.toLocaleString('en-IN')} cannot exceed project amount ₹${planAmt.toLocaleString('en-IN')}.`);
                 return false;
             }
-            if (!payUtr)    { showError('UTR / Transaction Number is required.'); return false; }
-            if (!payDate)   { showError('Payment Date is required.'); return false; }
-            if (!payMethod) { showError('Payment Method is required.'); return false; }
-            if (!payFile)   { showError('Please upload the payment receipt image / PDF.'); return false; }
+            if (!payUtr)    { showWarning('UTR / Transaction Number is required.'); return false; }
+            if (!payDate)   { showWarning('Payment Date is required.'); return false; }
+            if (!payMethod) { showWarning('Payment Method is required.'); return false; }
+            if (!payFile)   { showWarning('Please upload the payment receipt image / PDF.'); return false; }
 
             return true;
         }

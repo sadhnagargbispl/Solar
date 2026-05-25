@@ -1,8 +1,8 @@
 {
   "version": 2,
-  "dgSpecHash": "6JvzZVcIaIs=",
+  "dgSpecHash": "aizp6ZcrMDg=",
   "success": true,
-  "projectFilePath": "\\\\localhost\\Sadhna\\New folder (6)\\files\\SolarPortal_FINAL\\UserPanel\\SolarPortal\\SolarPortal\\SolarPortal.Application\\SolarPortal.Application.csproj",
+  "projectFilePath": "\\\\localhost\\Sadhna\\GitHub\\Solar\\SolarPortal\\SolarPortal.Application\\SolarPortal.Application.csproj",
   "expectedPackageFiles": [
     "C:\\Users\\Claude1\\.nuget\\packages\\automapper\\13.0.1\\automapper.13.0.1.nupkg.sha512",
     "C:\\Users\\Claude1\\.nuget\\packages\\fluentvalidation\\11.9.0\\fluentvalidation.11.9.0.nupkg.sha512",

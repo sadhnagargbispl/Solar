@@ -71,7 +71,7 @@ public class SolarRequestController : Controller
         // Pull the logged-in user's profile + bridged member master (if available)
         // so the form has values out of the gate. ApplicationUser is the cheapest
         // source; MMemberMaster has fuller data when present.
-        var meUser   = await _userManager.GetUserAsync(User);
+        var meUser = await _userManager.GetUserAsync(User);
         var meMember = await _db.Members
             .AsNoTracking()
             .FirstOrDefaultAsync(m => m.IdNo != null && m.IdNo.Trim() == userId);
@@ -85,7 +85,7 @@ public class SolarRequestController : Controller
                               ?? "";
         string profileCity = meUser?.City ?? meMember?.City ?? "";
         string profileState = meUser?.State ?? "";       // states stored as code on MMemberMaster — skip
-        string profilePin   = meUser?.PinCode ?? meMember?.PinCode ?? "";
+        string profilePin = meUser?.PinCode ?? meMember?.PinCode ?? "";
         string profileMobile = meUser?.MobileNumber
                              ?? meMember?.Mobl?.ToString()
                              ?? "";
@@ -170,26 +170,26 @@ public class SolarRequestController : Controller
                 {
                     // Name & Address come from profile (readonly in view) — fall back
                     // to the stub's stored values if the profile fields are blank.
-                    ApplicantName  = !string.IsNullOrWhiteSpace(profileName) ? profileName : (latest.ApplicantName ?? string.Empty),
-                    MobileNumber   = !string.IsNullOrWhiteSpace(profileMobile) ? profileMobile : (latest.MobileNumber ?? string.Empty),
-                    Email          = !string.IsNullOrWhiteSpace(profileEmail) ? profileEmail : stubEmail,
-                    Address        = !string.IsNullOrWhiteSpace(profileAddress) ? profileAddress : (latest.Address ?? string.Empty),
-                    City           = !string.IsNullOrWhiteSpace(profileCity) ? profileCity : (latest.City ?? string.Empty),
-                    State          = !string.IsNullOrWhiteSpace(profileState) ? profileState : (latest.State ?? string.Empty),
-                    PinCode        = !string.IsNullOrWhiteSpace(profilePin) ? profilePin : (latest.PinCode ?? string.Empty),
+                    ApplicantName = !string.IsNullOrWhiteSpace(profileName) ? profileName : (latest.ApplicantName ?? string.Empty),
+                    MobileNumber = !string.IsNullOrWhiteSpace(profileMobile) ? profileMobile : (latest.MobileNumber ?? string.Empty),
+                    Email = !string.IsNullOrWhiteSpace(profileEmail) ? profileEmail : stubEmail,
+                    Address = !string.IsNullOrWhiteSpace(profileAddress) ? profileAddress : (latest.Address ?? string.Empty),
+                    City = !string.IsNullOrWhiteSpace(profileCity) ? profileCity : (latest.City ?? string.Empty),
+                    State = !string.IsNullOrWhiteSpace(profileState) ? profileState : (latest.State ?? string.Empty),
+                    PinCode = !string.IsNullOrWhiteSpace(profilePin) ? profilePin : (latest.PinCode ?? string.Empty),
                     // Aadhaar & PAN are no longer collected on this form per spec —
                     // we preserve any prior value so the request keeps its data.
-                    AadharNumber   = latest.AadharNumber,
-                    PANNumber      = latest.PANNumber,
+                    AadharNumber = latest.AadharNumber,
+                    PANNumber = latest.PANNumber,
                     ConnectionType = latest.ConnectionType,
-                    KVCapacity     = latest.KVCapacity,
+                    KVCapacity = latest.KVCapacity,
                     SolarProjectId = latest.SolarProjectId,
-                    SelectedPlan   = latest.SelectedPlan,
-                    PlanAmount     = latest.RequestedAmount,
+                    SelectedPlan = latest.SelectedPlan,
+                    PlanAmount = latest.RequestedAmount,
                     // If the user is an active member (ActiveStatus=Y) we must lock
                     // them to "Already Active" mode regardless of what the request had.
                     // The view also disables the other two cards so they can't switch.
-                    RequestType    = isActiveMember
+                    RequestType = isActiveMember
                                         ? RequestType.AlreadyActiveOnlyRequest
                                         : latest.RequestType
                 };
@@ -203,7 +203,7 @@ public class SolarRequestController : Controller
             {
                 ApprovalStatus.Approved when latest.CurrentStage == ProjectStatus.Completed => "completed",
                 ApprovalStatus.Approved => "approved and in progress",
-                _                       => "in progress"
+                _ => "in progress"
             };
 
             TempData["Warning"] = $"You already have a solar request ({latest.RequestNumber}) which is {statusLabel}. " +
@@ -218,17 +218,17 @@ public class SolarRequestController : Controller
         ViewBag.ProfileReadonly = true;
         return View(new CreateSolarRequestViewModel
         {
-            ApplicantName  = profileName,
-            MobileNumber   = profileMobile,
-            Email          = profileEmail,
-            Address        = profileAddress,
-            City           = profileCity,
-            State          = profileState,
-            PinCode        = profilePin,
+            ApplicantName = profileName,
+            MobileNumber = profileMobile,
+            Email = profileEmail,
+            Address = profileAddress,
+            City = profileCity,
+            State = profileState,
+            PinCode = profilePin,
             // Active members in m_membermaster only have one valid mode: Already Active.
             // Default the form to that so they don't see a half-filled With Activation
             // form they aren't allowed to submit anyway.
-            RequestType    = isActiveMember
+            RequestType = isActiveMember
                                 ? RequestType.AlreadyActiveOnlyRequest
                                 : RequestType.WithActivation
         });
@@ -365,6 +365,16 @@ public class SolarRequestController : Controller
             ModelState.AddModelError(nameof(model.PaymentMethod), "Payment Method is required.");
         }
 
+        // ─── Payment receipt file mandatory (per spec) ───────────────────
+        // Bina receipt file choose kiye request submit nahi honi chahiye. We
+        // enforce this on the SERVER too (not just the client) so a request can
+        // never be created without proof of payment, even if the JS is bypassed.
+        if (model.PaymentReceipt == null || model.PaymentReceipt.Length == 0)
+        {
+            ModelState.AddModelError(nameof(model.PaymentReceipt),
+                "Payment receipt (image / PDF) is required. Please upload it to submit.");
+        }
+
         // ─── Basic product mandatory for With Activation (per spec) ──────
         if (model.RequestType == RequestType.WithActivation && !model.ExternalProductId.HasValue)
         {
@@ -410,11 +420,11 @@ public class SolarRequestController : Controller
             {
                 // Carry forward existing project info
                 model.SolarProjectId = basis.SolarProjectId;
-                model.SelectedPlan   = string.IsNullOrWhiteSpace(model.SelectedPlan)
+                model.SelectedPlan = string.IsNullOrWhiteSpace(model.SelectedPlan)
                                         ? (basis.SelectedPlan ?? "Already Active — Only Request")
                                         : model.SelectedPlan;
-                model.PlanAmount     = basis.RequestedAmount;
-                model.KVCapacity     = basis.KVCapacity;
+                model.PlanAmount = basis.RequestedAmount;
+                model.KVCapacity = basis.KVCapacity;
                 // Preserve the user's currently chosen ConnectionType. Do not overwrite
                 // with the prior request's value — they may legitimately be changing it.
             }
@@ -425,10 +435,10 @@ public class SolarRequestController : Controller
                 if (matched != null)
                 {
                     model.SolarProjectId = matched.Id;
-                    model.SelectedPlan   = string.IsNullOrWhiteSpace(model.SelectedPlan)
+                    model.SelectedPlan = string.IsNullOrWhiteSpace(model.SelectedPlan)
                                             ? $"Already Active — {matched.Name}"
                                             : model.SelectedPlan;
-                    model.PlanAmount     = matched.ProjectAmount;
+                    model.PlanAmount = matched.ProjectAmount;
                 }
                 else
                 {
@@ -444,15 +454,15 @@ public class SolarRequestController : Controller
             if (matched != null)
             {
                 model.SolarProjectId = matched.Id;
-                model.SelectedPlan   = $"Only Solar — {matched.Name}";
-                model.PlanAmount     = matched.ProjectAmount;
-                model.KVCapacity     = matched.SolarTypeKV;
+                model.SelectedPlan = $"Only Solar — {matched.Name}";
+                model.PlanAmount = matched.ProjectAmount;
+                model.KVCapacity = matched.SolarTypeKV;
                 // Preserve the user's ConnectionType selection — don't override.
             }
             else
             {
                 model.SolarProjectId = null;
-                model.SelectedPlan   = "Only Solar — Without Activation (pending plan assignment)";
+                model.SelectedPlan = "Only Solar — Without Activation (pending plan assignment)";
                 if (model.PlanAmount < 0) model.PlanAmount = 0m;
                 if (model.KVCapacity <= 0) model.KVCapacity = 0m;
             }
@@ -502,9 +512,9 @@ public class SolarRequestController : Controller
             if (actMatched != null)
             {
                 model.SolarProjectId = actMatched.Id;
-                model.SelectedPlan   = actMatched.Name;          // e.g. "2 kW Solar Kit"
-                model.PlanAmount     = actMatched.ProjectAmount; // e.g. ₹20,000
-                model.KVCapacity     = actMatched.SolarTypeKV;
+                model.SelectedPlan = actMatched.Name;          // e.g. "2 kW Solar Kit"
+                model.PlanAmount = actMatched.ProjectAmount; // e.g. ₹20,000
+                model.KVCapacity = actMatched.SolarTypeKV;
             }
             else
             {
@@ -520,9 +530,9 @@ public class SolarRequestController : Controller
             var project = await _solarProjectService.GetByIdAsync(model.SolarProjectId.Value);
             if (project != null)
             {
-                model.SelectedPlan   = project.Name;
-                model.PlanAmount     = project.ProjectAmount;
-                model.KVCapacity     = project.SolarTypeKV;
+                model.SelectedPlan = project.Name;
+                model.PlanAmount = project.ProjectAmount;
+                model.KVCapacity = project.SolarTypeKV;
                 // Preserve the user's chosen ConnectionType — don't override with plan's.
             }
         }
@@ -533,8 +543,8 @@ public class SolarRequestController : Controller
             if (matched != null)
             {
                 model.SolarProjectId = matched.Id;
-                model.SelectedPlan   = matched.Name;
-                model.PlanAmount     = matched.ProjectAmount;
+                model.SelectedPlan = matched.Name;
+                model.PlanAmount = matched.ProjectAmount;
             }
         }
 
@@ -549,7 +559,7 @@ public class SolarRequestController : Controller
             if (lastChance != null)
             {
                 model.SolarProjectId ??= lastChance.Id;
-                model.PlanAmount       = lastChance.ProjectAmount;
+                model.PlanAmount = lastChance.ProjectAmount;
                 if (string.IsNullOrWhiteSpace(model.SelectedPlan))
                     model.SelectedPlan = lastChance.Name;
             }
@@ -597,24 +607,24 @@ public class SolarRequestController : Controller
                 // database insert never sees a literal NULL — that's the SQL
                 // error the user was seeing:
                 //   "Cannot insert the value NULL into column 'Address'"
-                entity.ApplicantName  = dto.ApplicantName ?? string.Empty;
-                entity.MobileNumber   = dto.MobileNumber  ?? string.Empty;
-                entity.Email          = dto.Email         ?? string.Empty;
-                entity.Address        = dto.Address       ?? string.Empty;
-                entity.City           = dto.City          ?? string.Empty;
-                entity.State          = dto.State         ?? string.Empty;
-                entity.PinCode        = dto.PinCode       ?? string.Empty;
+                entity.ApplicantName = dto.ApplicantName ?? string.Empty;
+                entity.MobileNumber = dto.MobileNumber ?? string.Empty;
+                entity.Email = dto.Email ?? string.Empty;
+                entity.Address = dto.Address ?? string.Empty;
+                entity.City = dto.City ?? string.Empty;
+                entity.State = dto.State ?? string.Empty;
+                entity.PinCode = dto.PinCode ?? string.Empty;
                 // AadharNumber / PANNumber are nullable on the entity — null OK.
-                entity.AadharNumber   = dto.AadharNumber;
-                entity.PANNumber      = dto.PANNumber;
-                entity.RequestType    = dto.RequestType;
+                entity.AadharNumber = dto.AadharNumber;
+                entity.PANNumber = dto.PANNumber;
+                entity.RequestType = dto.RequestType;
                 entity.ConnectionType = dto.ConnectionType;
-                entity.KVCapacity     = dto.KVCapacity;
+                entity.KVCapacity = dto.KVCapacity;
                 entity.SolarProjectId = dto.SolarProjectId;
-                entity.SelectedPlan   = dto.SelectedPlan;
-                entity.PlanAmount     = dto.PlanAmount;
+                entity.SelectedPlan = dto.SelectedPlan;
+                entity.PlanAmount = dto.PlanAmount;
                 entity.ExternalProductId = dto.ExternalProductId;
-                entity.CurrentStage   = ProjectStatus.Payment;  // ← advance to Payment stage
+                entity.CurrentStage = ProjectStatus.Payment;  // ← advance to Payment stage
 
                 // If this is a re-submit of a previously REJECTED request, reset
                 // approval back to Pending so admin can review the new version.
@@ -632,8 +642,8 @@ public class SolarRequestController : Controller
                         : $"[Resubmitted on {DateTime.UtcNow:yyyy-MM-dd HH:mm} UTC] | Prior reject reason: {priorNote}";
                 }
 
-                entity.UpdatedAt      = DateTime.UtcNow;
-                entity.UpdatedBy      = userId;
+                entity.UpdatedAt = DateTime.UtcNow;
+                entity.UpdatedBy = userId;
                 await _db.SaveChangesAsync();
 
                 // Re-fetch as DTO for downstream code
@@ -680,7 +690,7 @@ public class SolarRequestController : Controller
                 // Effective min = min(₹20,000, project total). For a ₹15,900 project,
                 // the user can pay ₹15,900 (full) as the first payment — the ₹20K floor
                 // does not block this since it's logically a complete payment.
-                var hardMin      = PaymentService.MinimumPaymentThreshold;
+                var hardMin = PaymentService.MinimumPaymentThreshold;
                 var effectiveMin = model.PlanAmount > 0 && model.PlanAmount < hardMin
                                     ? model.PlanAmount
                                     : hardMin;
@@ -708,13 +718,13 @@ public class SolarRequestController : Controller
 
                     var payDto = new CreatePaymentDto
                     {
-                        SolarRequestId    = result.Data.Id,
-                        UserId            = userId,
-                        Amount            = model.PaymentAmount,
-                        UTRNumber         = (model.PaymentUTR ?? "").Trim(),
-                        PaymentDate       = model.PaymentDate ?? DateTime.UtcNow,
-                        PaymentMethod     = string.IsNullOrWhiteSpace(model.PaymentMethod) ? "Online" : model.PaymentMethod,
-                        ReceiptImagePath  = receiptPath
+                        SolarRequestId = result.Data.Id,
+                        UserId = userId,
+                        Amount = model.PaymentAmount,
+                        UTRNumber = (model.PaymentUTR ?? "").Trim(),
+                        PaymentDate = model.PaymentDate ?? DateTime.UtcNow,
+                        PaymentMethod = string.IsNullOrWhiteSpace(model.PaymentMethod) ? "Online" : model.PaymentMethod,
+                        ReceiptImagePath = receiptPath
                     };
                     var payResult = await _paymentService.CreateAsync(payDto);
                     if (!payResult.IsSuccess)
@@ -742,21 +752,21 @@ public class SolarRequestController : Controller
                             var idNo = _userManager.GetUserName(User) ?? userId; // ApplicationUser.Id = legacy IdNo
                             var bridgeResult = await _legacyBridge.InsertWithActivationAsync(new LegacyProductRequestInput
                             {
-                                MemberIdNo    = idNo,
-                                ProductId     = model.ExternalProductId.Value,
-                                Qty           = 1,
-                                TxnId         = (model.PaymentUTR ?? "").Trim(),
-                                TxnDate       = model.PaymentDate ?? DateTime.UtcNow,
-                                PayModeId     = MapPayMethodToLegacyPid(model.PaymentMethod),
+                                MemberIdNo = idNo,
+                                ProductId = model.ExternalProductId.Value,
+                                Qty = 1,
+                                TxnId = (model.PaymentUTR ?? "").Trim(),
+                                TxnDate = model.PaymentDate ?? DateTime.UtcNow,
+                                PayModeId = MapPayMethodToLegacyPid(model.PaymentMethod),
                                 ImageFileName = !string.IsNullOrWhiteSpace(receiptPath)
                                                 ? System.IO.Path.GetFileName(receiptPath)
                                                 : null,
-                                Address       = model.Address,
-                                City          = model.City,
-                                District      = model.City,    // legacy schema has District; we don't collect it separately
-                                PinCode       = model.PinCode,
-                                StateName     = model.State,
-                                StateCode     = model.State    // closest we have without a state code lookup
+                                Address = model.Address,
+                                City = model.City,
+                                District = model.City,    // legacy schema has District; we don't collect it separately
+                                PinCode = model.PinCode,
+                                StateName = model.State,
+                                StateCode = model.State    // closest we have without a state code lookup
                             });
                             if (!bridgeResult.Success)
                             {
@@ -803,11 +813,11 @@ public class SolarRequestController : Controller
         var m = method.Trim().ToLowerInvariant();
         return m switch
         {
-            "upi"                    => 1,
+            "upi" => 1,
             "netbanking" or "online" => 2,
-            "card"                   => 4,
-            "cash"                   => 3,
-            _                        => 1
+            "card" => 4,
+            "cash" => 3,
+            _ => 1
         };
     }
 
@@ -889,7 +899,7 @@ public class SolarRequestController : Controller
         return Json(new
         {
             available = reason == null,
-            message   = reason ?? "UTR is available."
+            message = reason ?? "UTR is available."
         });
     }
 
@@ -954,7 +964,7 @@ public class SolarRequestController : Controller
         // Compute per-project payment totals so the table can show
         // Total Amount / Total Paid / Remaining columns.
         // Sequential awaits — EF Core forbids concurrent ops on the same DbContext.
-        var paidMap   = new Dictionary<int, decimal>();
+        var paidMap = new Dictionary<int, decimal>();
         var imagesMap = new Dictionary<int, List<(string url, string label)>>();
 
         foreach (var p in projects)
@@ -1002,7 +1012,7 @@ public class SolarRequestController : Controller
 
             imagesMap[p.Id] = imgs;
         }
-        ViewBag.PaidMap   = paidMap;
+        ViewBag.PaidMap = paidMap;
         ViewBag.ImagesMap = imagesMap;
         return View(projects);
     }
@@ -1061,14 +1071,14 @@ public class SolarRequestController : Controller
     {
         var result = await _solarRequestService.GetByIdAsync(id);
         if (!result.IsSuccess) return NotFound();
-        ViewBag.Payments         = await _paymentService.GetByRequestIdAsync(id);
-        ViewBag.TotalPaid        = await _paymentService.GetTotalPaidAsync(id);
-        ViewBag.VerifiedPaid     = await _paymentService.GetVerifiedPaidAsync(id);
+        ViewBag.Payments = await _paymentService.GetByRequestIdAsync(id);
+        ViewBag.TotalPaid = await _paymentService.GetTotalPaidAsync(id);
+        ViewBag.VerifiedPaid = await _paymentService.GetVerifiedPaidAsync(id);
         ViewBag.MinimumThreshold = PaymentService.MinimumPaymentThreshold;
-        ViewBag.HasMetMinimum    = await _paymentService.HasMetMinimumAsync(id);
+        ViewBag.HasMetMinimum = await _paymentService.HasMetMinimumAsync(id);
         // Payment methods come from the legacy M_PayModeMaster table so the
         // dropdown matches the old SolFit system exactly (per spec).
-        ViewBag.PayModes         = await _payModes.GetActiveAsync();
+        ViewBag.PayModes = await _payModes.GetActiveAsync();
         return View(result.Data);
     }
 
@@ -1106,9 +1116,9 @@ public class SolarRequestController : Controller
         if (!reqResult.IsSuccess || reqResult.Data == null)
             return Json(new { success = false, message = "Solar request not found." });
 
-        var projectTotal   = reqResult.Data.RequestedAmount;
-        var alreadyPaid    = await _paymentService.GetTotalPaidAsync(dto.SolarRequestId);
-        var min            = PaymentService.MinimumPaymentThreshold;
+        var projectTotal = reqResult.Data.RequestedAmount;
+        var alreadyPaid = await _paymentService.GetTotalPaidAsync(dto.SolarRequestId);
+        var min = PaymentService.MinimumPaymentThreshold;
 
         // Guard: if the project is already fully paid, reject any further payment
         // outright with a clear message. The UI hides the form in this case, but a
@@ -1166,7 +1176,7 @@ public class SolarRequestController : Controller
 
         // Show user the totals (unverified + verified) for transparency
         var totalSubmitted = await _paymentService.GetTotalPaidAsync(dto.SolarRequestId);
-        var totalVerified  = await _paymentService.GetVerifiedPaidAsync(dto.SolarRequestId);
+        var totalVerified = await _paymentService.GetVerifiedPaidAsync(dto.SolarRequestId);
 
         var message = totalVerified >= min
             ? $"Payment submitted. Verified total ₹{totalVerified:N0} already meets the ₹{min:N0} minimum."
@@ -1209,8 +1219,8 @@ public class SolarRequestController : Controller
         if (data != null)
         {
             ViewBag.TotalSubmitted = await _paymentService.GetTotalPaidAsync(data.Id);
-            ViewBag.VerifiedPaid   = await _paymentService.GetVerifiedPaidAsync(data.Id);
-            ViewBag.Minimum        = PaymentService.MinimumPaymentThreshold;
+            ViewBag.VerifiedPaid = await _paymentService.GetVerifiedPaidAsync(data.Id);
+            ViewBag.Minimum = PaymentService.MinimumPaymentThreshold;
         }
         return View(data);
     }
