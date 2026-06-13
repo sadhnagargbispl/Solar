@@ -111,7 +111,7 @@ SELECT
     @OrderNo, @FormNo, ProdId, @Qty, DP, DP * @Qty, GETDATE(),
     NULL, 'N', 0, @Qty, 0,
     MRP, DP, ProductName, '', 0, BV,
-    (SELECT ISNULL(MAX(FsessID), 1) FROM VedicInv..M_FiscalMaster),
+    (SELECT ISNULL(MAX(FsessID), 1) FROM solfitenergyinv..M_FiscalMaster),
     'P', PV, @TxnId, @TxnDate, @ImageFile,
     'A', @PayMode,
     @Addr, @City, @Dist, @Pin, @StateNm, @StateCd
@@ -132,7 +132,26 @@ WHERE ProdId = @ProdId;";
             cmdI.Parameters.AddWithValue("@Dist",      (object?)input.District ?? DBNull.Value);
             cmdI.Parameters.AddWithValue("@Pin",       (object?)input.PinCode ?? DBNull.Value);
             cmdI.Parameters.AddWithValue("@StateNm",   (object?)input.StateName ?? DBNull.Value);
-            cmdI.Parameters.AddWithValue("@StateCd",   (object?)input.StateCode ?? DBNull.Value);
+
+            // ===== Resolve numeric StateCode for legacy column =====
+            // The legacy TrnProductorderDetail.StateCode column is **numeric**,
+            // but the controller passes whatever it has (often the state NAME
+            // like "Rajasthan" because the form doesn't collect a separate state
+            // code). Passing a non-numeric string blew up with
+            //   "Error converting data type nvarchar to numeric".
+            //
+            // Resolution strategy:
+            //   1. If input.StateCode parses cleanly as decimal → use it
+            //   2. Else, look it up from M_StateDivMaster by StateName
+            //   3. Else, send DBNull (column is nullable on the legacy side)
+            object stateCodeParam = await ResolveStateCodeAsync(input.StateCode, input.StateName);
+            var stateCdSqlParam = new SqlParameter("@StateCd", System.Data.SqlDbType.Decimal)
+            {
+                Precision = 18,
+                Scale     = 0,
+                Value     = stateCodeParam
+            };
+            cmdI.Parameters.Add(stateCdSqlParam);
 
             var rows = await cmdI.ExecuteNonQueryAsync();
             if (rows < 1)
@@ -155,5 +174,53 @@ WHERE ProdId = @ProdId;";
             result.ErrorMessage = $"Legacy bridge insert failed: {ex.Message}";
             return result;
         }
+    }
+
+    /// <summary>
+    /// Resolves the numeric value to bind to @StateCd. The legacy column is
+    /// decimal/numeric, but the controller often passes the state NAME (e.g.
+    /// "Rajasthan") because the user form doesn't collect a separate code.
+    ///
+    /// Priority:
+    ///   1. If the caller-supplied StateCode parses cleanly as decimal → use it.
+    ///   2. Else look up M_StateDivMaster by StateName (case-insensitive,
+    ///      whitespace-trimmed). Returns the matching StateCode.
+    ///   3. Else fall back to DBNull so SQL doesn't choke on type mismatch.
+    /// </summary>
+    private async Task<object> ResolveStateCodeAsync(string? rawCode, string? stateName)
+    {
+        // 1. Did the caller already give us a numeric code?
+        if (!string.IsNullOrWhiteSpace(rawCode) &&
+            decimal.TryParse(rawCode.Trim(), System.Globalization.NumberStyles.Number,
+                             System.Globalization.CultureInfo.InvariantCulture,
+                             out var parsed))
+        {
+            return parsed;
+        }
+
+        // 2. Lookup by state name in M_StateDivMaster
+        if (!string.IsNullOrWhiteSpace(stateName))
+        {
+            var name = stateName.Trim();
+            var row = await _db.States
+                .AsNoTracking()
+                .FirstOrDefaultAsync(s => s.StateName != null && s.StateName.Trim() == name);
+
+            if (row != null) return row.StateCode;
+
+            // Try case-insensitive match as fallback (state names sometimes
+            // arrive with different casing from the dropdown vs DB)
+            var allStates = await _db.States.AsNoTracking().ToListAsync();
+            var ci = allStates.FirstOrDefault(s =>
+                s.StateName != null &&
+                string.Equals(s.StateName.Trim(), name, StringComparison.OrdinalIgnoreCase));
+            if (ci != null) return ci.StateCode;
+
+            _log.LogWarning("Legacy bridge: state name '{StateName}' not found in M_StateDivMaster; sending NULL StateCode.",
+                stateName);
+        }
+
+        // 3. Give up — let SQL store NULL rather than blow up on type conversion
+        return DBNull.Value;
     }
 }

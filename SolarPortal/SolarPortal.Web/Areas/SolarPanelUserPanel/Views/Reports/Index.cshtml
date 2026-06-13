@@ -71,11 +71,12 @@
         <div class="card" style="margin-bottom:14px">
             <div class="ct"><span class="ct-dot"></span>Solar Requests (@requests.Count)</div>
             <div class="tbl-wrap">
-                <table>
+                <table class="report-table">
                     <thead>
                         <tr>
                             <th>Request #</th>
-                            <th>Plan</th>
+                            <th>Request Type</th>
+                            <th>Package</th>
                             <th>Capacity</th>
                             <th>Connection</th>
                             <th>Project Amount</th>
@@ -93,19 +94,30 @@
                                 ? SolarPortal.Domain.Enums.ApprovalStatus.Approved
                                 : r.ApprovalStatus;
 
+                            var reqTypeLabel = r.RequestType switch
+                            {
+                                SolarPortal.Domain.Enums.RequestType.WithActivation              => "🔌 With Activation",
+                                SolarPortal.Domain.Enums.RequestType.OnlySolarWithoutActivation  => "⚡ Without Activation",
+                                SolarPortal.Domain.Enums.RequestType.AlreadyActiveOnlyRequest    => "✅ Already Active",
+                                _ => r.RequestType.ToString()
+                            };
+
                             <tr>
-                                <td class="td-b">
+                                <td data-label="Request #" class="td-b">
                                     <a asp-action="Status" asp-controller="SolarRequest"
                                        asp-area="SolarPanelUserPanel" asp-route-id="@r.Id"
                                        style="color:var(--green)">@r.RequestNumber</a>
                                 </td>
-                                <td>@r.SelectedPlan</td>
-                                <td>@r.KVCapacity kV</td>
-                                <td>@r.ConnectionType</td>
-                                <td>₹@r.PlanAmount.ToString("N0")</td>
-                                <td><span class="sts sts-disp">@r.CurrentStage.ToString().Replace("_", " ")</span></td>
-                                <td>@Html.Raw(ApprovalBadge(effectiveApproval))</td>
-                                <td>@r.CreatedAt.ToLocalTime().ToString("dd MMM yyyy")</td>
+                                <td data-label="Request Type" style="font-size:12.5px">@reqTypeLabel</td>
+                                <td data-label="Package" style="font-size:12.5px;max-width:160px" title="@r.SelectedPlan">
+                                    @(string.IsNullOrWhiteSpace(r.SelectedPlan) ? "—" : r.SelectedPlan)
+                                </td>
+                                <td data-label="Capacity">@r.KVCapacity kV</td>
+                                <td data-label="Connection">@r.ConnectionType</td>
+                                <td data-label="Project Amount">₹@r.PlanAmount.ToString("N0")</td>
+                                <td data-label="Stage"><span class="sts sts-disp">@r.CurrentStage.ToString().Replace("_", " ")</span></td>
+                                <td data-label="Approval">@Html.Raw(ApprovalBadge(effectiveApproval))</td>
+                                <td data-label="Submitted">@r.CreatedAt.ToLocalTime().ToString("dd MMM yyyy")</td>
                             </tr>
                         }
                     </tbody>

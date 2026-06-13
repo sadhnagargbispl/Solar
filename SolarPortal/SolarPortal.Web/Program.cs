@@ -33,6 +33,10 @@ if (builder.Environment.IsDevelopment())
 // Infrastructure (DB, Identity, Services)
 builder.Services.AddInfrastructure(builder.Configuration);
 
+// HttpContextAccessor — needed by FileUploadService to build absolute URLs
+// (scheme + host) when saving image/document paths to DB.
+builder.Services.AddHttpContextAccessor();
+
 // Session
 builder.Services.AddDistributedMemoryCache();
 builder.Services.AddSession(options =>

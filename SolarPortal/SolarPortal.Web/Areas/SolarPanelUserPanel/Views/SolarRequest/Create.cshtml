@@ -2,6 +2,18 @@
 @{
     ViewData["Title"] = "New Solar Request";
     var projects = (IEnumerable<SolarPortal.Application.DTOs.SolarProjectDto>)(ViewBag.Projects ?? Enumerable.Empty<SolarPortal.Application.DTOs.SolarProjectDto>());
+
+    // ===== Reactivation flow flag =====
+    // Controller sets this when the user is a deactivated member filing their
+    // 2nd lifetime solar request (per the "deactive id 2 baar laga sakti hai"
+    // rule). In this flow:
+    //   • Activation Type mode is locked to "With Activation" — only valid mode
+    //     for reactivating a deactivated ID.
+    //   • Payment block is hidden — the prior completed request's payment is the
+    //     proof of payment, no new payment is collected.
+    //   • Server auto-approves the request on save + advances stage to PMSurvey.
+    bool isReactivation = (bool)(ViewBag.IsReactivation ?? false);
+    string? reactivationBasedOn = ViewBag.ReactivationBasedOn as string;
 }
 
 <div class="page active">
@@ -54,6 +66,26 @@
             </div>
         }
 
+        @* ===== Reactivation banner =====
+           Shown when the user is a deactivated member filing their 2nd lifetime
+           request. The banner explains why the form is locked + why payment is
+           absent, citing the prior completed request the reactivation is based on. *@
+        @if (isReactivation)
+        {
+            <div class="alert" style="background:#dcfce7;border-left:4px solid #16a34a;color:#065f46;padding:14px 18px;margin-bottom:16px;border-radius:6px">
+                <strong>🔁 Re-activation Request</strong>
+                <div style="margin-top:6px;font-size:14px">
+                    Aapki ID currently <strong>deactivated</strong> hai. Aap "With Activation" mode
+                    me ek follow-up request laga sakte hain — based on your earlier completed
+                    request <strong>@reactivationBasedOn</strong>.
+                </div>
+                <div style="margin-top:6px;font-size:13px;opacity:0.9">
+                    <strong>Payment will NOT be asked</strong> — aap pehle se payment de chuke hain
+                    apni earlier request me. Bas project select karke submit kariye.
+                </div>
+            </div>
+        }
+
         @if (!ViewData.ModelState.IsValid)
         {
             <div class="alert alert-e">
@@ -85,37 +117,58 @@
                         // Other two cards visually disable + click block, hidden
                         // input ko 3 set kar deta hai.
                         bool isActiveMem = (bool)(ViewBag.IsActiveMember ?? false);
-                        // Default hidden input value: 3 if active member, else from model (or 1).
-                        var defaultReqType = isActiveMem ? 3 : (int)Model.RequestType;
+                        // Default hidden input value:
+                        //   • Reactivation → 1 (With Activation forced)
+                        //   • Active member → 3 (Already Active only)
+                        //   • else from model (or 1)
+                        var defaultReqType = isReactivation ? 1
+                                            : (isActiveMem ? 3 : (int)Model.RequestType);
                     }
                     <div class="fg">
                         <label>Request Type <span class="req">*</span></label>
                         <input type="hidden" asp-for="RequestType" id="reqTypeInput" value="@defaultReqType" />
-                        @if (isActiveMem)
+                        @if (isActiveMem && !isReactivation)
                         {
                             <div class="alert alert-i" style="font-size:13px;margin-bottom:8px">
                                 <span class="ai">ℹ</span>You are an existing active solar member. Only the "Already Active — Only Request" mode is available for your account.
                             </div>
                         }
+                        @if (isReactivation)
+                        {
+                            <div class="alert alert-i" style="font-size:13px;margin-bottom:8px;background:#d1fae5;border-left:3px solid #16a34a;color:#065f46">
+                                <span class="ai">🔁</span>Reactivation mode — only "With Activation" is available. The other modes are locked because this is your follow-up request to activate your deactivated ID.
+                            </div>
+                        }
+                        @{
+                            // Lock state per card:
+                            //   • Reactivation: cards 2 & 3 locked (only With Activation allowed)
+                            //   • Active member: cards 1 & 2 locked (only Already Active allowed)
+                            //   • Default: nothing locked
+                            bool card1Locked = isActiveMem && !isReactivation;
+                            bool card2Locked = isActiveMem || isReactivation;
+                            bool card3Locked = isReactivation;
+                        }
                         <div class="rc-group">
-                            <div class="rc @(isActiveMem ? "disabled-card" : (defaultReqType == 1 ? "sel" : ""))"
+                            <div class="rc @(card1Locked ? "disabled-card" : (defaultReqType == 1 ? "sel" : ""))"
                                  data-val="1"
-                                 onclick="@(isActiveMem ? "blockedByActiveMember()" : "selectRequestType(this,1)")"
-                                 title="@(isActiveMem ? "Not available — you are already an active member" : "")">
+                                 onclick="@(card1Locked ? "blockedByActiveMember()" : "selectRequestType(this,1)")"
+                                 title="@(card1Locked ? "Not available — you are already an active member" : "")">
                                 <div class="rci">🔌</div><div class="rcl">With Activation</div><div class="rcs">New KYC</div>
-                                @if (isActiveMem) { <div class="rcs" style="color:#dc2626;font-size:11px;margin-top:4px">🔒 Locked</div> }
+                                @if (card1Locked) { <div class="rcs" style="color:#dc2626;font-size:11px;margin-top:4px">🔒 Locked</div> }
                             </div>
-                            <div class="rc @(isActiveMem ? "disabled-card" : (defaultReqType == 2 ? "sel" : ""))"
+                            <div class="rc @(card2Locked ? "disabled-card" : (defaultReqType == 2 ? "sel" : ""))"
                                  data-val="2"
-                                 onclick="@(isActiveMem ? "blockedByActiveMember()" : "selectRequestType(this,2)")"
-                                 title="@(isActiveMem ? "Not available — you are already an active member" : "")">
+                                 onclick="@(card2Locked ? "blockedByReactivationOrActive()" : "selectRequestType(this,2)")"
+                                 title="@(isReactivation ? "Locked — reactivation requires With Activation" : (card2Locked ? "Not available — you are already an active member" : ""))">
                                 <div class="rci">⚡</div><div class="rcl">Only Solar</div><div class="rcs">Without activation</div>
-                                @if (isActiveMem) { <div class="rcs" style="color:#dc2626;font-size:11px;margin-top:4px">🔒 Locked</div> }
+                                @if (card2Locked) { <div class="rcs" style="color:#dc2626;font-size:11px;margin-top:4px">🔒 Locked</div> }
                             </div>
-                            <div class="rc @(defaultReqType == 3 ? "sel" : "")"
+                            <div class="rc @(card3Locked ? "disabled-card" : (defaultReqType == 3 ? "sel" : ""))"
                                  data-val="3"
-                                 onclick="selectRequestType(this,3)">
+                                 onclick="@(card3Locked ? "blockedByReactivationOrActive()" : "selectRequestType(this,3)")"
+                                 title="@(card3Locked ? "Locked — reactivation requires With Activation" : "")">
                                 <div class="rci">✅</div><div class="rcl">Already Active</div><div class="rcs">Solar only</div>
+                                @if (card3Locked) { <div class="rcs" style="color:#dc2626;font-size:11px;margin-top:4px">🔒 Locked</div> }
                             </div>
                         </div>
                     </div>
@@ -537,6 +590,13 @@
             @* Customer Summary & Project Summary cards removed per spec.
                The Payment Summary card on TAB 1 already shows the auto-matched plan + amount. *@
 
+            @* ===== Payment block — hidden in reactivation flow =====
+               Deactivated user filing their 2nd lifetime request has already paid
+               through their earlier completed solar request. No new payment is
+               collected. Server also skips payment validation + payment recording
+               when canReactivate is true. *@
+            @if (!isReactivation)
+            {
             <!-- === Combined first-payment block (per spec: request + payment in one form) === -->
             <div class="card" style="margin-top:14px">
                 <div class="ct"><span class="ct-dot"></span>First Payment</div>
@@ -567,9 +627,6 @@
                         @* Payment Method made mandatory per spec: "Payment Method mandatory karo." *@
                         <label asp-for="PaymentMethod">Payment Method <span class="req">*</span></label>
                         @{
-                            // Same legacy M_PayModeMaster source as the standalone
-                            // Payment page, so the With Activation inline payment uses
-                            // identical options.
                             var createPayModes = ViewBag.PayModes
                                 as List<SolarPortal.Application.Services.PayModeDto>
                                 ?? new List<SolarPortal.Application.Services.PayModeDto>();
@@ -603,13 +660,41 @@
                     <span asp-validation-for="PaymentReceipt" class="hint" style="color:var(--danger);margin-top:6px;display:block"></span>
                 </div>
             </div>
+            }
+            else
+            {
+                <div class="card" style="margin-top:14px;border-left:4px solid #16a34a;background:#f0fdf4">
+                    <div class="ct"><span class="ct-dot"></span>Payment (Already Paid)</div>
+                    <div style="padding:8px 0;font-size:13.5px;color:#065f46">
+                        ✅ Aap pehle se payment de chuke hain apni earlier request <strong>@reactivationBasedOn</strong> me.
+                        Iss reactivation request ke liye <strong>koi naya payment nahi liya jayega</strong>.
+                    </div>
+                </div>
+            }
 
             <div class="card" style="margin-top:14px">
                 <div class="alert alert-s" style="font-size:13px">
-                    <span class="ai">✅</span>Submit will save your solar request AND first payment together.
+                    <span class="ai">✅</span>
+                    @if (isReactivation)
+                    {
+                        <text>Submit will save your reactivation request. It will be auto-approved (no payment needed) and you'll be moved to PM Surya Ghar to upload documents.</text>
+                    }
+                    else
+                    {
+                        <text>Submit will save your solar request AND first payment together.</text>
+                    }
                 </div>
                 <div class="btn-row" style="justify-content:center">
-                    <button type="submit" class="btn btn-p" style="padding:12px 32px;font-size:15px" onclick="return confirmSubmit()">☀️ Submit Application &amp; Payment</button>
+                    <button type="submit" class="btn btn-p" style="padding:12px 32px;font-size:15px" onclick="return confirmSubmit()">
+                        @if (isReactivation)
+                        {
+                            <text>🔁 Submit Reactivation Request</text>
+                        }
+                        else
+                        {
+                            <text>☀️ Submit Application &amp; Payment</text>
+                        }
+                    </button>
                 </div>
             </div>
         </div>
@@ -662,6 +747,15 @@
             } else {
                 alert('Aap pehle se active solar member hain. Sirf "Already Active — Only Request" mode allowed hai.');
             }
+            return false;
+        }
+
+        // Click handler for the cards that are locked in reactivation flow
+        // (Only Solar / Already Active). In reactivation the only valid mode is
+        // With Activation — show a clear toast explaining why the others are off.
+        function blockedByReactivationOrActive() {
+            const msg = 'Reactivation mode me sirf "With Activation" allowed hai. Earlier payment carry over hota hai, isliye iss form me payment nahi liya jaata.';
+            if (typeof showWarning === 'function') { showWarning(msg); } else { alert(msg); }
             return false;
         }
 
@@ -913,6 +1007,15 @@
             // on profile fields via the fieldsToIgnoreErrors scrub.)
 
             // === Payment validation (all 3 modes) ===
+            // Reactivation skip: when this is a reactivation request, the entire
+            // payment block is hidden in the markup AND the server skips payment
+            // recording. We must NOT run client-side payment-required checks here
+            // because the inputs don't exist on the page in that flow.
+            const isReactivationFlow = @(isReactivation ? "true" : "false");
+            if (isReactivationFlow) {
+                return true;
+            }
+
             const payAmt    = parseFloat(document.getElementById('paymentAmountInput').value || '0');
             const payUtr    = (document.querySelector('[name="PaymentUTR"]')?.value || '').trim();
             const payDate   = (document.querySelector('[name="PaymentDate"]')?.value || '').trim();

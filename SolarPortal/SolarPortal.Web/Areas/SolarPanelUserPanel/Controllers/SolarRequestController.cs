@@ -115,6 +115,50 @@ public class SolarRequestController : Controller
 
         if (existing.IsSuccess && existing.Data != null && existing.Data.Any())
         {
+            // ===== Reactivation flow (deactivated IDs get 2 requests) =====
+            // Per user spec (paraphrased Hinglish):
+            //   "deactive id 2 baar laga sakti hai, active id ek hi baar"
+            //
+            // Rule:
+            //   • Deactivated members (MMemberMaster.ActiveStatus != 'Y') are allowed
+            //     up to TWO real solar requests in their lifetime.
+            //   • Active members (ActiveStatus = 'Y') stay capped at ONE.
+            //   • The second request is treated as a "reactivation": forced to
+            //     With Activation mode, payment skipped (prior request already paid),
+            //     auto-approved on save, stage advanced past Payment.
+            //
+            // Eligibility for the 2nd request:
+            //   1. Member exists and is deactivated.
+            //   2. Has exactly ONE real prior request (auto-stubs don't count).
+            //   3. That prior request is Approved + Completed + fully paid.
+            // We do not care which mode the prior request was in — earlier the
+            // helper required "non-WithActivation", which mistakenly blocked
+            // deactivated users whose first request happened to be With Activation.
+            var (canReactivate, priorReqNum) = await IsReactivationEligibleAsync(userId);
+            if (canReactivate)
+            {
+                ViewBag.Projects        = await _solarProjectService.GetAllAsync(activeOnly: true);
+                ViewBag.BasicProducts   = await _basicProducts.GetActiveAsync();
+                ViewBag.PayModes        = await _payModes.GetActiveAsync();
+                ViewBag.States          = await _states.GetActiveAsync();
+                ViewBag.ProfileReadonly = true;
+                ViewBag.IsReactivation     = true;
+                ViewBag.ReactivationBasedOn = priorReqNum;
+
+                return View(new CreateSolarRequestViewModel
+                {
+                    ApplicantName = profileName,
+                    MobileNumber  = profileMobile,
+                    Email         = profileEmail,
+                    Address       = profileAddress,
+                    City          = profileCity,
+                    State         = profileState,
+                    PinCode       = profilePin,
+                    // Force With Activation — only valid mode for the 2nd request.
+                    RequestType = RequestType.WithActivation
+                });
+            }
+
             // STRICT LIFETIME RULE — one IdNo, one solar request, forever.
             // EXCEPTIONS where the user is allowed to (re)fill the form:
             //   (a) the auto-stub created at first login — meant to be filled in
@@ -122,7 +166,10 @@ public class SolarRequestController : Controller
             //       fix the issues admin flagged and re-submit. Per spec
             //       "user panel pe request reject ki to wapis laga sake request."
             //
-            // Approved / In-progress / Completed states stay LOCKED.
+            // Approved / In-progress / Completed states stay LOCKED — unless the
+            // user is a deactivated member whose reactivation branch above already
+            // returned. So if we reach here for an Approved/Completed prior request,
+            // the user is either active (capped at 1) or already at the 2-request cap.
             var latest = existing.Data
                 .OrderByDescending(r => r.CreatedAt)
                 .First();
@@ -317,11 +364,26 @@ public class SolarRequestController : Controller
         var existingEarly = await _solarRequestService.GetByUserIdAsync(userIdEarly);
         SolarRequestDto? stubToUpdate = null;
         bool isResubmitOfRejected = false;
-        if (existingEarly.IsSuccess && existingEarly.Data != null && existingEarly.Data.Any())
+
+        // ===== Reactivation eligibility (matches GET) =====
+        // Deactivated members get a 2nd solar request: With Activation mode, no
+        // payment (carried over from prior request), auto-approved.
+        var (canReactivate, reactivationBasedOn) = await IsReactivationEligibleAsync(userIdEarly);
+        if (canReactivate)
+        {
+            // Defense-in-depth — force the mode even if a tampered form posted
+            // something else, before we touch ModelState or do any work.
+            model.RequestType         = RequestType.WithActivation;
+            ViewBag.IsReactivation     = true;
+            ViewBag.ReactivationBasedOn = reactivationBasedOn;
+        }
+
+        if (!canReactivate && existingEarly.IsSuccess && existingEarly.Data != null && existingEarly.Data.Any())
         {
             // STRICT LIFETIME RULE — same as GET. Auto-stub OR Rejected can be
             // (re)submitted. Anything else (Approved / in-progress / completed)
-            // is locked.
+            // is locked. Reactivation branch above handles the deactivated-2nd-request
+            // case so the gate here only fires for active members or those at the cap.
             var latest = existingEarly.Data
                 .OrderByDescending(r => r.CreatedAt)
                 .First();
@@ -350,7 +412,9 @@ public class SolarRequestController : Controller
         // We cross-check against:
         //   1. walletreq.chqno — live cooperative master table
         //   2. Payments.UTRNumber — our own payment ledger
-        if (model.PaymentAmount > 0 && !string.IsNullOrWhiteSpace(model.PaymentUTR))
+        //
+        // Reactivation skips: no new payment is collected on the 2nd request.
+        if (!canReactivate && model.PaymentAmount > 0 && !string.IsNullOrWhiteSpace(model.PaymentUTR))
         {
             var dupReason = await CheckUtrDuplicateAsync(model.PaymentUTR.Trim());
             if (dupReason != null)
@@ -359,20 +423,33 @@ public class SolarRequestController : Controller
             }
         }
 
-        // ─── Payment method mandatory (per spec) ─────────────────────────
-        if (model.PaymentAmount > 0 && string.IsNullOrWhiteSpace(model.PaymentMethod))
+        // ─── Payment method mandatory (per spec) — reactivation exempt ───
+        if (!canReactivate && model.PaymentAmount > 0 && string.IsNullOrWhiteSpace(model.PaymentMethod))
         {
             ModelState.AddModelError(nameof(model.PaymentMethod), "Payment Method is required.");
         }
 
-        // ─── Payment receipt file mandatory (per spec) ───────────────────
+        // ─── Payment receipt file mandatory (per spec) — reactivation exempt ───
         // Bina receipt file choose kiye request submit nahi honi chahiye. We
         // enforce this on the SERVER too (not just the client) so a request can
         // never be created without proof of payment, even if the JS is bypassed.
-        if (model.PaymentReceipt == null || model.PaymentReceipt.Length == 0)
+        //
+        // EXCEPTION: reactivation flow — prior request's payment is the proof.
+        if (!canReactivate && (model.PaymentReceipt == null || model.PaymentReceipt.Length == 0))
         {
             ModelState.AddModelError(nameof(model.PaymentReceipt),
                 "Payment receipt (image / PDF) is required. Please upload it to submit.");
+        }
+
+        // Clear payment-field annotation errors that would otherwise fire during
+        // reactivation (Required / Range etc. on PaymentAmount, PaymentUTR ...).
+        if (canReactivate)
+        {
+            ModelState.Remove(nameof(model.PaymentAmount));
+            ModelState.Remove(nameof(model.PaymentUTR));
+            ModelState.Remove(nameof(model.PaymentDate));
+            ModelState.Remove(nameof(model.PaymentMethod));
+            ModelState.Remove(nameof(model.PaymentReceipt));
         }
 
         // ─── Basic product mandatory for With Activation (per spec) ──────
@@ -390,12 +467,12 @@ public class SolarRequestController : Controller
             ViewBag.States = await _states.GetActiveAsync();
             ViewBag.ProfileReadonly = true;
             ViewBag.IsActiveMember = isActiveMemberPost;
+            // Reactivation flag must survive re-renders — otherwise the view would
+            // re-show the payment block and mode picker after a validation error,
+            // confusing the deactivated user mid-submission.
+            ViewBag.IsReactivation = canReactivate;
+            ViewBag.ReactivationBasedOn = reactivationBasedOn;
             // Per spec: "Invalid email par validation do but uploaded receipt remove na ho."
-            // IFormFile is not bound back from the original POST, so on re-render the
-            // file input shows empty. We surface the original receipt's filename to the
-            // user so they know it's still in-flight, and we DO NOT clear it from the
-            // model (the receipt is uploaded only when the full POST succeeds — so they
-            // need to re-select; we just keep the UX hint about the file).
             ViewBag.PreservedReceiptName = model.PaymentReceipt?.FileName;
             return View(model);
         }
@@ -484,6 +561,8 @@ public class SolarRequestController : Controller
                 ViewBag.PayModes = await _payModes.GetActiveAsync();
                 ViewBag.States = await _states.GetActiveAsync();
                 ViewBag.ProfileReadonly = true;
+                ViewBag.IsReactivation = canReactivate;
+                ViewBag.ReactivationBasedOn = reactivationBasedOn;
                 ViewBag.PreservedReceiptName = model.PaymentReceipt?.FileName;
                 return View(model);
             }
@@ -496,6 +575,8 @@ public class SolarRequestController : Controller
                 ViewBag.PayModes = await _payModes.GetActiveAsync();
                 ViewBag.States = await _states.GetActiveAsync();
                 ViewBag.ProfileReadonly = true;
+                ViewBag.IsReactivation = canReactivate;
+                ViewBag.ReactivationBasedOn = reactivationBasedOn;
                 ViewBag.PreservedReceiptName = model.PaymentReceipt?.FileName;
                 return View(model);
             }
@@ -672,6 +753,8 @@ public class SolarRequestController : Controller
             ViewBag.States = await _states.GetActiveAsync();
             ViewBag.ProfileReadonly = true;
             ViewBag.IsActiveMember = isActiveMemberPost;
+            ViewBag.IsReactivation = canReactivate;
+            ViewBag.ReactivationBasedOn = reactivationBasedOn;
             ViewBag.PreservedReceiptName = model.PaymentReceipt?.FileName;
             return View(model);
         }
@@ -683,7 +766,10 @@ public class SolarRequestController : Controller
         // Per spec: payment fields appear on the same Create form. After the request is saved,
         // we immediately persist the payment as Pending so admin can verify it.
         // Server enforces effective minimum and ≤ project-total cap.
-        if (model.PaymentAmount > 0)
+        //
+        // EXCEPTION: reactivation flow — no new payment is collected. Skip the whole
+        // payment-save block; auto-approval below moves the request straight to PMSurvey.
+        if (!canReactivate && model.PaymentAmount > 0)
         {
             try
             {
@@ -749,7 +835,18 @@ public class SolarRequestController : Controller
                     {
                         try
                         {
-                            var idNo = _userManager.GetUserName(User) ?? userId; // ApplicationUser.Id = legacy IdNo
+                            // ===== Resolve legacy IdNo for the bridge =====
+                            // BUG WAS: var idNo = _userManager.GetUserName(User) ?? userId;
+                            //   That returned the synthetic Identity UserName like
+                            //   "member-SADHNATEST05@livedb.local" — which does NOT
+                            //   match M_MemberMaster.Idno ("SADHNATEST05"), so the
+                            //   bridge lookup failed silently and TrnProductorderDetail
+                            //   stayed empty.
+                            // FIX: use GetUserId which holds the raw IdNo (per
+                            //   LiveDbAuthBridge: ApplicationUser.Id = m_membermaster.IdNo).
+                            //   The normalize helper strips any stray "member-" prefix
+                            //   or "@..." suffix that may slip in from older login paths.
+                            var idNo = NormalizeIdNo(_userManager.GetUserId(User) ?? userId);
                             var bridgeResult = await _legacyBridge.InsertWithActivationAsync(new LegacyProductRequestInput
                             {
                                 MemberIdNo = idNo,
@@ -758,8 +855,13 @@ public class SolarRequestController : Controller
                                 TxnId = (model.PaymentUTR ?? "").Trim(),
                                 TxnDate = model.PaymentDate ?? DateTime.UtcNow,
                                 PayModeId = MapPayMethodToLegacyPid(model.PaymentMethod),
+                                // Per spec: "image save karte ho to full location save karo".
+                                // Saved receiptPath in our DB is relative (/uploads/...) so the
+                                // in-app views work without changes. For the LEGACY SolFit app
+                                // (different port, different wwwroot), we need to send a fully
+                                // qualified URL so its <img src="..."> can resolve.
                                 ImageFileName = !string.IsNullOrWhiteSpace(receiptPath)
-                                                ? System.IO.Path.GetFileName(receiptPath)
+                                                ? (_fileUploadService.BuildAbsoluteUrl(receiptPath) ?? receiptPath)
                                                 : null,
                                 Address = model.Address,
                                 City = model.City,
@@ -786,6 +888,138 @@ public class SolarRequestController : Controller
             {
                 TempData["Warning"] = "Request saved, but payment save failed: " + ex.Message;
             }
+        }
+
+        // === Reactivation post-save: auto-approve + skip Payment stage ===
+        // The 2nd request from a deactivated user (per spec: "deactive id 2 baar
+        // laga sakti hai") doesn't go through the usual Payment → Approval gate.
+        // The prior request's payment satisfies the payment proof, so we:
+        //   1. Mark the new request Approved (eligibility was server-validated above)
+        //   2. Advance the stage past Payment, directly to PMSurvey
+        //   3. ALSO insert a TrnProductorderDetail row in the legacy DB so the
+        //      SolFit activation workflow processes this new activation. The
+        //      legacy insert was previously gated behind the payment block, so
+        //      reactivation requests skipped it — bug fix: now runs here too,
+        //      sourcing txn/date/paymode from the prior completed request's
+        //      verified payment record (since no new payment is collected).
+        //
+        // If either step fails, the request is still saved — admin can intervene
+        // manually via the Payment Verification screen.
+        if (canReactivate && result.Data != null)
+        {
+            try
+            {
+                var adminId = userIdEarly;   // user themselves trigger this; system-marked
+
+                var approveRes = await _solarRequestService.ApproveAsync(
+                    result.Data.Id, adminId,
+                    $"Auto-approved via reactivation flow. Based on prior completed request {reactivationBasedOn}. " +
+                    "Payment carried over from prior request.");
+
+                await _solarRequestService.UpdateStageAsync(new UpdateSolarRequestStatusDto
+                {
+                    Id = result.Data.Id,
+                    NewStage = ProjectStatus.PMSurvey,
+                    Notes = $"Reactivation: payment carried over from {reactivationBasedOn}. Skip to PM Surya Ghar."
+                }, adminId);
+
+                TempData["Success"] =
+                    $"Reactivation request {result.Data.RequestNumber} submitted successfully! " +
+                    "Payment skipped — proof of payment carried over from your earlier completed request. " +
+                    "Please upload PM Surya Ghar documents to activate your ID.";
+            }
+            catch (Exception ex)
+            {
+                TempData["Warning"] = "Reactivation request saved, but auto-approve step failed: " + ex.Message +
+                                      ". Please ask admin to verify manually.";
+            }
+
+            // ─── Legacy SolFit bridge for reactivation (per spec) ────────────
+            // Reactivation is still a "With Activation" submission semantically,
+            // so the legacy SolFit activation workflow (TrnProductorderDetail)
+            // needs an entry. We source the txn metadata from the PRIOR
+            // request's verified payment (no new payment was collected on this
+            // submission), and tag the txnid so admin can tell it's a re-issue.
+            if (model.ExternalProductId.HasValue)
+            {
+                try
+                {
+                    var idNo = NormalizeIdNo(_userManager.GetUserId(User) ?? userIdEarly);
+
+                    // Look up the prior request by its RequestNumber, then fetch
+                    // its latest verified payment row to source TxnId/TxnDate/
+                    // PaymentMethod for the legacy bridge. If for some reason we
+                    // can't find one, fall back to sane defaults so the legacy
+                    // insert still goes through (it would fail otherwise).
+                    string priorUtr   = $"REACT-{result.Data.RequestNumber}";
+                    DateTime priorDate = DateTime.UtcNow;
+                    int priorPayMode  = 1;   // 1 = UPI default in legacy
+                    string? priorReceiptFile = null;
+
+                    if (!string.IsNullOrWhiteSpace(reactivationBasedOn))
+                    {
+                        var priorReq = (await _solarRequestService.GetByUserIdAsync(userIdEarly)).Data
+                            ?.FirstOrDefault(r => r.RequestNumber == reactivationBasedOn);
+                        if (priorReq != null)
+                        {
+                            var priorPayments = await _paymentService.GetByRequestIdAsync(priorReq.Id);
+                            var lastVerified = priorPayments
+                                .Where(p => p.IsVerified)
+                                .OrderByDescending(p => p.PaymentDate)
+                                .FirstOrDefault();
+                            if (lastVerified != null)
+                            {
+                                if (!string.IsNullOrWhiteSpace(lastVerified.UTRNumber))
+                                    priorUtr = $"REACT-{lastVerified.UTRNumber}";
+                                priorDate = lastVerified.PaymentDate;
+                                priorPayMode = MapPayMethodToLegacyPid(lastVerified.PaymentMethod);
+                                if (!string.IsNullOrWhiteSpace(lastVerified.ReceiptImagePath))
+                                    // Pass the FULL absolute URL to legacy ImageUpload column
+                                    // so the legacy SolFit app can display the receipt directly.
+                                    // ReceiptImagePath in our DB is the relative "/uploads/..." path —
+                                    // BuildAbsoluteUrl prepends scheme + host using the current request.
+                                    priorReceiptFile = _fileUploadService.BuildAbsoluteUrl(lastVerified.ReceiptImagePath)
+                                                       ?? lastVerified.ReceiptImagePath;
+                            }
+                        }
+                    }
+
+                    var bridgeResult = await _legacyBridge.InsertWithActivationAsync(new LegacyProductRequestInput
+                    {
+                        MemberIdNo    = idNo,
+                        ProductId     = model.ExternalProductId.Value,
+                        Qty           = 1,
+                        TxnId         = priorUtr,
+                        TxnDate       = priorDate,
+                        PayModeId     = priorPayMode,
+                        ImageFileName = priorReceiptFile,
+                        Address       = model.Address,
+                        City          = model.City,
+                        District      = model.City,
+                        PinCode       = model.PinCode,
+                        StateName     = model.State,
+                        StateCode     = model.State
+                    });
+                    if (!bridgeResult.Success)
+                    {
+                        var existing = TempData["Warning"] as string ?? "";
+                        TempData["Warning"] = existing
+                            + (string.IsNullOrEmpty(existing) ? "" : " | ")
+                            + "Legacy product-order sync failed for reactivation: "
+                            + (bridgeResult.ErrorMessage ?? "unknown error")
+                            + ". Admin will reconcile.";
+                    }
+                }
+                catch (Exception bridgeEx)
+                {
+                    var existing = TempData["Warning"] as string ?? "";
+                    TempData["Warning"] = existing
+                        + (string.IsNullOrEmpty(existing) ? "" : " | ")
+                        + "Legacy product-order sync threw on reactivation: " + bridgeEx.Message;
+                }
+            }
+
+            return RedirectToAction("Upload", "PMSurya", new { id = result.Data.Id });
         }
 
         // === Mode 2 post-save redirect ===
@@ -819,6 +1053,36 @@ public class SolarRequestController : Controller
             "cash" => 3,
             _ => 1
         };
+    }
+
+    /// <summary>
+    /// Defensive normalizer for the Identity user's IdNo before it is passed
+    /// to the legacy bridge.
+    ///
+    /// Why this exists:
+    ///   LiveDbAuthBridge.EnsureUserViaSqlAsync stores the raw IdNo (e.g.
+    ///   "SADHNATEST05") as ApplicationUser.Id. But older / alternate sign-in
+    ///   paths in the same controller chain occasionally returned the synthetic
+    ///   UserName "member-SADHNATEST05@livedb.local" — and that value was
+    ///   passed through to the bridge unchanged, causing M_MemberMaster lookups
+    ///   to fail with "IdNo not found".
+    ///
+    /// What we strip:
+    ///   1. Leading "member-" prefix (synthetic UserName format)
+    ///   2. Trailing "@..." domain suffix (synthetic email format)
+    ///   3. Surrounding whitespace
+    ///
+    /// Result: a clean raw IdNo that matches M_MemberMaster.Idno exactly.
+    /// </summary>
+    private static string NormalizeIdNo(string? raw)
+    {
+        if (string.IsNullOrWhiteSpace(raw)) return string.Empty;
+        var s = raw.Trim();
+        if (s.StartsWith("member-", StringComparison.OrdinalIgnoreCase))
+            s = s.Substring("member-".Length);
+        var atIdx = s.IndexOf('@');
+        if (atIdx > 0) s = s.Substring(0, atIdx);
+        return s.Trim();
     }
 
     // Helper: find a SolarProject matching the given KV and connection type.
@@ -1241,5 +1505,81 @@ public class SolarRequestController : Controller
             approvalStatus = project.ApprovalStatus.ToString(),
             requestNumber = project.RequestNumber
         });
+    }
+
+    /// <summary>
+    /// Reactivation eligibility check for the "deactivated IDs get 2 requests" rule.
+    ///
+    /// Active members (m_membermaster.ActiveStatus = 'Y'): capped at ONE solar
+    /// request lifetime (strict gate handles that).
+    ///
+    /// Deactivated members (ActiveStatus != 'Y'): allowed up to TWO real solar
+    /// requests. The SECOND request is treated as a reactivation:
+    ///   • Forced to With Activation mode (only sensible mode for re-activating an ID)
+    ///   • Payment block skipped (prior request's payment is the proof)
+    ///   • Auto-approved on save, stage jumps directly to PMSurvey
+    ///
+    /// Eligibility for the reactivation (i.e. 2nd request):
+    ///   1. Member exists in m_membermaster and ActiveStatus != 'Y'.
+    ///   2. User has exactly ONE real prior request (auto-stubs with no
+    ///      SolarProjectId and Pending status don't count).
+    ///   3. That prior request is fully completed: ApprovalStatus = Approved,
+    ///      CurrentStage = Completed, verified payments &gt;= project amount.
+    ///
+    /// Returns: (eligible, priorRequestNumber). Prior request number is shown in
+    /// the reactivation banner so the user knows which earlier request this
+    /// follow-up is based on.
+    ///
+    /// Note: the mode of the prior request is NOT checked. Earlier this helper
+    /// rejected any user who already had a With Activation request, which broke
+    /// the flow for deactivated users whose first request happened to be With
+    /// Activation. Per the corrected spec, the prior request's mode is irrelevant —
+    /// the rule is simply "1 vs 2 lifetime cap based on member status."
+    /// </summary>
+    private async Task<(bool IsEligible, string? PriorRequestNumber)> IsReactivationEligibleAsync(string userId)
+    {
+        // 1. Deactivated member?
+        var member = await _db.Members
+            .AsNoTracking()
+            .FirstOrDefaultAsync(m => m.IdNo != null && m.IdNo.Trim() == userId);
+        if (member == null) return (false, null);
+
+        var isDeactivated = !string.Equals(
+            (member.ActiveStatus ?? "").Trim(),
+            "Y",
+            StringComparison.OrdinalIgnoreCase);
+        if (!isDeactivated) return (false, null);
+
+        // 2. Walk user's solar requests, filter out auto-stubs (those don't count
+        //    toward the lifetime cap — they're empty shells from first login).
+        var requests = await _solarRequestService.GetByUserIdAsync(userId);
+        if (!requests.IsSuccess || requests.Data == null) return (false, null);
+
+        var realRequests = requests.Data
+            .Where(r =>
+                !((r.CurrentStage == ProjectStatus.Registration || r.CurrentStage == ProjectStatus.ProductSelection) &&
+                  r.ApprovalStatus == ApprovalStatus.Pending &&
+                  r.SolarProjectId == null))
+            .OrderByDescending(r => r.CreatedAt)
+            .ToList();
+
+        // 3. Cap enforcement.
+        //    0 real requests → not in reactivation flow yet (first request goes
+        //                       through the normal path; reactivation is specifically
+        //                       the SECOND request).
+        //    1 real request  → eligible IF that request is Approved + Completed + Fully Paid.
+        //    2+ real requests → cap reached, no more allowed.
+        if (realRequests.Count == 0) return (false, null);
+        if (realRequests.Count >= 2) return (false, null);
+
+        var prior = realRequests[0];
+        if (prior.ApprovalStatus != ApprovalStatus.Approved) return (false, null);
+        if (prior.CurrentStage   != ProjectStatus.Completed) return (false, null);
+        if (prior.PlanAmount     <= 0) return (false, null);
+
+        var verifiedPaid = await _paymentService.GetVerifiedPaidAsync(prior.Id);
+        if (verifiedPaid < prior.PlanAmount) return (false, null);
+
+        return (true, prior.RequestNumber);
     }
 }

@@ -3,10 +3,28 @@
     var req = (SolarPortal.Domain.Entities.SolarRequest)ViewBag.Request;
     var existing = (SolarPortal.Domain.Entities.DCRDocument?)ViewBag.Existing;
 
-    // Per spec: agar user ne submit kar diya hai aur status pending/approved hai,
-    // form read-only mode mein dikhna chahiye (no edit). Only if Rejected, user
-    // can re-upload (clear form + re-show inputs).
-    var status        = existing?.ApprovalStatus ?? SolarPortal.Domain.Enums.ApprovalStatus.Pending;
+    // ===== Effective status (defensive against stale ApprovalStatus) =====
+    // Per user complaint: "approve kar di hai but [page still] show this [Awaiting verification]".
+    //
+    // Root cause: legacy admin SubmitDCR set IsVerified=true but didn't touch
+    // ApprovalStatus, so the user view stayed at Pending forever. Admin
+    // SubmitDCR is now fixed to set ApprovalStatus=Approved AND update the
+    // existing user record (instead of creating a sibling). But we also add a
+    // safety net on this view: if the project's CurrentStage is Completed, we
+    // treat the DCR as Approved regardless of what ApprovalStatus says — the
+    // workflow simply cannot reach Completed without DCR being approved.
+    //
+    // Same for IsVerified=true: that's the older "verified" flag and is also
+    // a reliable signal that admin has accepted the document.
+    var rawStatus    = existing?.ApprovalStatus ?? SolarPortal.Domain.Enums.ApprovalStatus.Pending;
+    var stageDone    = req.CurrentStage == SolarPortal.Domain.Enums.ProjectStatus.Completed;
+    var verifiedFlag = existing?.IsVerified == true;
+    var status       = (rawStatus == SolarPortal.Domain.Enums.ApprovalStatus.Approved
+                        || stageDone
+                        || verifiedFlag)
+                            ? SolarPortal.Domain.Enums.ApprovalStatus.Approved
+                            : rawStatus;
+
     var hasSubmission = existing != null;
     var canEdit       = !hasSubmission || status == SolarPortal.Domain.Enums.ApprovalStatus.Rejected;
 }
@@ -28,11 +46,27 @@
                         @switch (status)
                         {
                             case SolarPortal.Domain.Enums.ApprovalStatus.Approved:
-                                <div class="alert alert-success">
-                                    ✅ <strong>Approved</strong> by admin on
-                                    @(existing!.ApprovedAt?.ToLocalTime().ToString("dd MMM yyyy HH:mm") ?? "—").
-                                    Project will be marked Completed.
-                                </div>
+                                {
+                                    // ApprovedAt may be null on legacy records that pre-date the
+                                    // ApprovalStatus column being populated by admin. Fall back to
+                                    // the request's UpdatedAt and finally CreatedAt so we always
+                                    // show a real timestamp instead of "—".
+                                    var approvedOn = existing!.ApprovedAt
+                                                     ?? req.UpdatedAt
+                                                     ?? existing.CreatedAt;
+                                    <div class="alert alert-success">
+                                        ✅ <strong>Approved</strong> by admin on
+                                        @approvedOn.ToLocalTime().ToString("dd MMM yyyy HH:mm").
+                                        @if (stageDone)
+                                        {
+                                            <span>Your project is now <strong>Completed</strong>.</span>
+                                        }
+                                        else
+                                        {
+                                            <span>Project will be marked Completed.</span>
+                                        }
+                                    </div>
+                                }
                                 break;
                             case SolarPortal.Domain.Enums.ApprovalStatus.Rejected:
                                 <div class="alert alert-danger">

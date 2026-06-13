@@ -9,13 +9,18 @@ public class FileUploadService : IFileUploadService
 {
     private readonly IWebHostEnvironment _env;
     private readonly IConfiguration _config;
+    private readonly IHttpContextAccessor _httpCtx;
     private readonly string[] _allowedExtensions = { ".jpg", ".jpeg", ".png", ".pdf" };
     private readonly long _maxFileSize = 10 * 1024 * 1024; // 10 MB
 
-    public FileUploadService(IWebHostEnvironment env, IConfiguration config)
+    public FileUploadService(
+        IWebHostEnvironment env,
+        IConfiguration config,
+        IHttpContextAccessor httpCtx)
     {
         _env = env;
         _config = config;
+        _httpCtx = httpCtx;
     }
 
     // Cleans a caller-supplied subfolder like "SCR-001/dcr" into a safe relative
@@ -68,7 +73,19 @@ public class FileUploadService : IFileUploadService
             await file.CopyToAsync(stream);
         }
 
-        var relativePath = $"/uploads/{subfolder}/{uniqueName}";
+        // ─── URL that gets stored in DB ──────────────────────────────────
+        // We store the RELATIVE URL ("/uploads/<subfolder>/<file>"). This is
+        // what existing views + admin file mirroring already expect, so the
+        // hundreds of existing rendered <img src="/uploads/..."> tags keep
+        // working without changes.
+        //
+        // For callers that need to send an ABSOLUTE URL elsewhere (e.g. the
+        // legacy SolFit bridge populating TrnProductorderDetail.ImageUpload —
+        // legacy VB app can't resolve our relative paths), they call
+        // BuildAbsoluteUrl(relativeUrl) at the point of use. That keeps
+        // storage clean + portable while still giving the legacy DB a
+        // self-contained URL.
+        var relativeUrl = $"/uploads/{subfolder}/{uniqueName}";
 
         // ─── Mirror the file into the ADMIN panel's wwwroot ──────────────────
         // The admin panel is a separate app with its own wwwroot. When the user
@@ -100,7 +117,54 @@ public class FileUploadService : IFileUploadService
             // fall back to the FileController that probes the user wwwroot.
         }
 
-        return (true, relativePath, null);
+        return (true, relativeUrl, null);
+    }
+
+    /// <summary>
+    /// Builds an absolute URL ({scheme}://{host}{relativeUrl}) from the
+    /// current HTTP request. Returns null if there's no HttpContext (e.g.
+    /// the upload was triggered from a background job, a worker process or
+    /// a unit test) — callers should fall back to the relative URL.
+    ///
+    /// Why we expose this:
+    ///   • The legacy SolFit DB (TrnProductorderDetail.ImageUpload column) is
+    ///     read by the legacy VB app on a different port — relative URLs
+    ///     don't resolve there. We pass the absolute URL so legacy can
+    ///     &lt;img src="..."&gt; directly from the saved value.
+    ///   • Saved DB value is self-contained — paste into any browser tab and
+    ///     it loads, no need to know which app served it.
+    ///   • Exports / shared links work without having to know the host.
+    ///
+    /// We trust X-Forwarded-Proto / X-Forwarded-Host (handled upstream by
+    /// HttpContext.Request) so a reverse-proxy deployment gets the public
+    /// scheme + host, not the internal one.
+    ///
+    /// Inputs already absolute (http:// or https://) are returned unchanged
+    /// so this is idempotent — safe to call on a value that may already be
+    /// in either form.
+    /// </summary>
+    public string? BuildAbsoluteUrl(string? relativeOrAbsoluteUrl)
+    {
+        if (string.IsNullOrWhiteSpace(relativeOrAbsoluteUrl)) return null;
+
+        var url = relativeOrAbsoluteUrl.Trim();
+
+        // Already absolute — idempotent return.
+        if (url.StartsWith("http://", StringComparison.OrdinalIgnoreCase) ||
+            url.StartsWith("https://", StringComparison.OrdinalIgnoreCase))
+        {
+            return url;
+        }
+
+        var req = _httpCtx.HttpContext?.Request;
+        if (req == null) return null;
+        if (string.IsNullOrEmpty(req.Scheme) || !req.Host.HasValue) return null;
+
+        // Ensure the relative part has a leading slash so concatenation
+        // produces a valid URL ("http://host" + "/path" = "http://host/path").
+        var relative = url.StartsWith("/") ? url : "/" + url;
+        // Request.Host already includes the port when present, e.g. "localhost:7050"
+        return $"{req.Scheme}://{req.Host.Value}{relative}";
     }
 
     // Locate the admin panel's wwwroot/uploads folder so uploaded files can be
@@ -147,7 +211,16 @@ public class FileUploadService : IFileUploadService
     public void DeleteFile(string filePath)
     {
         if (string.IsNullOrEmpty(filePath)) return;
-        var fullPath = Path.Combine(_env.WebRootPath, filePath.TrimStart('/'));
+
+        // ─── Normalise: accept both absolute URLs and relative paths ─────────
+        // Storage is normally relative ("/uploads/..."), but in case a caller
+        // ever passes back the absolute form (e.g. from a legacy column),
+        // we tolerate it by stripping the scheme + host first.
+        var localPath = filePath;
+        if (Uri.TryCreate(filePath, UriKind.Absolute, out var uri))
+            localPath = uri.AbsolutePath;        // -> "/uploads/SCR-001/payments/<guid>.jpg"
+
+        var fullPath = Path.Combine(_env.WebRootPath, localPath.TrimStart('/'));
         if (File.Exists(fullPath))
             File.Delete(fullPath);
 
@@ -157,9 +230,9 @@ public class FileUploadService : IFileUploadService
             var adminUploadsRoot = ResolveAdminUploadsRoot();
             if (!string.IsNullOrWhiteSpace(adminUploadsRoot))
             {
-                // filePath is "/uploads/<subfolder>/<file>"; strip the leading
+                // localPath is "/uploads/<subfolder>/<file>"; strip the leading
                 // "/uploads/" to get "<subfolder>/<file>" relative to admin uploads.
-                var rel = filePath.Replace("\\", "/").TrimStart('/');
+                var rel = localPath.Replace("\\", "/").TrimStart('/');
                 if (rel.StartsWith("uploads/", StringComparison.OrdinalIgnoreCase))
                     rel = rel.Substring("uploads/".Length);
                 var adminFullPath = Path.Combine(adminUploadsRoot, rel.Replace('/', Path.DirectorySeparatorChar));
