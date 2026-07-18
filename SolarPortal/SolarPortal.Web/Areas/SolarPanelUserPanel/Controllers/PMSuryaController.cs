@@ -60,38 +60,16 @@ public class PMSuryaController : Controller
         }
 
         var req = await _uow.SolarRequests.GetByIdAsync(id.Value);
-        if (req == null || req.UserId != userId) return NotFound();
+        if (req == null || !string.Equals(req.UserId?.Trim(), userId?.Trim(), StringComparison.OrdinalIgnoreCase)) return NotFound();
 
         // ===== PM Surya Ghar gate =====
-        // Per spec: "Full payment complete hone tak PM Surya Ghar next step locked rakho.
-        //            Partial/incomplete payment par next process disable rahe."
-        //
-        // Stage-gate (req.CurrentStage >= PMSurvey) is the FIRST line of defence — it ensures
-        // admin has at least verified the minimum payment. But we now also enforce a stricter
-        // rule here: the user's VERIFIED total must equal (or exceed) the project amount before
-        // they can upload PM Surya Ghar documents.
-        //
-        // This guards against the edge case where:
-        //  - project = ₹50,000
-        //  - admin verifies first ₹20,000 payment → stage auto-advances to PMSurvey
-        //  - user still owes ₹30,000 but the system would otherwise let them upload PM docs
+        // Per spec (task 6): "Payment pura nahi aaye to bhi sabhi task complete ho sakte he."
+        // Incomplete / partial payment must NOT block the workflow anymore. The only gate we
+        // keep is the stage gate — admin advances the request to the PM Surya stage once the
+        // request itself is approved. The earlier full-payment requirement has been removed.
         if (req.CurrentStage < ProjectStatus.PMSurvey)
         {
-            TempData["Info"] = "PM Surya Ghar upload unlocks after your payment is approved by admin.";
-            return RedirectToAction("Status", "SolarRequest", new { id });
-        }
-
-        // Compute current verified vs project total
-        var verifiedPaid = (await _uow.Payments.FindAsync(p => p.SolarRequestId == req.Id && p.IsVerified))
-                          .Sum(p => p.Amount);
-        var projectTotal = req.PlanAmount;
-
-        if (projectTotal > 0 && verifiedPaid < projectTotal)
-        {
-            var due = projectTotal - verifiedPaid;
-            TempData["Error"] = $"Full payment is required before PM Surya Ghar upload. " +
-                                $"Verified ₹{verifiedPaid:N0} of ₹{projectTotal:N0}. " +
-                                $"Please pay the remaining ₹{due:N0} and wait for admin verification.";
+            TempData["Info"] = "PM Surya Ghar upload unlocks after your request is approved by admin.";
             return RedirectToAction("Status", "SolarRequest", new { id });
         }
 
@@ -111,26 +89,13 @@ public class PMSuryaController : Controller
 
         var userId = _userManager.GetUserId(User)!;
         var req = await _uow.SolarRequests.GetByIdAsync(requestId);
-        if (req == null || req.UserId != userId)
+        if (req == null || !string.Equals(req.UserId?.Trim(), userId?.Trim(), StringComparison.OrdinalIgnoreCase))
             return Json(new { success = false, message = "Request not found" });
 
-        // ===== Gate: full payment required (mirrors GET Upload gate above) =====
-        // Prevents direct-POST bypass of the same-page rule.
+        // ===== Gate: only the stage gate remains (mirrors GET Upload) =====
+        // Per spec (task 6) incomplete payment no longer blocks uploads.
         if (req.CurrentStage < ProjectStatus.PMSurvey)
-            return Json(new { success = false, message = "PM Surya Ghar is locked until admin approves your payment." });
-
-        var verifiedPaid = (await _uow.Payments.FindAsync(p => p.SolarRequestId == req.Id && p.IsVerified))
-                          .Sum(p => p.Amount);
-        if (req.PlanAmount > 0 && verifiedPaid < req.PlanAmount)
-        {
-            var due = req.PlanAmount - verifiedPaid;
-            return Json(new
-            {
-                success = false,
-                message = $"Full payment required before PM Surya Ghar upload. " +
-                          $"Verified ₹{verifiedPaid:N0} of ₹{req.PlanAmount:N0} — ₹{due:N0} due."
-            });
-        }
+            return Json(new { success = false, message = "PM Surya Ghar is locked until admin approves your request." });
 
         // Save the file
         // Organise uploads by project: uploads/SCR-001/pmsurya/<file>
@@ -162,6 +127,28 @@ public class PMSuryaController : Controller
         return Json(new { success = true, message = "Document uploaded. Waiting for admin verification.", filePath = path });
     }
 
+    // POST: /User/PMSurya/SaveLoanOption  — user picks Loan / Without Loan (spec task 7)
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> SaveLoanOption(int requestId, string loanOption)
+    {
+        var userId = _userManager.GetUserId(User)!;
+        var req = await _uow.SolarRequests.GetByIdAsync(requestId);
+        if (req == null || !string.Equals(req.UserId?.Trim(), userId?.Trim(), StringComparison.OrdinalIgnoreCase))
+            return Json(new { success = false, message = "Request not found" });
+
+        if (loanOption != "Loan" && loanOption != "WithoutLoan")
+            return Json(new { success = false, message = "Invalid option" });
+
+        req.PMSuryaLoanOption = loanOption;
+        req.UpdatedAt = DateTime.UtcNow;
+        req.UpdatedBy = userId;
+        _uow.SolarRequests.Update(req);
+        await _uow.SaveChangesAsync();
+
+        return Json(new { success = true, message = "Loan preference saved." });
+    }
+
     // POST: /User/PMSurya/Submit  — user clicks "Submit for verification"
     [HttpPost]
     [ValidateAntiForgeryToken]
@@ -169,7 +156,7 @@ public class PMSuryaController : Controller
     {
         var userId = _userManager.GetUserId(User)!;
         var req = await _uow.SolarRequests.GetByIdAsync(requestId);
-        if (req == null || req.UserId != userId)
+        if (req == null || !string.Equals(req.UserId?.Trim(), userId?.Trim(), StringComparison.OrdinalIgnoreCase))
             return Json(new { success = false, message = "Request not found" });
 
         var docs = (await _pmDocs.GetByRequestIdAsync(requestId)).ToList();

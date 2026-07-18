@@ -99,7 +99,9 @@ public class PaymentService : IPaymentService
     /// </summary>
     public async Task<decimal> GetTotalPaidAsync(int requestId)
     {
-        var payments = await _uow.Payments.FindAsync(p => p.SolarRequestId == requestId);
+        // Exclude admin-rejected payments - a rejected payment is void and must never
+        // count toward "Total Paid" / due / minimum (reject ko count nahi karna).
+        var payments = await _uow.Payments.FindAsync(p => p.SolarRequestId == requestId && p.Status != SolarPortal.Domain.Enums.PaymentStatus.Rejected);
         return payments.Sum(p => p.Amount);
     }
 

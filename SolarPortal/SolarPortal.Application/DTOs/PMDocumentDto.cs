@@ -13,5 +13,6 @@ public class PMDocumentDto
     public long FileSize { get; set; }
     public ApprovalStatus Status { get; set; }
     public string? Remarks { get; set; }
+    public bool IsAdminUpload { get; set; }
     public DateTime CreatedAt { get; set; }
 }

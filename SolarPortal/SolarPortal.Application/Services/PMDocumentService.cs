@@ -32,17 +32,42 @@ public class PMDocumentService : IPMDocumentService
 
     public async Task<PMDocumentDto> UploadDocumentAsync(int solarRequestId, DocumentType documentType, string fileName, string filePath, string? contentType, long fileSize)
     {
-        var document = new PMDocument
-        {
-            SolarRequestId = solarRequestId,
-            DocumentType = documentType,
-            FileName = fileName,
-            FilePath = filePath,
-            ContentType = contentType,
-            FileSize = fileSize
-        };
+        // Upsert per (request, documentType). Spec task 10: when a rejected document
+        // is re-uploaded it must REPLACE the prior submission (and go back to Pending
+        // for the admin to re-review) instead of piling up a second row — the extra
+        // rows were why re-uploaded docs did not show correctly on the admin side.
+        var existing = (await _unitOfWork.PMDocuments
+                            .FindAsync(d => d.SolarRequestId == solarRequestId && d.DocumentType == documentType))
+                       .OrderByDescending(d => d.CreatedAt)
+                       .FirstOrDefault();
 
-        await _unitOfWork.PMDocuments.AddAsync(document);
+        PMDocument document;
+        if (existing != null)
+        {
+            existing.FileName    = fileName;
+            existing.FilePath    = filePath;
+            existing.ContentType = contentType;
+            existing.FileSize    = fileSize;
+            existing.Status      = ApprovalStatus.Pending; // re-review from scratch
+            existing.Remarks     = null;                   // clear prior reject remark
+            existing.UpdatedAt   = DateTime.UtcNow;
+            _unitOfWork.PMDocuments.Update(existing);
+            document = existing;
+        }
+        else
+        {
+            document = new PMDocument
+            {
+                SolarRequestId = solarRequestId,
+                DocumentType = documentType,
+                FileName = fileName,
+                FilePath = filePath,
+                ContentType = contentType,
+                FileSize = fileSize
+            };
+            await _unitOfWork.PMDocuments.AddAsync(document);
+        }
+
         await _unitOfWork.SaveChangesAsync();
 
         return _mapper.Map<PMDocumentDto>(document);

@@ -35,8 +35,16 @@ public class DashboardController : Controller
         if (dashboard.LatestProject != null)
         {
             ViewBag.TotalSubmitted = await _paymentService.GetTotalPaidAsync(dashboard.LatestProject.Id);
-            ViewBag.VerifiedPaid   = await _paymentService.GetVerifiedPaidAsync(dashboard.LatestProject.Id);
+            var verified = await _paymentService.GetVerifiedPaidAsync(dashboard.LatestProject.Id);
+            ViewBag.VerifiedPaid   = verified;
             ViewBag.Minimum        = PaymentService.MinimumPaymentThreshold;
+
+            // "Activate Now" — only for a fully-paid "Without Activation" ID (spec).
+            var lp = dashboard.LatestProject;
+            ViewBag.CanActivateNow =
+                lp.RequestType == SolarPortal.Domain.Enums.RequestType.OnlySolarWithoutActivation
+                && lp.RequestedAmount > 0
+                && verified >= lp.RequestedAmount;
         }
         return View(dashboard);
     }

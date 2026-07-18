@@ -65,6 +65,18 @@
                 <partial name="~/Views/Shared/_StatusTimeline.cshtml" model="Model.LatestProject" />
             </div>
             <div>
+                @* "Activate Now" — only for a fully-paid "Without Activation" ID (spec). *@
+                @if ((bool)(ViewBag.CanActivateNow ?? false))
+                {
+                    <div class="card" style="margin-bottom:14px;border-left:4px solid var(--green);background:linear-gradient(180deg,#f0fdf4,#fff)">
+                        <div class="ct"><span class="ct-dot"></span>Ready to Activate</div>
+                        <p class="text-muted" style="font-size:13px;margin-bottom:12px">
+                            Payments complete — activate this ID now. Select a product and continue;
+                            <strong>no further payment needed.</strong>
+                        </p>
+                        <a class="btn btn-p btn-full" asp-area="SolarPanelUserPanel" asp-controller="SolarRequest" asp-action="Activate" asp-route-id="@Model.LatestProject.Id">⚡ Activate Now</a>
+                    </div>
+                }
                 <div class="card" style="margin-bottom:14px">
                     <div class="ct"><span class="ct-dot"></span>Next Action</div>
                     @{

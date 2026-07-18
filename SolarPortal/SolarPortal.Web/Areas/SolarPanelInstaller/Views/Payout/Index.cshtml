@@ -1,0 +1,51 @@
+@model List<SolarPortal.Domain.Entities.IncConnection>
+@{
+    ViewData["Title"] = "Payout";
+    decimal gross = Model.Sum(c => c.CommissionAmount);
+    decimal tds = Math.Round(gross * 0.01m, 2);
+    decimal net = gross - tds;
+}
+<div class="page active">
+    <div class="ph">
+        <div class="ph-bc">Installer / <span>Payout</span></div>
+        <div class="ph-title">Payout &mdash; Per-Connection Income</div>
+        <div class="ph-sub">Income from your admin-approved connections. 1% TDS is deducted.</div>
+    </div>
+
+    <div class="g3" style="margin-bottom:18px">
+        <div class="sc"><div class="sc-label">Gross Income</div><div class="sc-val blue">₹@gross.ToString("N0")</div><div class="sc-sub">@Model.Count approved connection(s)</div></div>
+        <div class="sc"><div class="sc-label">TDS (1%)</div><div class="sc-val red">₹@tds.ToString("N2")</div><div class="sc-sub">Deducted</div></div>
+        <div class="sc"><div class="sc-label">Net Income</div><div class="sc-val green">₹@net.ToString("N2")</div><div class="sc-sub">After 1% TDS</div></div>
+    </div>
+
+    <div class="card">
+        <div class="ct"><span class="ct-dot"></span>Income Detail (@Model.Count)</div>
+        @if (!Model.Any())
+        {
+            <div class="text-muted" style="text-align:center;padding:26px">No approved connections yet. Income shows once admin approves your connections.</div>
+        }
+        else
+        {
+            <div class="tbl-wrap">
+                <table>
+                    <thead><tr><th>Customer</th><th>Connection</th><th>kV</th><th>Approved On</th><th style="text-align:right">Commission</th><th style="text-align:right">TDS 1%</th><th style="text-align:right">Net</th></tr></thead>
+                    <tbody>
+                        @foreach (var c in Model)
+                        {
+                            var t = Math.Round(c.CommissionAmount * 0.01m, 2);
+                            <tr>
+                                <td class="td-b">@c.CustomerName</td>
+                                <td>@c.ConnectionType</td>
+                                <td>@c.KVCapacity kV</td>
+                                <td>@((c.UpdatedAt ?? c.CreatedAt).ToLocalTime().ToString("dd MMM yyyy"))</td>
+                                <td style="text-align:right">₹@c.CommissionAmount.ToString("N0")</td>
+                                <td style="text-align:right;color:#dc2626">₹@t.ToString("N2")</td>
+                                <td style="text-align:right;color:var(--green);font-weight:600">₹@((c.CommissionAmount - t).ToString("N2"))</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+    </div>
+</div>

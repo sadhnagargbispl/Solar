@@ -35,9 +35,14 @@
                     var verified  = (decimal)(ViewBag.VerifiedPaid ?? 0m);
                     var minimum   = (decimal)(ViewBag.MinimumThreshold ?? 20000m);
                     var dueAmt    = Math.Max(0, Model.RequestedAmount - totalPaid);
+                    var pendingAmt = Math.Max(0, totalPaid - verified);
                     var remaining = Math.Max(0, minimum - verified);
                 }
-                <div class="sr"><span class="srk">Total Paid</span><span class="srv" style="color:var(--green)">₹@totalPaid.ToString("N0")</span></div>
+                <div class="sr"><span class="srk">Total Paid (Verified)</span><span class="srv" style="color:var(--green)">₹@verified.ToString("N0")</span></div>
+                @if (pendingAmt > 0)
+                {
+                    <div class="sr"><span class="srk">Pending (Awaiting Approval)</span><span class="srv" style="color:#f59e0b">₹@pendingAmt.ToString("N0")</span></div>
+                }
                 <div class="sr"><span class="srk">Due</span><span class="srv" style="color:var(--sun)">₹@dueAmt.ToString("N0")</span></div>
 
                 <div class="pay-card" style="margin-top:14px">
@@ -72,14 +77,29 @@
                 @* Per spec: jab project ka pura amount pay ho chuka ho (due = 0),
                    to payment form nahi dikhana — sirf ek confirmation message.
                    User ko dobara payment karne ki zaroorat nahi. *@
-                @if (dueAmt <= 0)
+                @if (dueAmt <= 0 && pendingAmt <= 0)
                 {
                     <div class="alert alert-s" style="margin:0">
                         <span class="ai">✅</span>
                         <div>
                             <strong>Payment complete!</strong><br />
-                            Aapne pura project amount (₹@Model.RequestedAmount.ToString("N0")) pay kar diya hai.
-                            Koi due baaki nahi hai — ab aur payment karne ki zaroorat nahi.
+                            Your full project amount (₹@Model.RequestedAmount.ToString("N0")) has been verified.
+                            No balance is due — no further payment is needed.
+                        </div>
+                    </div>
+                    <a asp-area="SolarPanelUserPanel" asp-controller="SolarRequest" asp-action="Details"
+                       asp-route-id="@Model.Id" class="btn btn-s" style="margin-top:14px">
+                        ← Back to Project
+                    </a>
+                }
+                else if (dueAmt <= 0 && pendingAmt > 0)
+                {
+                    <div class="alert alert-w" style="margin:0">
+                        <span class="ai">⌛</span>
+                        <div>
+                            <strong>Payment submitted - verification pending.</strong><br />
+                            You have submitted the full amount. ₹@pendingAmt.ToString("N0") is still pending admin verification.
+                            Total Paid will update as soon as it is verified.
                         </div>
                     </div>
                     <a asp-area="SolarPanelUserPanel" asp-controller="SolarRequest" asp-action="Details"

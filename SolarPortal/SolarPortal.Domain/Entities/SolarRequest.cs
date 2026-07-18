@@ -36,6 +36,18 @@ public class SolarRequest : BaseEntity
     // this case. Only ONE of the two should be populated per request.
     public int? ExternalProductId { get; set; }
 
+    // ─── Light Bill ownership (spec task 3) ──────────────────────────────
+    // Asked at solar-request time: is the electricity bill in the applicant's own
+    // name, or in a blood relation's name? If a blood relation, proof is mandatory.
+    // Values: "Self" | "BloodRelation".
+    public string? LightBillOwnership { get; set; }
+    public string? LightBillRelationName { get; set; }   // relation holder's name (blood-relation case)
+    public string? LightBillProofPath { get; set; }      // uploaded proof (blood-relation case)
+
+    // ─── PM Surya Ghar options (spec tasks 7 & 11) ───────────────────────
+    public string? PMSuryaLoanOption { get; set; }       // "Loan" | "WithoutLoan"
+    public string? PMSuryaGharIdNo { get; set; }         // set by admin on approval
+
     // Status
     public ProjectStatus CurrentStage { get; set; } = ProjectStatus.Registration;
     public ApprovalStatus ApprovalStatus { get; set; } = ApprovalStatus.Pending;

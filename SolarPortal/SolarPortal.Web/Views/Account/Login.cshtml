@@ -1,21 +1,37 @@
-﻿@model LoginViewModel
+@model LoginViewModel
 @{
     ViewData["Title"] = "Login";
     Layout = "~/Views/Shared/_AuthLayout.cshtml";
+    var panel = (ViewBag.Panel as string) ?? "user";
+    var isInc = panel == "inc";
 }
+
+<style>
+    .auth-tabs { display:flex; gap:8px; margin-bottom:18px; background:#f1f5f9; padding:5px; border-radius:10px }
+    .auth-tab { flex:1; text-align:center; padding:9px 10px; border-radius:7px; font-size:13px; font-weight:600;
+                color:#64748b; text-decoration:none; transition:all .15s ease }
+    .auth-tab:hover { color:#0f172a }
+    .auth-tab.active { background:#fff; color:var(--accent-dark); box-shadow:0 1px 3px rgba(0,0,0,.1) }
+</style>
 
 <div class="auth-card">
     <div class="auth-logo">
         <div class="brand-logo-lg">☀️</div>
         <h1 class="auth-title">SOLAR PORTAL</h1>
-        <p class="auth-sub">Sign in to your account</p>
+        <p class="auth-sub">@(isInc ? "Sign in to the INC / Installer panel" : "Sign in to your account")</p>
+    </div>
+
+    <div class="auth-tabs">
+        <a class="auth-tab @(isInc ? "" : "active")" href="@Url.Action("Login", "Account", new { panel = "user" })">&#128100; User Panel</a>
+        <a class="auth-tab @(isInc ? "active" : "")" href="@Url.Action("Login", "Account", new { panel = "inc" })">&#128736; INC Panel</a>
     </div>
 
     <form asp-action="Login" method="post" id="loginForm">
         <input type="hidden" asp-for="ReturnUrl" />
+        <input type="hidden" name="panel" value="@panel" />
         <div class="fg">
-            <label asp-for="Email">Member ID</label>
-            <input asp-for="Email" type="text" placeholder="Your Member ID" autocomplete="username" />
+            <label asp-for="Email">@(isInc ? "INC / Installer ID" : "Member ID")</label>
+            <input asp-for="Email" type="text" placeholder="@(isInc ? "Your INC login ID / email" : "Your Member ID")" autocomplete="username" />
             <span asp-validation-for="Email" class="text-danger" style="font-size:11px"></span>
         </div>
         <div class="fg">
@@ -34,7 +50,7 @@
             <a asp-action="ForgotPassword" style="font-size:12px;color:var(--sun)">Forgot password?</a>
         </div>
         <button type="submit" class="btn btn-p btn-full" style="margin-top:4px">
-            ☀️ Sign In
+            @(isInc ? "Sign In to INC Panel" : "☀️ Sign In")
         </button>
     </form>
 

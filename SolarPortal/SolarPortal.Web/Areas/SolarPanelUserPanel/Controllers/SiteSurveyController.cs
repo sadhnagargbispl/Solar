@@ -58,9 +58,13 @@ public class SiteSurveyController : Controller
         }
 
         var req = await _uow.SolarRequests.GetByIdAsync(id.Value);
-        if (req == null || req.UserId != userId) return NotFound();
+        if (req == null || !string.Equals(req.UserId?.Trim(), userId?.Trim(), StringComparison.OrdinalIgnoreCase)) return NotFound();
 
-        if (req.CurrentStage < ProjectStatus.SiteSurvey)
+        // Spec task 12: once PM Surya Ghar is approved, Meter Dispatch AND Site Survey
+        // open together. PM approval advances the request to the MeterDispatch stage, so
+        // the Site Survey unlocks from MeterDispatch onward (it no longer waits for the
+        // request to reach the SiteSurvey stage specifically).
+        if (req.CurrentStage < ProjectStatus.MeterDispatch)
         {
             TempData["Info"] = "Site survey unlocks after PM Surya Ghar is approved by admin.";
             return RedirectToAction("Status", "SolarRequest", new { id });
@@ -77,7 +81,7 @@ public class SiteSurveyController : Controller
     {
         var userId = _userManager.GetUserId(User)!;
         var req = await _uow.SolarRequests.GetByIdAsync(id);
-        if (req == null || req.UserId != userId) return NotFound();
+        if (req == null || !string.Equals(req.UserId?.Trim(), userId?.Trim(), StringComparison.OrdinalIgnoreCase)) return NotFound();
 
         var html = BuildSurveyFormHtml(req);
         var bytes = System.Text.Encoding.UTF8.GetBytes(html);
@@ -98,7 +102,7 @@ public class SiteSurveyController : Controller
         decimal? RoofTotalAreaSqft,
         // ── Section 2: Electrical ──
         string? DiscomName,
-        string? ConsumerNumber,
+        string? DiscomOther,
         string? MeterType,
         string? GridType,
         // ── Section 3: Site Conditions ──
@@ -111,22 +115,26 @@ public class SiteSurveyController : Controller
         // ── Section 4: Photos & Notes ──
         string? surveyNotes,
         IFormFile? roofPhoto,
-        IFormFile? gpsPhoto)
+        IFormFile? housePhoto)
     {
         var userId = _userManager.GetUserId(User)!;
         var req = await _uow.SolarRequests.GetByIdAsync(requestId);
-        if (req == null || req.UserId != userId)
+        if (req == null || !string.Equals(req.UserId?.Trim(), userId?.Trim(), StringComparison.OrdinalIgnoreCase))
         {
             TempData["Error"] = "Request not found.";
             return RedirectToAction("Index");
         }
 
+        // Spec task 14: if "Other" DISCOM chosen, use the free-text value entered.
+        if (string.Equals(DiscomName, "Other", StringComparison.OrdinalIgnoreCase))
+            DiscomName = string.IsNullOrWhiteSpace(DiscomOther) ? null : DiscomOther.Trim();
+
         // Required-field server-side check (defence-in-depth alongside HTML required)
+        // Note (spec task 13): Consumer Number / "K No." is no longer collected.
         if (string.IsNullOrWhiteSpace(PropertyType) ||
             string.IsNullOrWhiteSpace(RoofAvailable) ||
             string.IsNullOrWhiteSpace(RoofType) ||
             string.IsNullOrWhiteSpace(DiscomName) ||
-            string.IsNullOrWhiteSpace(ConsumerNumber) ||
             string.IsNullOrWhiteSpace(MeterType) ||
             string.IsNullOrWhiteSpace(GridType) ||
             string.IsNullOrWhiteSpace(ShadowOnRoof) ||
@@ -138,17 +146,19 @@ public class SiteSurveyController : Controller
             return RedirectToAction("Index", new { id = requestId });
         }
 
-        string? roofPath = null, gpsPath = null;
-        // Organise uploads by project: uploads/SCR-001/sitesurvey/roof|gps/<file>
+        string? roofPath = null, housePath = null;
+        // Organise uploads by project: uploads/SCR-001/sitesurvey/roof|house/<file>
         if (roofPhoto != null)
         {
             var (ok, path, _) = await _fileUpload.UploadAsync(roofPhoto, $"{req.RequestNumber}/sitesurvey/roof");
             if (ok) roofPath = path;
         }
-        if (gpsPhoto != null)
+        // Spec task 16: House Photo replaces the old GPS photo. We keep storing it in
+        // the GpsPhotoPath column (repurposed) to avoid a schema change.
+        if (housePhoto != null)
         {
-            var (ok, path, _) = await _fileUpload.UploadAsync(gpsPhoto, $"{req.RequestNumber}/sitesurvey/gps");
-            if (ok) gpsPath = path;
+            var (ok, path, _) = await _fileUpload.UploadAsync(housePhoto, $"{req.RequestNumber}/sitesurvey/house");
+            if (ok) housePath = path;
         }
 
         var obstructionsCsv = Obstructions != null && Obstructions.Length > 0
@@ -170,7 +180,7 @@ public class SiteSurveyController : Controller
             existing.RoofTypeOther       = RoofTypeOther;
             existing.RoofTotalAreaSqft   = RoofTotalAreaSqft;
             existing.DiscomName          = DiscomName;
-            existing.ConsumerNumber      = ConsumerNumber;
+            existing.ConsumerNumber      = null;   // K No. no longer collected (spec task 13)
             existing.MeterType           = MeterType;
             existing.GridType            = GridType;
             existing.ShadowOnRoof        = ShadowOnRoof;
@@ -180,8 +190,8 @@ public class SiteSurveyController : Controller
             existing.EarthingAvailable   = EarthingAvailable;
             existing.InternetAvailable   = InternetAvailable;
             existing.SurveyNotes         = surveyNotes;
-            if (roofPath != null) existing.RoofPhotoPath = roofPath;
-            if (gpsPath  != null) existing.GpsPhotoPath  = gpsPath;
+            if (roofPath  != null) existing.RoofPhotoPath = roofPath;
+            if (housePath != null) existing.GpsPhotoPath  = housePath;  // repurposed as House Photo
             existing.OperationsRemark    = null;  // clear prior reject reason — this is a fresh re-submission
             existing.UpdatedAt           = DateTime.UtcNow;
             existing.UpdatedBy           = userId;
@@ -200,7 +210,6 @@ public class SiteSurveyController : Controller
                 RoofTypeOther        = RoofTypeOther,
                 RoofTotalAreaSqft    = RoofTotalAreaSqft,
                 DiscomName           = DiscomName,
-                ConsumerNumber       = ConsumerNumber,
                 MeterType            = MeterType,
                 GridType             = GridType,
                 ShadowOnRoof         = ShadowOnRoof,
@@ -211,7 +220,7 @@ public class SiteSurveyController : Controller
                 InternetAvailable    = InternetAvailable,
                 SurveyNotes          = surveyNotes,
                 RoofPhotoPath        = roofPath,
-                GpsPhotoPath         = gpsPath,
+                GpsPhotoPath         = housePath,   // repurposed as House Photo (spec task 16)
                 IsCompleted          = false,  // admin must approve
                 CreatedAt            = DateTime.UtcNow,
                 CreatedBy            = userId

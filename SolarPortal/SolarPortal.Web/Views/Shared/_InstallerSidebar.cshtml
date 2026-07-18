@@ -1,0 +1,21 @@
+@{
+    var cur = ViewContext.RouteData.Values["controller"]?.ToString();
+    var act = ViewContext.RouteData.Values["action"]?.ToString();
+    string A(string c) => cur == c ? "active" : "";
+    string AA(string c, string a) => (cur == c && act == a) ? "active" : "";
+    var isInc = User.FindFirst("WorkerType")?.Value == "INC";
+}
+<div class="sb-section">
+    <div class="sb-label">Installer Menu</div>
+    <a class="sb-item @A("Dashboard")" asp-area="SolarPanelInstaller" asp-controller="Dashboard" asp-action="Index"><span class="sbi">&#128202;</span>Dashboard</a>
+    <a class="sb-item @AA("Connections","Create")" asp-area="SolarPanelInstaller" asp-controller="Connections" asp-action="Create"><span class="sbi">&#10133;</span>New Installer</a>
+    <a class="sb-item @AA("Connections","Index")" asp-area="SolarPanelInstaller" asp-controller="Connections" asp-action="Index"><span class="sbi">&#128203;</span>Reports</a>
+</div>
+@if (isInc)
+{
+    <div class="sb-section">
+        <div class="sb-label">Income (INC only)</div>
+        <a class="sb-item @A("Payout")" asp-area="SolarPanelInstaller" asp-controller="Payout" asp-action="Index"><span class="sbi">&#128176;</span>Payout</a>
+        <a class="sb-item @A("Withdraw")" asp-area="SolarPanelInstaller" asp-controller="Withdraw" asp-action="Index"><span class="sbi">&#127974;</span>Withdraw</a>
+    </div>
+}

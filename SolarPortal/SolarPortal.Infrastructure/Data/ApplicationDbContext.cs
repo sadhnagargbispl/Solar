@@ -23,6 +23,8 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
     public DbSet<Installation> Installations => Set<Installation>();
     public DbSet<DCRDocument> DCRDocuments => Set<DCRDocument>();
     public DbSet<Worker> Workers => Set<Worker>();
+    public DbSet<IncConnection> IncConnections => Set<IncConnection>();
+    public DbSet<IncWithdrawal> IncWithdrawals => Set<IncWithdrawal>();
     public DbSet<WorkerAssignment> WorkerAssignments => Set<WorkerAssignment>();
     public DbSet<Commission> Commissions => Set<Commission>();
     public DbSet<Notification> Notifications => Set<Notification>();

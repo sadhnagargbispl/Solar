@@ -2,118 +2,200 @@
     ViewData["Title"] = "PM Surya Ghar Documents";
     var req = (SolarPortal.Domain.Entities.SolarRequest)ViewBag.Request;
     var docs = (IEnumerable<SolarPortal.Application.DTOs.PMDocumentDto>)ViewBag.Documents;
-    // Once admin has moved the request past the PM Surya stage, this page becomes
-    // read-only. The user can still view files, but cannot replace them or re-submit.
     var isLocked = (int)req.CurrentStage > (int)SolarPortal.Domain.Enums.ProjectStatus.PMSurvey;
+
+    var loanOpt   = req.PMSuryaLoanOption;
+    var adminDocs = docs.Where(x => x.IsAdminUpload).ToList();
+    var userDocs  = docs.Where(x => !x.IsAdminUpload).ToList();
+
+    var requiredDocs = new[]
+    {
+        new { Type = "AadharCard",       Label = "Aadhaar Card",                                Icon = "🪪" },
+        new { Type = "PANCard",          Label = "PAN Card",                                    Icon = "💳" },
+        new { Type = "LightBill",        Label = "Light Bill (Last 3 Months)",                  Icon = "💡" },
+        new { Type = "BankPassbook",     Label = "Cancelled Cheque / Passbook",                 Icon = "🏦" },
+        new { Type = "PropertyDocument", Label = "Property Document (Farad / पट्टा / Registry)", Icon = "🏠" },
+        new { Type = "GPSPhoto",         Label = "GPS / Location Photo",                        Icon = "📍" },
+        new { Type = "Photo",            Label = "Applicant Photo",                             Icon = "📷" },
+        new { Type = "Signature",        Label = "Signature",                                   Icon = "✍️" }
+    };
+    var doneCount = requiredDocs.Count(d => userDocs.Any(x => x.DocumentType.ToString() == d.Type));
+    var totalCount = requiredDocs.Length;
+    var pct = totalCount > 0 ? (int)Math.Round(doneCount * 100.0 / totalCount) : 0;
+
+    string StsClass(SolarPortal.Domain.Enums.ApprovalStatus s) => s switch
+    {
+        SolarPortal.Domain.Enums.ApprovalStatus.Approved => "sts-act",
+        SolarPortal.Domain.Enums.ApprovalStatus.Rejected => "sts-rej",
+        _ => "sts-pend"
+    };
 }
 
-<div class="page-header" style="padding:16px">
-    <h2>PM Surya Ghar Documents — @req.RequestNumber</h2>
-    <p class="text-muted">Upload all required documents under the PM Surya Ghar scheme. Once submitted, an admin will verify them.</p>
-</div>
+<div class="page active">
+    <div class="ph">
+        <div class="ph-bc">User / <span>PM Surya Ghar</span></div>
+        <div class="ph-title">PM Surya Ghar Documents &mdash; @req.RequestNumber</div>
+        <div class="ph-sub">Upload the required scheme documents. Once submitted, an admin will verify them.</div>
+    </div>
 
-<div class="container-fluid">
-    <div class="row">
-        <div class="col-lg-7">
+    <div class="g2" style="grid-template-columns:1.5fr 1fr;gap:16px;align-items:start">
+        <div>
             <div class="card">
-                <div class="card-header bg-primary text-white">Upload Documents</div>
-                <div class="card-body">
-                    @{
-                        var requiredDocs = new[]
+                <div class="ct"><span class="ct-dot"></span>Loan Preference</div>
+                <p class="text-muted" style="font-size:13.5px;margin-bottom:12px">
+                    Do you want to avail this PM Surya Ghar installation on <strong>Loan</strong> or <strong>Without Loan</strong>?
+                </p>
+                <div class="loan-seg">
+                    <button type="button" class="btn @(loanOpt == "Loan" ? "btn-success" : "btn-outline-success") loan-opt" data-opt="Loan">On Loan</button>
+                    <button type="button" class="btn @(loanOpt == "WithoutLoan" ? "btn-success" : "btn-outline-success") loan-opt" data-opt="WithoutLoan">Without Loan</button>
+                    <span id="loanSavedMsg" class="text-success" style="font-size:13px;align-self:center"></span>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="ct" style="justify-content:space-between">
+                    <span style="display:flex;align-items:center;gap:9px"><span class="ct-dot"></span>Upload Documents</span>
+                    <span style="font-size:12.5px;color:var(--text2);font-weight:500">@doneCount / @totalCount uploaded</span>
+                </div>
+
+                <div class="prog-wrap" style="margin-top:0">
+                    <div class="prog-bar" style="width:@pct%"></div>
+                </div>
+
+                @foreach (var d in requiredDocs)
+                {
+                    var uploaded = userDocs.FirstOrDefault(x => x.DocumentType.ToString() == d.Type);
+                    <div class="pm-doc @(uploaded != null ? "done" : "")">
+                        <div class="pm-doc-ic">@d.Icon</div>
+                        <div class="pm-doc-body">
+                            <div class="pm-doc-name">@d.Label</div>
+                            <div class="pm-doc-sub">
+                                @if (uploaded != null) { <text>Uploaded</text> } else { <text>Not uploaded yet</text> }
+                            </div>
+                        </div>
+                        @if (uploaded != null)
                         {
-                            new { Type = "PMSuryagramDocument", Label = "PM Surya Ghar Application", Icon="📄" },
-                            new { Type = "AadharCard",          Label = "Aadhaar Card", Icon="🪪" },
-                            new { Type = "PANCard",             Label = "PAN Card", Icon="💳" },
-                            new { Type = "LightBill",           Label = "Light Bill (Last 3 Months)", Icon="💡" },
-                            new { Type = "BankPassbook",        Label = "Cancelled Cheque / Passbook", Icon="🏦" },
-                            new { Type = "PropertyDocument",    Label = "Property Document (Farad / पट्टा / Registry)", Icon="🏠" },
-                            new { Type = "GPSPhoto",            Label = "GPS / Location Photo", Icon="📍" }
-                        };
-                    }
-
-                    @foreach (var d in requiredDocs)
-                    {
-                        var uploaded = docs.FirstOrDefault(x => x.DocumentType.ToString() == d.Type);
-                        <div class="pm-doc-row d-flex align-items-center justify-content-between p-2 mb-2 border rounded">
-                            <div>
-                                <span style="font-size:20px">@d.Icon</span>
-                                <strong class="ms-2">@d.Label</strong>
-                                @if (uploaded != null)
+                            <span class="sts @StsClass(uploaded.Status)">@uploaded.Status</span>
+                        }
+                        <div class="pm-doc-act">
+                            @if (!isLocked)
+                            {
+                                <input type="file" class="d-none pm-file" id="file-@d.Type" data-type="@d.Type" accept=".pdf,.png,.jpg,.jpeg" style="display:none" />
+                                @if (d.Type == "Photo")
                                 {
-                                    <span class="badge bg-@(uploaded.Status == SolarPortal.Domain.Enums.ApprovalStatus.Approved ? "success" : uploaded.Status == SolarPortal.Domain.Enums.ApprovalStatus.Rejected ? "danger" : "warning") ms-2">
-                                        @uploaded.Status
-                                    </span>
+                                    <button type="button" class="btn btn-sm btn-p" onclick="openLivePhoto()">📷 Live Photo</button>
                                 }
-                            </div>
-                            <div>
-                                @if (!isLocked)
+                                @if (d.Type == "Signature")
                                 {
-                                    <input type="file" class="d-none pm-file" id="file-@d.Type" data-type="@d.Type" accept=".pdf,.png,.jpg,.jpeg" />
-                                    <button class="btn btn-sm btn-outline-primary pm-pick" data-target="file-@d.Type">
-                                        @(uploaded != null ? "Replace" : "Upload")
-                                    </button>
+                                    <button type="button" class="btn btn-sm btn-p" onclick="openSignaturePad()">✍️ Draw</button>
                                 }
-                                @if (uploaded != null)
-                                {
-                                    <a href="javascript:void(0)" onclick="openFileModal('@uploaded.FilePath')" class="btn btn-sm btn-link">View</a>
-                                }
-                            </div>
+                                <button class="btn btn-sm @(uploaded != null ? "btn-s" : "btn-p") pm-pick" data-target="file-@d.Type">
+                                    @(uploaded != null ? "Replace" : "Upload")
+                                </button>
+                            }
+                            @if (uploaded != null)
+                            {
+                                <a href="javascript:void(0)" onclick="openFileModal('@uploaded.FilePath')" class="btn btn-sm btn-s">View</a>
+                            }
                         </div>
-                    }
+                    </div>
+                }
 
-                    <hr />
-                    @if (isLocked)
+                @if (isLocked)
+                {
+                    <div class="alert alert-s" style="margin:14px 0 0">
+                        <span class="ai">OK</span>
+                        <div><strong>Approved &amp; Locked.</strong> Admin has verified all PM Surya Ghar documents. This stage is complete.</div>
+                    </div>
+                }
+                else
+                {
+                    <button id="btnSubmit" class="btn btn-g btn-full" style="margin-top:16px" @(userDocs.Any() ? "" : "disabled")>
+                        Submit for Admin Verification
+                    </button>
+                    @if (!userDocs.Any())
                     {
-                        <div class="alert alert-success" style="margin:0">
-                            <span style="font-size:18px">✅</span>
-                            <strong>Approved & Locked.</strong>
-                            Admin has verified all PM Surya Ghar documents. This stage is complete — no further action needed here.
-                        </div>
+                        <div class="hint" style="text-align:center;margin-top:8px">Upload at least one document to enable submit.</div>
+                    }
+                }
+            </div>
+        </div>
+
+        <div>
+            <div class="card">
+                <div class="ct"><span class="ct-dot"></span>Status</div>
+                <div class="sr"><span class="srk">Project</span><span class="srv">@req.RequestNumber</span></div>
+                <div class="sr"><span class="srk">Applicant</span><span class="srv">@req.ApplicantName</span></div>
+                <div class="sr"><span class="srk">Mobile</span><span class="srv">@(string.IsNullOrWhiteSpace(req.MobileNumber) ? "-" : req.MobileNumber)</span></div>
+                <div class="sr"><span class="srk">Email</span><span class="srv" style="word-break:break-all">@(string.IsNullOrWhiteSpace(req.Email) ? "-" : req.Email)</span></div>
+                <div class="sr"><span class="srk">Current Stage</span><span class="srv"><span class="sts sts-disp">@req.CurrentStage</span></span></div>
+                @{
+                    var anyDocs = userDocs.Any();
+                    string pmLabel; string pmCls;
+                    if ((int)req.CurrentStage > (int)SolarPortal.Domain.Enums.ProjectStatus.PMSurvey)
+                    {
+                        pmLabel = "Verified by Admin"; pmCls = "sts-act";
+                    }
+                    else if (anyDocs) { pmLabel = "Awaiting admin review"; pmCls = "sts-pend"; }
+                    else { pmLabel = "Not uploaded yet"; pmCls = "sts-pend"; }
+                }
+                <div class="sr"><span class="srk">PM Surya Status</span><span class="srv"><span class="sts @pmCls">@pmLabel</span></span></div>
+                @if (!string.IsNullOrWhiteSpace(loanOpt))
+                {
+                    <div class="sr"><span class="srk">Loan Preference</span><span class="srv">@(loanOpt == "Loan" ? "On Loan" : "Without Loan")</span></div>
+                }
+                <div class="hint" style="margin-top:10px">After admin verifies your documents, you'll be able to download the Site Survey form.</div>
+            </div>
+
+            @if (!string.IsNullOrWhiteSpace(req.PMSuryaGharIdNo) || adminDocs.Any())
+            {
+                <div class="card" style="border-left:4px solid var(--green)">
+                    <div class="ct"><span class="ct-dot"></span>Approval Documents</div>
+                    @if (!string.IsNullOrWhiteSpace(req.PMSuryaGharIdNo))
+                    {
+                        <div class="sr"><span class="srk">PM Surya Ghar ID</span><span class="srv">@req.PMSuryaGharIdNo</span></div>
+                    }
+                    @if (adminDocs.Any())
+                    {
+                        <div class="hint" style="margin:10px 0 6px">Issued by admin - click to download:</div>
+                        @foreach (var ad in adminDocs)
+                        {
+                            <a href="@ad.FilePath" download target="_blank" class="pm-dl">@(string.IsNullOrWhiteSpace(ad.FileName) ? ad.DocumentType.ToString() : ad.FileName)</a>
+                        }
                     }
                     else
                     {
-                        <button id="btnSubmit" class="btn btn-success w-100" @(docs.Any() ? "" : "disabled")>
-                            Submit for Admin Verification
-                        </button>
+                        <div class="hint" style="margin-top:8px">Admin will upload your approval documents here once your application is approved.</div>
                     }
                 </div>
-            </div>
-        </div>
-        <div class="col-lg-5">
-            <div class="card">
-                <div class="card-header">Status</div>
-                <div class="card-body">
-                    <p>Project: <strong>@req.RequestNumber</strong></p>
-                    <p>Current Stage: <span class="badge bg-info">@req.CurrentStage</span></p>
-                    @{
-                        // PM Surya specific status:
-                        //   - stage past PMSurvey   → admin verified, this step done
-                        //   - has docs, still PMSurvey → awaiting admin review
-                        //   - no docs at all        → user still needs to upload
-                        var anyDocs = docs.Any();
-                        var pmStage = req.CurrentStage;
-                        string pmLabel; string pmBg;
-                        if ((int)pmStage > (int)SolarPortal.Domain.Enums.ProjectStatus.PMSurvey)
-                        {
-                            pmLabel = "Verified by Admin ✓"; pmBg = "success";
-                        }
-                        else if (anyDocs)
-                        {
-                            pmLabel = "Awaiting admin review"; pmBg = "warning";
-                        }
-                        else
-                        {
-                            pmLabel = "Documents not uploaded yet"; pmBg = "secondary";
-                        }
-                    }
-                    <p>PM Surya Status: <span class="badge bg-@pmBg">@pmLabel</span></p>
-                    <hr />
-                    <small class="text-muted">After admin verifies your documents, you'll be able to download the Site Survey form.</small>
-                </div>
-            </div>
+            }
         </div>
     </div>
 </div>
+
+@section Styles {
+    <style>
+        .loan-seg { display:flex; gap:10px; flex-wrap:wrap; }
+        .pm-doc { display:flex; align-items:center; gap:12px; padding:12px 14px; margin-top:10px; border:1px solid var(--border); border-radius:var(--r-md); background:var(--bg3); transition:all .15s ease; }
+        .pm-doc:hover { border-color:var(--border2); box-shadow:var(--shadow); }
+        .pm-doc.done { background:linear-gradient(180deg,#f0fdf4,#fff); border-color:#bbf7d0; }
+        .pm-doc-ic { width:42px; height:42px; flex-shrink:0; display:flex; align-items:center; justify-content:center; font-size:22px; border-radius:10px; background:#fff; border:1px solid var(--border); }
+        .pm-doc-body { flex:1; min-width:0; }
+        .pm-doc-name { font-weight:600; font-size:13.5px; color:var(--text1); line-height:1.3; }
+        .pm-doc-sub  { font-size:11.5px; color:var(--text3); margin-top:2px; }
+        .pm-doc.done .pm-doc-sub { color:var(--green); }
+        .pm-doc-act { display:flex; gap:6px; flex-shrink:0; }
+        .pm-dl { display:block; padding:8px 12px; margin-top:6px; background:var(--bg3); border:1px solid var(--border); border-radius:var(--r-sm); color:var(--accent-dark); text-decoration:none; font-size:13px; font-weight:500; transition:all .15s ease; word-break:break-all; }
+        .pm-dl:hover { background:var(--accent-light); border-color:var(--accent); }
+        @@media (max-width:900px) { .g2 { grid-template-columns:1fr !important; } .pm-doc-act { flex-direction:column; } }
+        .cap-overlay { position:fixed; inset:0; background:rgba(15,23,42,.6); z-index:2000; display:flex; align-items:center; justify-content:center; padding:16px; }
+        .cap-box { background:#fff; border-radius:14px; padding:18px; width:100%; max-width:520px; box-shadow:0 20px 50px rgba(0,0,0,.3); }
+        .cap-title { font-weight:700; font-size:16px; margin-bottom:12px; }
+        .cap-media { width:100%; max-height:60vh; border-radius:10px; background:#000; display:block; }
+        .sig-canvas { width:100%; height:200px; border:2px dashed #cbd5e1; border-radius:10px; background:#fff; touch-action:none; cursor:crosshair; }
+        .cap-actions { display:flex; gap:8px; flex-wrap:wrap; justify-content:flex-end; margin-top:14px; }
+    </style>
+}
 
 @section Scripts {
 <script>
@@ -128,28 +210,36 @@ $(function () {
         const file = this.files[0];
         const docType = $(this).data('type');
         if (!file) return;
-
         const fd = new FormData();
         fd.append('requestId', @req.Id);
         fd.append('documentType', docType);
         fd.append('file', file);
         fd.append('__RequestVerificationToken', token);
-
         $.ajax({
             url: '@Url.Action("UploadDocument", "PMSurya")',
-            type: 'POST',
-            data: fd,
-            processData: false,
-            contentType: false,
+            type: 'POST', data: fd, processData: false, contentType: false,
+            success: function (r) { if (r.success) { setTimeout(() => location.reload(), 900); } }
+        });
+    });
+
+    $('.loan-opt').on('click', function () {
+        const opt = $(this).data('opt');
+        const $btns = $('.loan-opt');
+        const fd = new FormData();
+        fd.append('requestId', @req.Id);
+        fd.append('loanOption', opt);
+        fd.append('__RequestVerificationToken', token);
+        $.ajax({
+            url: '@Url.Action("SaveLoanOption", "PMSurya")',
+            type: 'POST', data: fd, processData: false, contentType: false,
             success: function (r) {
                 if (r.success) {
-                    alert(r.message);
-                    location.reload();
-                } else {
-                    alert('Upload failed: ' + r.message);
+                    $btns.removeClass('btn-success').addClass('btn-outline-success');
+                    $('.loan-opt[data-opt="' + opt + '"]').removeClass('btn-outline-success').addClass('btn-success');
+                    $('#loanSavedMsg').text('Saved');
+                    setTimeout(() => $('#loanSavedMsg').text(''), 2000);
                 }
-            },
-            error: function () { alert('Upload error'); }
+            }
         });
     });
 
@@ -157,23 +247,94 @@ $(function () {
         const fd = new FormData();
         fd.append('requestId', @req.Id);
         fd.append('__RequestVerificationToken', token);
-
         $.ajax({
             url: '@Url.Action("Submit", "PMSurya")',
-            type: 'POST',
-            data: fd,
-            processData: false,
-            contentType: false,
-            success: function (r) {
-                alert(r.message);
-                if (r.success) window.location.href = '@Url.Action("Status", "SolarRequest", new { id = req.Id })';
-            }
+            type: 'POST', data: fd, processData: false, contentType: false,
+            success: function (r) { if (r.success) setTimeout(() => { window.location.href = '@Url.Action("Status", "SolarRequest", new { id = req.Id })'; }, 900); }
         });
     });
 });
 </script>
+<script>
+(function(){
+  function on(id,ev,fn){ var e=document.getElementById(id); if(e) e.addEventListener(ev,fn); }
+  function antiToken(){ var e=document.querySelector('input[name="__RequestVerificationToken"]'); return e ? e.value : ''; }
+  function uploadCaptured(blob, docType, filename){
+    var fd = new FormData();
+    fd.append('requestId', @req.Id);
+    fd.append('documentType', docType);
+    fd.append('file', blob, filename);
+    fd.append('__RequestVerificationToken', antiToken());
+    $.ajax({ url:'@Url.Action("UploadDocument","PMSurya")', type:'POST', data:fd, processData:false, contentType:false,
+      success:function(r){ if(r.success){ setTimeout(function(){ location.reload(); }, 700); } } });
+  }
+
+  // ---- Live photo (camera) ----
+  var lpStream=null;
+  function lpButtons(mode){
+    var cap=document.getElementById('lpCapture'), re=document.getElementById('lpRetake'), sv=document.getElementById('lpSave');
+    if(cap) cap.style.display = mode==='live'?'':'none';
+    if(re)  re.style.display  = mode==='shot'?'':'none';
+    if(sv)  sv.style.display  = mode==='shot'?'':'none';
+  }
+  window.openLivePhoto=function(){
+    var modal=document.getElementById('livePhotoModal'); if(!modal) return; modal.style.display='flex';
+    var video=document.getElementById('lpVideo');
+    if(!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia){ alert('Camera is not supported in this browser.'); closeLivePhoto(); return; }
+    navigator.mediaDevices.getUserMedia({ video:{ facingMode:'user' }, audio:false })
+      .then(function(s){ lpStream=s; video.srcObject=s; video.style.display=''; document.getElementById('lpCanvas').style.display='none'; lpButtons('live'); })
+      .catch(function(e){ alert('Camera access denied: '+e.message); closeLivePhoto(); });
+  };
+  window.closeLivePhoto=function(){ var m=document.getElementById('livePhotoModal'); if(m) m.style.display='none'; if(lpStream){ lpStream.getTracks().forEach(function(t){t.stop();}); lpStream=null; } };
+  on('lpCapture','click', function(){ var v=document.getElementById('lpVideo'), c=document.getElementById('lpCanvas'); c.width=v.videoWidth||640; c.height=v.videoHeight||480; c.getContext('2d').drawImage(v,0,0,c.width,c.height); v.style.display='none'; c.style.display=''; lpButtons('shot'); });
+  on('lpRetake','click', function(){ document.getElementById('lpVideo').style.display=''; document.getElementById('lpCanvas').style.display='none'; lpButtons('live'); });
+  on('lpSave','click', function(){ document.getElementById('lpCanvas').toBlob(function(b){ uploadCaptured(b,'Photo','applicant-photo.png'); closeLivePhoto(); }, 'image/png'); });
+
+  // ---- Signature pad ----
+  var sigCtx=null, drawing=false, hasInk=false, last=null;
+  function sigPos(e){ var c=document.getElementById('sigCanvas'), r=c.getBoundingClientRect(); var p=(e.touches&&e.touches[0])||e; return { x:p.clientX-r.left, y:p.clientY-r.top }; }
+  window.openSignaturePad=function(){
+    var modal=document.getElementById('signModal'); if(!modal) return; modal.style.display='flex';
+    var c=document.getElementById('sigCanvas'); c.width=c.offsetWidth; c.height=c.offsetHeight;
+    sigCtx=c.getContext('2d'); sigCtx.fillStyle='#fff'; sigCtx.fillRect(0,0,c.width,c.height);
+    sigCtx.strokeStyle='#111827'; sigCtx.lineWidth=2.2; sigCtx.lineJoin='round'; sigCtx.lineCap='round'; hasInk=false;
+  };
+  window.closeSignature=function(){ var m=document.getElementById('signModal'); if(m) m.style.display='none'; };
+  (function(){ var c=document.getElementById('sigCanvas'); if(!c) return;
+    c.addEventListener('pointerdown', function(e){ e.preventDefault(); drawing=true; last=sigPos(e); });
+    c.addEventListener('pointermove', function(e){ if(!drawing) return; e.preventDefault(); var p=sigPos(e); sigCtx.beginPath(); sigCtx.moveTo(last.x,last.y); sigCtx.lineTo(p.x,p.y); sigCtx.stroke(); last=p; hasInk=true; });
+    window.addEventListener('pointerup', function(){ drawing=false; });
+  })();
+  on('sigClear','click', function(){ var c=document.getElementById('sigCanvas'); if(sigCtx){ sigCtx.fillStyle='#fff'; sigCtx.fillRect(0,0,c.width,c.height); hasInk=false; } });
+  on('sigSave','click', function(){ if(!hasInk){ alert('Please draw your signature first.'); return; } document.getElementById('sigCanvas').toBlob(function(b){ uploadCaptured(b,'Signature','signature.png'); closeSignature(); }, 'image/png'); });
+})();
+</script>
 @Html.AntiForgeryToken()
 }
 
-@* In-page file preview modal (no new tab) *@
+@* Live-photo (camera) + signature-pad modals *@
+<div id="livePhotoModal" class="cap-overlay" style="display:none">
+  <div class="cap-box">
+    <div class="cap-title">Take Live Photo</div>
+    <video id="lpVideo" autoplay playsinline class="cap-media"></video>
+    <canvas id="lpCanvas" class="cap-media" style="display:none"></canvas>
+    <div class="cap-actions">
+      <button type="button" class="btn btn-p" id="lpCapture">Capture</button>
+      <button type="button" class="btn btn-s" id="lpRetake" style="display:none">Retake</button>
+      <button type="button" class="btn btn-g" id="lpSave" style="display:none">Save &amp; Upload</button>
+      <button type="button" class="btn btn-s" onclick="closeLivePhoto()">Cancel</button>
+    </div>
+  </div>
+</div>
+<div id="signModal" class="cap-overlay" style="display:none">
+  <div class="cap-box">
+    <div class="cap-title">Draw Signature</div>
+    <canvas id="sigCanvas" class="sig-canvas"></canvas>
+    <div class="cap-actions">
+      <button type="button" class="btn btn-s" id="sigClear">Clear</button>
+      <button type="button" class="btn btn-g" id="sigSave">Save &amp; Upload</button>
+      <button type="button" class="btn btn-s" onclick="closeSignature()">Cancel</button>
+    </div>
+  </div>
+</div>
 @await Html.PartialAsync("_FileModal")

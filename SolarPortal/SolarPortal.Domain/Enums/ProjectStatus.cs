@@ -46,7 +46,12 @@ public enum DocumentType
     GPSPhoto = 7,
     DCRDocument = 8,
     SitePhoto = 9,
-    PMSuryagramDocument = 10
+    PMSuryagramDocument = 10,
+    // PM Surya Ghar - applicant photo & signature (image point 6)
+    // NOTE: values 11-14 are used by the Admin project on the shared
+    // PMDocuments.DocumentType column, so we use 15/16 to avoid a clash.
+    Photo = 15,
+    Signature = 16
 }
 
 public enum RequestType

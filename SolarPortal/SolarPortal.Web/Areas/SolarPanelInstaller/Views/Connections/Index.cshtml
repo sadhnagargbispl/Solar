@@ -1,0 +1,67 @@
+@model List<SolarPortal.Domain.Entities.IncConnection>
+@{
+    ViewData["Title"] = "My Connections";
+    string Cls(string s) => s == "Approved" ? "sts-act" : s == "Rejected" ? "sts-rej" : s == "Complete" ? "sts-disp" : "sts-pend";
+}
+<div class="page active">
+    <div class="ph">
+        <div class="ph-bc">Installer / <span>My Connections</span></div>
+        <div class="ph-title">My Connections (Report)</div>
+        <div class="ph-sub">All connections you registered, with their current status.</div>
+    </div>
+
+    <div style="margin-bottom:14px">
+        <a class="btn btn-p" asp-area="SolarPanelInstaller" asp-controller="Connections" asp-action="Create">+ New Installer / Connection</a>
+    </div>
+
+    <div class="card">
+        <div class="ct"><span class="ct-dot"></span>Connections (@Model.Count)</div>
+        @if (!Model.Any())
+        {
+            <div class="text-muted" style="text-align:center;padding:26px">No connections yet. Click "New Installer / Connection" to add one.</div>
+        }
+        else
+        {
+            <div class="tbl-wrap">
+                <table>
+                    <thead>
+                        <tr><th>Customer</th><th>Mobile</th><th>Connection</th><th>kV</th><th>Document</th><th>Status</th><th>Commission</th><th>Submitted</th><th>Action</th></tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var c in Model)
+                        {
+                            <tr>
+                                <td class="td-b">@c.CustomerName</td>
+                                <td>@c.MobileNumber</td>
+                                <td>@c.ConnectionType</td>
+                                <td>@c.KVCapacity kV</td>
+                                <td>
+                                    @if (!string.IsNullOrWhiteSpace(c.DocumentPath))
+                                    { <a href="@c.DocumentPath" target="_blank" style="color:var(--accent)">View</a> }
+                                    else { <span class="text-muted">-</span> }
+                                </td>
+                                <td><span class="sts @Cls(c.Status)">@c.Status</span></td>
+                                <td>₹@c.CommissionAmount.ToString("N0")</td>
+                                <td>@c.CreatedAt.ToLocalTime().ToString("dd MMM yyyy")</td>
+                                <td>
+                                    @if (c.Status == "Pending")
+                                    {
+                                        <form asp-area="SolarPanelInstaller" asp-controller="Connections" asp-action="MarkComplete" method="post" style="display:inline">
+                                            @Html.AntiForgeryToken()
+                                            <input type="hidden" name="id" value="@c.Id" />
+                                            <button type="submit" class="btn btn-sm btn-p">Mark Complete</button>
+                                        </form>
+                                    }
+                                    @if (c.Status == "Rejected" && !string.IsNullOrWhiteSpace(c.AdminRemark))
+                                    {
+                                        <span style="color:#dc2626;font-size:12px" title="@c.AdminRemark">Reason</span>
+                                    }
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+    </div>
+</div>

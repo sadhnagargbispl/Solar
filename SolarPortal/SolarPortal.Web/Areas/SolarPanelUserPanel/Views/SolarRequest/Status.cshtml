@@ -61,6 +61,20 @@ else
                 <partial name="~/Views/Shared/_StatusTimeline.cshtml" model="Model" />
             </div>
             <div>
+                @* "Activate Now" — shown ONLY for a fully-paid "Without Activation"
+                   ID (spec). Hidden for With-Activation / already-active IDs. *@
+                @if ((bool)(ViewBag.CanActivateNow ?? false))
+                {
+                    <div class="card" style="margin-bottom:14px;border-left:4px solid var(--green);background:linear-gradient(180deg,#f0fdf4,#fff)">
+                        <div class="ct"><span class="ct-dot"></span>Ready to Activate</div>
+                        <p class="text-muted" style="font-size:13px;margin-bottom:12px">
+                            Your payments are complete. You can now activate this ID —
+                            select a product and continue the activation process.
+                            <strong>No further payment is needed.</strong>
+                        </p>
+                        <a class="btn btn-p btn-full" asp-action="Activate" asp-route-id="@Model.Id">⚡ Activate Now</a>
+                    </div>
+                }
                 <div class="card" style="margin-bottom:14px">
                     <div class="ct"><span class="ct-dot"></span>Next Action</div>
                     @{
@@ -223,7 +237,28 @@ else
                 }
                 <div class="sr"><span class="srk">Approval</span><span class="srv"><span class="sts @ApprovalStsClass(effectiveApproval)">@effectiveApproval</span></span></div>
             </div>
-        </div>
+            @{
+                var actProduct = ViewBag.ActProduct as SolarPortal.Application.Services.BasicProductDto;
+            }
+            @if (actProduct != null)
+            {
+                decimal _projTotal = Model.RequestedAmount > 0 ? Model.RequestedAmount : actProduct.DP;
+                decimal _vPaid = 0m; try { _vPaid = (decimal)(ViewBag.VerifiedPaid ?? 0m); } catch { }
+                decimal _totalBV = actProduct.BV;
+                decimal _paidBV = _projTotal > 0 ? Math.Round(_totalBV * Math.Min(1m, _vPaid / _projTotal), 2) : (_vPaid > 0 ? _totalBV : 0m);
+                if (_paidBV > _totalBV) { _paidBV = _totalBV; }
+                decimal _pendingBV = _totalBV - _paidBV;
+                <div class="card" style="border-left:4px solid var(--green)">
+                    <div class="ct"><span class="ct-dot"></span>Product &amp; BV</div>
+                    <div class="sr"><span class="srk">Product Taken</span><span class="srv">@actProduct.ProductName</span></div>
+                    <div class="sr"><span class="srk">Product DP</span><span class="srv">₹@actProduct.DP.ToString("N0")</span></div>
+                    <div class="sr"><span class="srk">Total BV</span><span class="srv">@_totalBV.ToString("N2")</span></div>
+                    <div class="sr"><span class="srk" style="color:var(--green)">Paid BV</span><span class="srv" style="color:var(--green)">@_paidBV.ToString("N2")</span></div>
+                    <div class="sr"><span class="srk" style="color:#d97706">Pending BV</span><span class="srv" style="color:#d97706">@_pendingBV.ToString("N2")</span></div>
+                    <div class="sr"><span class="srk">Claimable BV</span><span class="srv">@_paidBV.ToString("N2")</span></div>
+                    <div class="hint" style="margin-top:8px">Paid BV is proportional to your verified payment.</div>
+                </div>
+            }        </div>
     </div>
 </div>
 }

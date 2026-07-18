@@ -51,7 +51,14 @@
 
         <!-- SIDEBAR -->
         <div class="sidebar">
-            <partial name="~/Views/Shared/_UserSidebar.cshtml" />
+            @if (isInstaller)
+            {
+                <partial name="~/Views/Shared/_InstallerSidebar.cshtml" />
+            }
+            else
+            {
+                <partial name="~/Views/Shared/_UserSidebar.cshtml" />
+            }
         </div>
 
         <!-- MAIN CONTENT -->

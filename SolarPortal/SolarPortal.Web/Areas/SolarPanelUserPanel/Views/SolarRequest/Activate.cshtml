@@ -1,0 +1,147 @@
+@{
+    ViewData["Title"] = "Activate Now";
+    var req = (SolarPortal.Application.DTOs.SolarRequestDto)ViewBag.Request;
+    var basicProducts = (ViewBag.BasicProducts as List<SolarPortal.Application.Services.BasicProductDto>)
+                        ?? new List<SolarPortal.Application.Services.BasicProductDto>();
+    var verified = (decimal)(ViewBag.VerifiedPaid ?? 0m);
+}
+
+<div class="page active">
+    <div class="ph">
+        <div class="ph-bc">👤 User / <span>Activate Now</span></div>
+        <div class="ph-title">⚡ Activate Your Solar ID</div>
+        <div class="ph-sub">Your payments are complete — pick a product to activate. No further payment is required.</div>
+    </div>
+
+    <div class="alert alert-s">
+        <span class="ai">✅</span>
+        <div>
+            <strong>All payments completed.</strong>
+            You've paid <strong>₹@verified.ToString("N0")</strong> for <strong>@req.RequestNumber</strong>.
+            Activation will continue as <strong>With Activation</strong> — Product Selection → ID Activation →
+            Document Upload. <strong>Payment step is skipped.</strong>
+        </div>
+    </div>
+
+    <form asp-area="SolarPanelUserPanel" asp-controller="SolarRequest" asp-action="ActivateConfirm" method="post" id="activateForm">
+        @Html.AntiForgeryToken()
+        <input type="hidden" name="id" value="@req.Id" />
+        <input type="hidden" name="externalProductId" id="externalProductIdInput" />
+
+        <!-- Activation type: only "With Activation" enabled, others disabled -->
+        <div class="card">
+            <div class="ct"><span class="ct-dot"></span>Activation Type</div>
+            <div class="rc-group" style="grid-template-columns:1fr 1fr 1fr">
+                <div class="rc sel" title="Activation continues as With Activation">
+                    <div class="rci">🔌</div>
+                    <div><div class="rcl">With Activation</div><div class="rcs">Selected</div></div>
+                </div>
+                <div class="rc disabled-card" title="Not available — you are activating an existing paid ID">
+                    <div class="rci">⚡</div>
+                    <div><div class="rcl">Only Solar</div><div class="rcs" style="color:#dc2626;font-size:11px">🔒 Disabled</div></div>
+                </div>
+                <div class="rc disabled-card" title="Not available">
+                    <div class="rci">✅</div>
+                    <div><div class="rcl">Already Active</div><div class="rcs" style="color:#dc2626;font-size:11px">🔒 Disabled</div></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Product selection -->
+        <div class="card">
+            <div class="ct"><span class="ct-dot"></span>Select Product to Activate</div>
+            <div class="alert alert-i" style="font-size:13px">
+                <span class="ai">ℹ</span>Pick one of the products below to activate your ID.
+            </div>
+            @if (basicProducts.Any())
+            {
+                <div class="bp-grid">
+                    @foreach (var p in basicProducts)
+                    {
+                        var outOfStock = p.Stock <= 0;
+                        var saving = p.MRP - p.DP;
+                        var pct = p.MRP > 0 ? (int)Math.Round((double)(saving) / (double)p.MRP * 100) : 0;
+                        <div class="bp-card @(outOfStock ? "out-of-stock" : "")"
+                             data-prodid="@p.ProdId"
+                             onclick="@(outOfStock ? "" : "selectActivateProduct(this)")">
+                            @if (!outOfStock && pct > 0)
+                            {
+                                <span class="bp-badge">@pct% OFF</span>
+                            }
+                            <div class="bp-tick">✓</div>
+                            <div class="bp-icon">🔆</div>
+                            <div class="bp-name">@p.ProductName</div>
+                            <div class="bp-prices">
+                                <span class="bp-mrp">₹@p.MRP.ToString("N0")</span>
+                                <span class="bp-dp">₹@p.DP.ToString("N0")</span>
+                            </div>
+                            @if (outOfStock)
+                            {
+                                <div class="bp-oos">Out of stock</div>
+                            }
+                        </div>
+                    }
+                </div>
+            }
+            else
+            {
+                <div class="alert alert-w"><span class="ai">⚠</span>No products available right now. Please contact admin.</div>
+            }
+        </div>
+
+        <div class="card">
+            <div class="alert alert-i" style="font-size:13px">
+                <span class="ai">➡️</span>After activation you'll be taken to <strong>PM Surya Ghar</strong> to upload your documents.
+            </div>
+            <div class="btn-row" style="justify-content:center">
+                <button type="submit" class="btn btn-p" style="padding:12px 32px;font-size:15px" onclick="return confirmActivate()">
+                    ⚡ Activate &amp; Continue
+                </button>
+            </div>
+        </div>
+    </form>
+</div>
+
+@section Styles {
+    <style>
+        .bp-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(200px,1fr)); gap:14px; margin-top:10px; }
+        .bp-card { position:relative; background:#fff; border:2px solid #e5e7eb; border-radius:14px; padding:20px 16px 16px; text-align:center; cursor:pointer; transition:transform .15s ease, box-shadow .15s ease, border-color .15s ease; overflow:hidden; }
+        .bp-card:hover { transform:translateY(-4px); box-shadow:0 10px 24px rgba(22,163,74,.15); border-color:#bbf7d0; }
+        .bp-card.sel { border-color:#16a34a; box-shadow:0 8px 24px rgba(22,163,74,.25); background:linear-gradient(180deg,#f0fdf4 0%,#fff 60%); }
+        .bp-badge { position:absolute; top:10px; left:10px; background:#dc2626; color:#fff; font-size:11px; font-weight:700; padding:3px 8px; border-radius:20px; }
+        .bp-tick { position:absolute; top:8px; right:10px; width:26px; height:26px; border-radius:50%; background:#16a34a; color:#fff; font-size:15px; line-height:26px; text-align:center; display:none; }
+        .bp-card.sel .bp-tick { display:block; }
+        .bp-icon { font-size:40px; margin:6px 0 10px; line-height:1; }
+        .bp-name { font-weight:600; font-size:13px; color:#111827; min-height:34px; display:flex; align-items:center; justify-content:center; line-height:1.3; }
+        .bp-prices { margin-top:10px; display:flex; align-items:baseline; justify-content:center; gap:8px; }
+        .bp-mrp { color:#9ca3af; text-decoration:line-through; font-size:13px; }
+        .bp-dp { color:#16a34a; font-weight:800; font-size:22px; font-family:Rajdhani,sans-serif; }
+        .bp-oos { margin-top:8px; color:#dc2626; font-size:12px; font-weight:600; }
+        .bp-card.out-of-stock { opacity:.55; cursor:not-allowed; filter:grayscale(.4); }
+        .bp-card.out-of-stock:hover { transform:none; box-shadow:none; border-color:#e5e7eb; }
+        .rc.disabled-card { opacity:.5; cursor:not-allowed; background:#f9fafb; border-style:dashed !important; }
+    </style>
+}
+
+@section Scripts {
+    <script>
+        function selectActivateProduct(el) {
+            document.querySelectorAll('.bp-card').forEach(c => {
+                c.classList.remove('sel');
+                const t = c.querySelector('.bp-tick'); if (t) t.style.display = 'none';
+            });
+            el.classList.add('sel');
+            const tick = el.querySelector('.bp-tick'); if (tick) tick.style.display = 'block';
+            document.getElementById('externalProductIdInput').value = el.dataset.prodid;
+        }
+        function confirmActivate() {
+            const pid = (document.getElementById('externalProductIdInput').value || '').trim();
+            if (!pid) {
+                if (typeof showWarning === 'function') showWarning('Please select a product to activate.');
+                else alert('Please select a product to activate.');
+                return false;
+            }
+            return true;
+        }
+    </script>
+}

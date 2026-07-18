@@ -59,7 +59,7 @@ public class DCRController : Controller
         }
 
         var req = await _uow.SolarRequests.GetByIdAsync(id.Value);
-        if (req == null || req.UserId != userId) return NotFound();
+        if (req == null || !string.Equals(req.UserId?.Trim(), userId?.Trim(), StringComparison.OrdinalIgnoreCase)) return NotFound();
 
         if (req.ConnectionType != ConnectionType.Domestic)
         {
@@ -85,7 +85,7 @@ public class DCRController : Controller
     {
         var userId = _userManager.GetUserId(User)!;
         var req = await _uow.SolarRequests.GetByIdAsync(requestId);
-        if (req == null || req.UserId != userId)
+        if (req == null || !string.Equals(req.UserId?.Trim(), userId?.Trim(), StringComparison.OrdinalIgnoreCase))
             return Json(new { success = false, message = "Request not found" });
 
         if (req.ConnectionType != ConnectionType.Domestic)

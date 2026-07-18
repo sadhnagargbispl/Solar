@@ -60,6 +60,19 @@ public class CreateSolarRequestViewModel
     [Display(Name = "PAN Number")]
     public string? PANNumber { get; set; }
 
+    // === Light Bill ownership (spec task 3) ===
+    // "Self" = bill is in the applicant's own name.
+    // "BloodRelation" = bill is in a blood relation's name → proof mandatory.
+    [Display(Name = "Light Bill Ownership")]
+    public string? LightBillOwnership { get; set; }
+
+    [MaxLength(200)]
+    [Display(Name = "Relation Holder Name")]
+    public string? LightBillRelationName { get; set; }
+
+    [Display(Name = "Light Bill Proof")]
+    public IFormFile? LightBillProof { get; set; }
+
     // === Activation Type ===
     [Display(Name = "Request Type")]
     public RequestType RequestType { get; set; } = RequestType.WithActivation;

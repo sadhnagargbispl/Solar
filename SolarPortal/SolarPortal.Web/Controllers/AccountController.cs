@@ -1,9 +1,12 @@
+using System.Security.Claims;
+using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using SolarPortal.Application.Interfaces.Services;
 using SolarPortal.Domain.Entities;
+using SolarPortal.Domain.Enums;
 using SolarPortal.Infrastructure.Data;
 using SolarPortal.Web.ViewModels;
 
@@ -32,22 +35,62 @@ public class AccountController : Controller
         _logger = logger;
     }
 
+    // panel = "user" (default) | "inc"  — the login page shows a tab for each.
     [HttpGet]
-    public IActionResult Login(string? returnUrl = null)
+    public IActionResult Login(string? returnUrl = null, string? panel = null)
     {
         if (User.Identity?.IsAuthenticated == true)
             return RedirectToAction("Index", "Dashboard");
 
         ViewData["ReturnUrl"] = returnUrl;
+        ViewBag.Panel = string.Equals(panel, "inc", StringComparison.OrdinalIgnoreCase) ? "inc" : "user";
         return View();
     }
 
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Login(LoginViewModel model, string? returnUrl = null)
+    public async Task<IActionResult> Login(LoginViewModel model, string? returnUrl = null, string? panel = null)
     {
+        var isInc = string.Equals(panel, "inc", StringComparison.OrdinalIgnoreCase);
+        ViewBag.Panel = isInc ? "inc" : "user";
+
         if (!ModelState.IsValid)
             return View(model);
+
+        // ─── INC / Installer login (Workers table, NOT Identity) ──────────
+        // INC workers are created by admin in the Workers table with
+        // LoginUsername / LoginPassword and Type = INC. We authenticate against
+        // that table and issue a cookie with the "Installer" role claim so the
+        // installer area's [Authorize(Roles="Installer")] works.
+        if (isInc)
+        {
+            var uname = (model.Email ?? string.Empty).Trim();
+            // Both JOB and INC workers share this panel and can log in.
+            var worker = await _db.Workers.FirstOrDefaultAsync(w =>
+                !w.IsDeleted && w.LoginUsername != null && w.LoginUsername == uname);
+
+            if (worker == null || worker.LoginPassword != model.Password)
+            {
+                ModelState.AddModelError(string.Empty, "Invalid INC login. Check your ID and password.");
+                return View(model);
+            }
+
+            var claims = new List<Claim>
+            {
+                new Claim(ClaimTypes.NameIdentifier, "worker-" + worker.Id),
+                new Claim(ClaimTypes.Name, string.IsNullOrWhiteSpace(worker.Name) ? uname : worker.Name),
+                new Claim(ClaimTypes.Role, "Installer"),
+                new Claim("WorkerId", worker.Id.ToString()),
+                new Claim("WorkerType", worker.Type.ToString())
+            };
+            var identity = new ClaimsIdentity(claims, IdentityConstants.ApplicationScheme);
+            var principal = new ClaimsPrincipal(identity);
+            await HttpContext.SignInAsync(IdentityConstants.ApplicationScheme, principal,
+                new AuthenticationProperties { IsPersistent = model.RememberMe });
+
+            _logger.LogInformation("INC worker {User} (id {Id}) logged in.", uname, worker.Id);
+            return RedirectToAction("Index", "Dashboard", new { area = "SolarPanelInstaller" });
+        }
 
         // ─── LiveDB bridge ────────────────────────────────────────────────
         // Bridge verifies against m_membermaster and returns a loaded
@@ -100,17 +143,18 @@ public class AccountController : Controller
             _logger.LogInformation("User {Email} logged in.", model.Email);
             var roles = await _userManager.GetRolesAsync(user);
 
-            // ── USER SITE — only User role allowed ─────────────────────────
-            if (!roles.Contains("User"))
-            {
-                await _signInManager.SignOutAsync();
-                ModelState.AddModelError(string.Empty,
-                    "This account is not authorised for the user site. " +
-                    "Use the Admin or Installer site instead.");
-                return View(model);
-            }
+            // ── Unified login routing (per spec: INC login from user panel) ──
+            // Installer / INC users -> Installer panel; regular users -> user panel.
+            if (roles.Contains("Installer"))
+                return RedirectToAction("Index", "Dashboard", new { area = "SolarPanelInstaller" });
+            if (roles.Contains("User"))
+                return RedirectToAction("Index", "Dashboard", new { area = "SolarPanelUserPanel" });
 
-            return RedirectToAction("Index", "Dashboard", new { area = "SolarPanelUserPanel" });
+            // Admin / SuperAdmin should use the dedicated admin site.
+            await _signInManager.SignOutAsync();
+            ModelState.AddModelError(string.Empty,
+                "This account is not authorised for this site. Please use the Admin site.");
+            return View(model);
         }
 
         if (result.IsLockedOut)

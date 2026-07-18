@@ -33,8 +33,14 @@
     --text2:    #4b5563;
     --text3:    #9ca3af;
 
-    --shadow:   0 1px 3px rgba(15, 23, 42, .06), 0 1px 2px rgba(15, 23, 42, .04);
-    --shadow-lg:0 4px 16px rgba(15, 23, 42, .08);
+    --shadow:   0 1px 2px rgba(15, 23, 42, .04), 0 2px 6px rgba(15, 23, 42, .05);
+    --shadow-md:0 4px 12px rgba(15, 23, 42, .07), 0 2px 4px rgba(15, 23, 42, .05);
+    --shadow-lg:0 12px 32px rgba(15, 23, 42, .10), 0 4px 8px rgba(15, 23, 42, .05);
+
+    /* Radii */
+    --r-sm: 8px;
+    --r-md: 12px;
+    --r-lg: 16px;
 }
 
 /* Per-panel theming: body[data-role="Admin"|"User"|"Installer"] picks the accent */
@@ -89,7 +95,9 @@ html, body {
     position: fixed;
     top: 0; left: 0; right: 0;
     height: 56px;
-    background: var(--bg2);
+    background: rgba(255, 255, 255, .85);
+    backdrop-filter: saturate(180%) blur(12px);
+    -webkit-backdrop-filter: saturate(180%) blur(12px);
     border-bottom: 1px solid var(--border);
     display: flex;
     align-items: center;
@@ -100,11 +108,12 @@ html, body {
 }
 .brand { display: flex; align-items: center; gap: 10px; }
 .brand-logo {
-    width: 36px; height: 36px;
+    width: 38px; height: 38px;
     background: linear-gradient(135deg, var(--accent), var(--accent-dark));
-    border-radius: 8px;
+    border-radius: 10px;
     display: flex; align-items: center; justify-content: center;
     font-size: 20px; color: white;
+    box-shadow: 0 4px 10px -2px color-mix(in srgb, var(--accent) 55%, transparent);
 }
 .brand-name {
     font-family: 'Rajdhani', sans-serif;
@@ -163,27 +172,39 @@ html, body {
     font-weight: 600;
 }
 .sb-item {
+    position: relative;
     display: flex;
     align-items: center;
     gap: 11px;
-    padding: 9px 12px;
-    border-radius: 7px;
+    padding: 10px 12px;
+    border-radius: var(--r-sm);
     color: var(--text2);
     cursor: pointer;
     font-size: 13.5px;
     text-decoration: none;
-    transition: all .12s ease;
-    margin-bottom: 2px;
+    transition: all .15s ease;
+    margin-bottom: 3px;
     font-weight: 500;
 }
 .sb-item:hover {
     background: var(--bg);
     color: var(--text1);
+    transform: translateX(2px);
 }
 .sb-item.active {
-    background: var(--accent-light);
+    background: linear-gradient(90deg, var(--accent-light), color-mix(in srgb, var(--accent-light) 40%, #fff));
     color: var(--accent-dark);
     font-weight: 600;
+    box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent) 22%, transparent);
+}
+.sb-item.active::before {
+    content: "";
+    position: absolute;
+    left: 0; top: 50%;
+    transform: translateY(-50%);
+    width: 3px; height: 60%;
+    border-radius: 0 3px 3px 0;
+    background: var(--accent);
 }
 .sb-item.active .sbi { filter: none; }
 .sbi { font-size: 17px; width: 22px; text-align: center; }
@@ -216,11 +237,20 @@ html, body {
 .ph-bc a { color: var(--accent); text-decoration: none; }
 .ph-title {
     font-family: 'Rajdhani', sans-serif;
-    font-size: 26px;
+    font-size: 27px;
     font-weight: 700;
     color: var(--text1);
     margin-bottom: 4px;
     line-height: 1.2;
+    display: inline-flex;
+    align-items: center;
+}
+.ph-title::before {
+    content: "";
+    width: 4px; height: 22px;
+    border-radius: 3px;
+    margin-right: 11px;
+    background: linear-gradient(180deg, var(--accent), var(--accent-dark));
 }
 .ph-sub {
     color: var(--text2);
@@ -231,10 +261,15 @@ html, body {
 .card {
     background: var(--card);
     border: 1px solid var(--border);
-    border-radius: 10px;
+    border-radius: var(--r-md);
     padding: 20px;
     margin-bottom: 16px;
     box-shadow: var(--shadow);
+    transition: box-shadow .2s ease, transform .2s ease, border-color .2s ease;
+}
+.card:hover {
+    box-shadow: var(--shadow-md);
+    border-color: var(--border2);
 }
 .ct {
     font-family: 'Rajdhani', sans-serif;
@@ -930,4 +965,91 @@ thead.bg-dark    > tr > th {
 }
 .btn-outline-warning:hover {
     color: #1f2937 !important;   /* yellow exception, same as above */
+}
+
+/* ════════════════════════════════════════════════════════════════════
+ *  PROFESSIONAL POLISH (appended) — user-panel refresh
+ *  Later cascade wins; refines stat cards, buttons, badges, inputs,
+ *  radio/upload cards and tables without touching markup.
+ * ════════════════════════════════════════════════════════════════════ */
+
+/* Softer app background with a faint accent wash at the top */
+body[data-role="User"] {
+    background:
+        radial-gradient(1200px 400px at 100% -10%, color-mix(in srgb, var(--accent-light) 45%, transparent), transparent 70%),
+        var(--bg);
+    background-attachment: fixed;
+}
+
+/* Stat cards — accent top-bar, lift on hover, bigger numerals */
+.sc {
+    position: relative;
+    border-radius: var(--r-md);
+    padding: 20px 18px 18px;
+    overflow: hidden;
+    transition: box-shadow .2s ease, transform .2s ease;
+}
+.sc::before {
+    content: "";
+    position: absolute; top: 0; left: 0; right: 0; height: 3px;
+    background: linear-gradient(90deg, var(--accent), var(--accent-dark));
+}
+.sc:hover { box-shadow: var(--shadow-md); transform: translateY(-3px); }
+.sc-val { font-size: 30px; letter-spacing: .3px; }
+.sc:has(.sc-val.green)::before { background: linear-gradient(90deg, #16a34a, #22c55e); }
+.sc:has(.sc-val.gold)::before  { background: linear-gradient(90deg, #f59e0b, #fbbf24); }
+.sc:has(.sc-val.blue)::before  { background: linear-gradient(90deg, #2563eb, #3b82f6); }
+.sc:has(.sc-val.red)::before   { background: linear-gradient(90deg, #dc2626, #ef4444); }
+
+/* Primary button — subtle gradient + coloured shadow, gentle lift */
+.btn-p {
+    background: linear-gradient(135deg, var(--accent), var(--accent-dark));
+    box-shadow: 0 4px 12px -3px color-mix(in srgb, var(--accent) 55%, transparent);
+}
+.btn-p:hover {
+    background: linear-gradient(135deg, var(--accent-dark), var(--accent-dark));
+    transform: translateY(-1px);
+    box-shadow: 0 6px 16px -3px color-mix(in srgb, var(--accent) 60%, transparent);
+}
+.btn-p:active { transform: translateY(0); }
+.btn { border-radius: var(--r-sm); }
+
+/* Inputs — a touch more breathing room + rounded */
+input[type="text"], input[type="email"], input[type="password"],
+input[type="number"], input[type="date"], input[type="tel"],
+input[type="file"], select, textarea {
+    border-radius: var(--r-sm);
+    padding: 10px 12px;
+}
+
+/* Radio cards — smoother selected state */
+.rc { border-radius: var(--r-md); transition: all .18s ease; }
+.rc:hover { transform: translateY(-2px); box-shadow: var(--shadow); }
+.rc.sel {
+    box-shadow: 0 0 0 1px var(--accent), var(--shadow-md);
+    background: linear-gradient(180deg, var(--accent-light), #fff 85%);
+}
+
+/* Upload dropzone — rounder, clearer hover */
+.upload-area { border-radius: var(--r-md); }
+
+/* Status pills — a hair bolder */
+.sts { letter-spacing: .2px; }
+
+/* Section title dots pulse-free but crisper */
+.ct-dot { box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 18%, transparent); }
+
+/* Tables — sticky, tinted header + zebra polish */
+thead th { background: linear-gradient(180deg, var(--bg3), var(--bg)); }
+tbody tr { transition: background .12s ease; }
+
+/* Detail summary rows — keys lighter, values crisp */
+.srk, .dk, .prk { font-weight: 500; }
+
+/* Card section header (Bootstrap card-header used on PM Surya / Site Survey) */
+.card-header {
+    border-top-left-radius: var(--r-md);
+    border-top-right-radius: var(--r-md);
+    font-weight: 600;
+    letter-spacing: .2px;
 }

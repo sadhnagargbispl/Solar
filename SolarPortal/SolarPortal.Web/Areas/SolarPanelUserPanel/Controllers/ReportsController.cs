@@ -80,6 +80,14 @@ public class ReportsController : Controller
 
         // Apply the high-level filter to each section. Empty filter shows all.
         var payments = (await _uow.Payments.FindAsync(p => p.UserId == userId)).ToList();
+
+        // Per-request verified-paid map (from the UNFILTERED payment list so figures
+        // stay correct regardless of the section filter).
+        var paidByReq = myRequests.ToDictionary(
+            r => r.Id,
+            r => payments.Where(p => p.SolarRequestId == r.Id && p.IsVerified).Sum(p => p.Amount));
+        ViewBag.PaidByRequest = paidByReq;
+
         if (f == "pending")  payments = payments.Where(p => p.Status == PaymentStatus.Pending).ToList();
         if (f == "approved") payments = payments.Where(p => p.Status == PaymentStatus.Completed).ToList();
         if (f == "rejected") payments = payments.Where(p => p.Status == PaymentStatus.Rejected).ToList();

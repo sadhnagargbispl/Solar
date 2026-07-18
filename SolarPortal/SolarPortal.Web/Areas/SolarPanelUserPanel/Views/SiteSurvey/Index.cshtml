@@ -15,6 +15,14 @@
 
     // Form is locked when either Approved OR Pending — user cannot edit/submit then.
     var formLocked = isApproved || isPending;
+
+    string PhotoUrl(string? p)
+    {
+        if (string.IsNullOrWhiteSpace(p)) return "";
+        var r = p.Replace("\\", "/").TrimStart('/');
+        if (r.StartsWith("wwwroot/", System.StringComparison.OrdinalIgnoreCase)) r = r.Substring("wwwroot/".Length);
+        return "/" + r;
+    }
 }
 
 <style>
@@ -36,6 +44,13 @@
     .btn-submit:hover { background:#155029 }
     .btn-submit:disabled { background:#94a3b8; cursor:not-allowed }
     .file-row { padding:10px; border:2px dashed #cbd5e1; border-radius:6px; background:#f8fafc; text-align:center }
+    .img-prev { margin-top:10px }
+    .img-prev img { max-width:100%; max-height:180px; border-radius:8px; border:1px solid #e2e8f0; display:block; margin:0 auto; cursor:pointer }
+    .img-prev-cap { font-size:11px; color:#64748b; text-align:center; margin-top:4px }
+    .imgmodal { position:fixed; inset:0; background:rgba(15,23,42,.82); z-index:3000; display:none; align-items:center; justify-content:center; padding:20px }
+    .imgmodal.open { display:flex }
+    .imgmodal img { max-width:95%; max-height:90vh; border-radius:10px; box-shadow:0 20px 60px rgba(0,0,0,.5) }
+    .imgmodal-close { position:absolute; top:14px; right:24px; color:#fff; font-size:36px; cursor:pointer; line-height:1; font-weight:300 }
     .alert-locked { background:#dcfce7; padding:14px; border-radius:8px; border-left:4px solid #16a34a; margin-bottom:18px }
     .alert-pending { background:#fef3c7; padding:14px; border-radius:8px; border-left:4px solid #d97706; margin-bottom:18px }
 </style>
@@ -139,14 +154,28 @@
                     <span class="survey-section-num">2</span> Electrical / Connection Details
                 </div>
 
+                @{
+                    // Spec task 14: DISCOM is now a fixed dropdown (with an "Other" free-text
+                    // fallback). Spec task 13: the "K No." / Consumer Number field is removed.
+                    var discomOptions = new[] { "AVVNL-Ajmer", "JVVNL-Jaipur", "JDVVNL-Jodhpur" };
+                    var curDiscom = latest?.DiscomName ?? "";
+                    var discomIsOther = !string.IsNullOrWhiteSpace(curDiscom) && !discomOptions.Contains(curDiscom);
+                }
                 <div class="fr">
                     <div class="fc">
-                        <label class="fl req">DISCOM Name</label>
-                        <input class="fi" name="DiscomName" value="@latest?.DiscomName" placeholder="e.g., JVVNL, BSES, Adani" required />
+                        <label class="fl req">DISCOM</label>
+                        <select class="fi" name="DiscomName" id="discomSelect" onchange="onDiscomChange(this.value)" required>
+                            <option value="">-- Select DISCOM --</option>
+                            @foreach (var opt in discomOptions)
+                            {
+                                <option value="@opt" selected="@(curDiscom == opt)">@opt</option>
+                            }
+                            <option value="Other" selected="@discomIsOther">Other (enter name)</option>
+                        </select>
                     </div>
-                    <div class="fc">
-                        <label class="fl req">Consumer Number</label>
-                        <input class="fi" name="ConsumerNumber" value="@latest?.ConsumerNumber" placeholder="From your electricity bill" required />
+                    <div class="fc" id="discomOtherWrap" style="@(discomIsOther ? "" : "display:none")">
+                        <label class="fl req">Other DISCOM Name</label>
+                        <input class="fi" name="DiscomOther" id="discomOther" value="@(discomIsOther ? curDiscom : "")" placeholder="Enter your DISCOM name" />
                     </div>
                 </div>
 
@@ -163,6 +192,8 @@
                         <div class="radio-row">
                             <label class="radio-opt"><input type="radio" name="GridType" value="OnGrid" @(latest?.GridType == "OnGrid" ? "checked" : "") required /> On-Grid</label>
                             <label class="radio-opt"><input type="radio" name="GridType" value="OffGrid" @(latest?.GridType == "OffGrid" ? "checked" : "") /> Off-Grid</label>
+                            @* Spec task 15: Water Pump option added alongside On/Off-Grid. *@
+                            <label class="radio-opt"><input type="radio" name="GridType" value="WaterPump" @(latest?.GridType == "WaterPump" ? "checked" : "") /> Water Pump</label>
                             <label class="radio-opt"><input type="radio" name="GridType" value="Hybrid" @(latest?.GridType == "Hybrid" ? "checked" : "") /> Hybrid</label>
                         </div>
                     </div>
@@ -245,15 +276,30 @@
                     <div class="fc">
                         <label class="fl">Roof Photo</label>
                         <div class="file-row">
-                            <input type="file" name="roofPhoto" accept="image/*" />
+                            <input type="file" name="roofPhoto" accept="image/*" onchange="previewImg(this,'roofPrev')" />
                             <div style="font-size:11px;color:#94a3b8;margin-top:4px">JPG / PNG • Max 5 MB</div>
+                            <div id="roofPrev" class="img-prev">
+                                @if (!string.IsNullOrWhiteSpace(latest?.RoofPhotoPath))
+                                {
+                                    <img src="@PhotoUrl(latest.RoofPhotoPath)" onclick="showImgModal(this.src)" />
+                                    <div class="img-prev-cap">Current uploaded roof photo</div>
+                                }
+                            </div>
                         </div>
                     </div>
                     <div class="fc">
-                        <label class="fl">GPS / Location Photo</label>
+                        @* Spec task 16: GPS / Location Photo replaced with House Photo. *@
+                        <label class="fl">House Photo</label>
                         <div class="file-row">
-                            <input type="file" name="gpsPhoto" accept="image/*" />
-                            <div style="font-size:11px;color:#94a3b8;margin-top:4px">JPG / PNG • Max 5 MB</div>
+                            <input type="file" name="housePhoto" accept="image/*" onchange="previewImg(this,'housePrev')" />
+                            <div style="font-size:11px;color:#94a3b8;margin-top:4px">Front of the house • JPG / PNG • Max 5 MB</div>
+                            <div id="housePrev" class="img-prev">
+                                @if (!string.IsNullOrWhiteSpace(latest?.GpsPhotoPath))
+                                {
+                                    <img src="@PhotoUrl(latest.GpsPhotoPath)" onclick="showImgModal(this.src)" />
+                                    <div class="img-prev-cap">Current uploaded house photo</div>
+                                }
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -280,8 +326,35 @@
     </form>
 </div>
 
+<div id="imgModal" class="imgmodal" onclick="closeImgModal()">
+    <span class="imgmodal-close" onclick="closeImgModal()">&times;</span>
+    <img id="imgModalImg" src="" alt="Preview" onclick="event.stopPropagation()" />
+</div>
 @section Scripts {
     <script>
+        // Show/hide the free-text DISCOM name when "Other" is chosen (spec task 14).
+        function onDiscomChange(val) {
+            const wrap  = document.getElementById('discomOtherWrap');
+            const other = document.getElementById('discomOther');
+            const isOther = val === 'Other';
+            if (wrap) wrap.style.display = isOther ? '' : 'none';
+            if (other) other.required = isOther;
+        }
+        document.addEventListener('DOMContentLoaded', function () {
+            const sel = document.getElementById('discomSelect');
+            if (sel) onDiscomChange(sel.value);
+        });
+
+        function showImgModal(src){ var m=document.getElementById('imgModal'), i=document.getElementById('imgModalImg'); if(!m||!i||!src) return; i.src=src; m.classList.add('open'); }
+        function closeImgModal(){ var m=document.getElementById('imgModal'); if(m) m.classList.remove('open'); }
+        document.addEventListener('keydown', function(e){ if(e.key==='Escape') closeImgModal(); });
+        function previewImg(input, targetId) {
+            var box = document.getElementById(targetId);
+            if (!box || !input.files || !input.files[0]) return;
+            var f = input.files[0];
+            var url = URL.createObjectURL(f);
+            box.innerHTML = '<img src="' + url + '" onclick="showImgModal(this.src)" /><div class="img-prev-cap">Selected: ' + f.name + '</div>';
+        }
         document.getElementById('surveyForm')?.addEventListener('submit', function (e) {
             const btn = document.getElementById('submitBtn');
             if (btn) { btn.disabled = true; btn.textContent = 'Submitting...'; }

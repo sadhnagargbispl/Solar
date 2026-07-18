@@ -378,6 +378,15 @@ public class SolarRequestController : Controller
             ViewBag.ReactivationBasedOn = reactivationBasedOn;
         }
 
+        // ── Payment expectation per mode (spec tasks 2 & 5) ──────────────
+        //  • Mode 1 (With Activation)          → payment is MANDATORY.
+        //  • Mode 2 (Only Solar Without Activ.) → NO payment is taken at all.
+        //  • Mode 3 (Already Active)            → payment is OPTIONAL; the request
+        //                                          submits with or without it.
+        //  • Reactivation                       → payment carried over, none collected.
+        bool collectPayment   = !canReactivate && model.RequestType != RequestType.OnlySolarWithoutActivation;
+        bool paymentRequired  = collectPayment && model.RequestType == RequestType.WithActivation;
+
         if (!canReactivate && existingEarly.IsSuccess && existingEarly.Data != null && existingEarly.Data.Any())
         {
             // STRICT LIFETIME RULE — same as GET. Auto-stub OR Rejected can be
@@ -413,8 +422,8 @@ public class SolarRequestController : Controller
         //   1. walletreq.chqno — live cooperative master table
         //   2. Payments.UTRNumber — our own payment ledger
         //
-        // Reactivation skips: no new payment is collected on the 2nd request.
-        if (!canReactivate && model.PaymentAmount > 0 && !string.IsNullOrWhiteSpace(model.PaymentUTR))
+        // Reactivation & Mode-2 skip: no payment is collected.
+        if (collectPayment && model.PaymentAmount > 0 && !string.IsNullOrWhiteSpace(model.PaymentUTR))
         {
             var dupReason = await CheckUtrDuplicateAsync(model.PaymentUTR.Trim());
             if (dupReason != null)
@@ -423,27 +432,30 @@ public class SolarRequestController : Controller
             }
         }
 
-        // ─── Payment method mandatory (per spec) — reactivation exempt ───
-        if (!canReactivate && model.PaymentAmount > 0 && string.IsNullOrWhiteSpace(model.PaymentMethod))
+        // ─── Payment method mandatory only when a payment amount is entered ───
+        if (collectPayment && model.PaymentAmount > 0 && string.IsNullOrWhiteSpace(model.PaymentMethod))
         {
             ModelState.AddModelError(nameof(model.PaymentMethod), "Payment Method is required.");
         }
 
-        // ─── Payment receipt file mandatory (per spec) — reactivation exempt ───
-        // Bina receipt file choose kiye request submit nahi honi chahiye. We
-        // enforce this on the SERVER too (not just the client) so a request can
-        // never be created without proof of payment, even if the JS is bypassed.
-        //
-        // EXCEPTION: reactivation flow — prior request's payment is the proof.
-        if (!canReactivate && (model.PaymentReceipt == null || model.PaymentReceipt.Length == 0))
+        // ─── Payment receipt mandatory ONLY when payment is required (Mode 1) ───
+        // Mode 2 takes no payment; Mode 3 payment is optional; reactivation carries
+        // the prior request's payment. In those cases the receipt is not required.
+        if (paymentRequired && (model.PaymentReceipt == null || model.PaymentReceipt.Length == 0))
         {
             ModelState.AddModelError(nameof(model.PaymentReceipt),
                 "Payment receipt (image / PDF) is required. Please upload it to submit.");
         }
 
-        // Clear payment-field annotation errors that would otherwise fire during
-        // reactivation (Required / Range etc. on PaymentAmount, PaymentUTR ...).
-        if (canReactivate)
+        // Clear payment-field annotation errors (Required / Range on PaymentAmount,
+        // PaymentUTR ...) whenever no payment is expected or entered:
+        //   • reactivation (carried over) / Mode 2 (no payment taken)  → always
+        //   • Mode 3 (optional) with the payment block left blank      → clear
+        // NEVER clear for Mode 1 (paymentRequired) — payment stays mandatory there
+        // even if the amount field was left blank.
+        bool skipPaymentValidation = !collectPayment
+                                     || (!paymentRequired && model.PaymentAmount <= 0);
+        if (skipPaymentValidation)
         {
             ModelState.Remove(nameof(model.PaymentAmount));
             ModelState.Remove(nameof(model.PaymentUTR));
@@ -457,6 +469,23 @@ public class SolarRequestController : Controller
         {
             ModelState.AddModelError(nameof(model.ExternalProductId),
                 "Please pick one of the basic products.");
+        }
+
+        // ─── Light Bill ownership (spec task 3) ──────────────────────────
+        // Default to "Self" when nothing was posted. When the bill is in a blood
+        // relation's name, both the relation holder's name and a proof file are
+        // mandatory — enforced server-side too.
+        if (string.IsNullOrWhiteSpace(model.LightBillOwnership))
+            model.LightBillOwnership = "Self";
+
+        if (string.Equals(model.LightBillOwnership, "BloodRelation", StringComparison.OrdinalIgnoreCase))
+        {
+            if (string.IsNullOrWhiteSpace(model.LightBillRelationName))
+                ModelState.AddModelError(nameof(model.LightBillRelationName),
+                    "Relation holder's name is required when the light bill is in a blood relation's name.");
+            if (model.LightBillProof == null || model.LightBillProof.Length == 0)
+                ModelState.AddModelError(nameof(model.LightBillProof),
+                    "Proof is mandatory when the light bill is in a blood relation's name.");
         }
 
         if (!ModelState.IsValid)
@@ -474,6 +503,7 @@ public class SolarRequestController : Controller
             ViewBag.ReactivationBasedOn = reactivationBasedOn;
             // Per spec: "Invalid email par validation do but uploaded receipt remove na ho."
             ViewBag.PreservedReceiptName = model.PaymentReceipt?.FileName;
+            ViewBag.PreservedLightBillProofName = model.LightBillProof?.FileName;
             return View(model);
         }
 
@@ -762,6 +792,39 @@ public class SolarRequestController : Controller
         TempData["Success"] = $"Request {result.Data!.RequestNumber} submitted successfully!";
         TempData["RequestId"] = result.Data.Id;
 
+        // === Persist Light Bill ownership (spec task 3) ===
+        // Saved directly on the request entity (and admin sees it). The proof file
+        // is uploaded to uploads/SCR-xxx/lightbill/ when the bill is in a blood
+        // relation's name. Non-fatal: the request is already saved.
+        try
+        {
+            var reqEntity = await _db.SolarRequests.FirstOrDefaultAsync(r => r.Id == result.Data.Id);
+            if (reqEntity != null)
+            {
+                reqEntity.LightBillOwnership = model.LightBillOwnership;
+                if (string.Equals(model.LightBillOwnership, "BloodRelation", StringComparison.OrdinalIgnoreCase))
+                {
+                    reqEntity.LightBillRelationName = model.LightBillRelationName;
+                    if (model.LightBillProof != null && model.LightBillProof.Length > 0)
+                    {
+                        var (ok, path, _) = await _fileUploadService.UploadAsync(
+                            model.LightBillProof, $"{result.Data.RequestNumber}/lightbill");
+                        if (ok) reqEntity.LightBillProofPath = path;
+                    }
+                }
+                else
+                {
+                    // Self ownership — clear any stale blood-relation data.
+                    reqEntity.LightBillRelationName = null;
+                }
+                await _db.SaveChangesAsync();
+            }
+        }
+        catch (Exception ex)
+        {
+            TempData["Warning"] = "Request saved, but light-bill detail could not be stored: " + ex.Message;
+        }
+
         // === Save first payment in the same submission (Solar Request + Payment combined) ===
         // Per spec: payment fields appear on the same Create form. After the request is saved,
         // we immediately persist the payment as Pending so admin can verify it.
@@ -769,7 +832,8 @@ public class SolarRequestController : Controller
         //
         // EXCEPTION: reactivation flow — no new payment is collected. Skip the whole
         // payment-save block; auto-approval below moves the request straight to PMSurvey.
-        if (!canReactivate && model.PaymentAmount > 0)
+        // Mode 2 (Only Solar) also never records a payment (collectPayment == false).
+        if (collectPayment && model.PaymentAmount > 0)
         {
             try
             {
@@ -1233,7 +1297,8 @@ public class SolarRequestController : Controller
 
         foreach (var p in projects)
         {
-            paidMap[p.Id] = await _paymentService.GetTotalPaidAsync(p.Id);
+            // "Total Paid" on My Projects = admin-verified only (pending/rejected excluded).
+            paidMap[p.Id] = await _paymentService.GetVerifiedPaidAsync(p.Id);
 
             // Collect all images attached to this request — payment receipts,
             // site survey photos, KYC/PM docs — so the row can show a thumbnail
@@ -1483,10 +1548,156 @@ public class SolarRequestController : Controller
         if (data != null)
         {
             ViewBag.TotalSubmitted = await _paymentService.GetTotalPaidAsync(data.Id);
-            ViewBag.VerifiedPaid = await _paymentService.GetVerifiedPaidAsync(data.Id);
+            var verified = await _paymentService.GetVerifiedPaidAsync(data.Id);
+            ViewBag.VerifiedPaid = verified;
             ViewBag.Minimum = PaymentService.MinimumPaymentThreshold;
+            ViewBag.CanActivateNow = IsActivationEligible(data, verified);
+
+            // #2: show the actual product taken (With Activation) + its BV/DP.
+            if (data.ExternalProductId.HasValue)
+                ViewBag.ActProduct = await _basicProducts.GetByIdAsync(data.ExternalProductId.Value);
         }
         return View(data);
+    }
+
+    // ─── "Activate Now" (spec) ───────────────────────────────────────────
+    // Eligibility: a request registered as "Only Solar — Without Activation" whose
+    // payments are all completed (verified total >= project amount). The option is
+    // shown ONLY to these users — never for With-Activation or already-active IDs.
+    private static bool IsActivationEligible(SolarRequestDto? req, decimal verifiedPaid)
+        => req != null
+           && req.RequestType == RequestType.OnlySolarWithoutActivation
+           && req.RequestedAmount > 0
+           && verifiedPaid >= req.RequestedAmount;
+
+    // GET: /User/SolarRequest/Activate/5
+    // Starts the With-Activation flow for a fully-paid Without-Activation ID:
+    // Product Selection → (submit) → ID Activation → Document Upload. The payment
+    // step is skipped because the user has already paid in full.
+    public async Task<IActionResult> Activate(int id)
+    {
+        var userId = _userManager.GetUserId(User)!;
+        var res = await _solarRequestService.GetByIdAsync(id);
+        var req = res.IsSuccess ? res.Data : null;
+        if (req == null || !string.Equals(req.UserId?.Trim(), userId?.Trim(), StringComparison.OrdinalIgnoreCase)) return NotFound();
+
+        var verified = await _paymentService.GetVerifiedPaidAsync(id);
+        if (!IsActivationEligible(req, verified))
+        {
+            TempData["Warning"] = "Activation is available only for a fully-paid Without-Activation request.";
+            return RedirectToAction(nameof(Status), new { id });
+        }
+
+        ViewBag.Request       = req;
+        ViewBag.BasicProducts = await _basicProducts.GetActiveAsync();
+        ViewBag.VerifiedPaid  = verified;
+        return View();
+    }
+
+    // POST: /User/SolarRequest/ActivateConfirm
+    // Product picked → convert the request to With Activation, advance into the
+    // PM Surya Ghar (document upload) pipeline. No payment collected (already paid).
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> ActivateConfirm(int id, int? externalProductId)
+    {
+        var userId = _userManager.GetUserId(User)!;
+        var entity = await _db.SolarRequests.FirstOrDefaultAsync(r => r.Id == id);
+        if (entity == null || !string.Equals(entity.UserId?.Trim(), userId?.Trim(), StringComparison.OrdinalIgnoreCase))
+        {
+            TempData["Error"] = "Request not found.";
+            return RedirectToAction(nameof(Status), new { id });
+        }
+
+        // Re-check eligibility server-side (defence-in-depth).
+        var verified = await _paymentService.GetVerifiedPaidAsync(id);
+        if (entity.RequestType != RequestType.OnlySolarWithoutActivation
+            || !(entity.PlanAmount > 0 && verified >= entity.PlanAmount))
+        {
+            TempData["Warning"] = "Activation unlocks only for a fully-paid Without-Activation request.";
+            return RedirectToAction(nameof(Status), new { id });
+        }
+
+        // Product selection is mandatory for With Activation.
+        if (!externalProductId.HasValue)
+        {
+            TempData["Error"] = "Please select a product to activate.";
+            return RedirectToAction(nameof(Activate), new { id });
+        }
+        var product = await _basicProducts.GetByIdAsync(externalProductId.Value);
+        if (product == null)
+        {
+            TempData["Error"] = "Selected product is not available. Please pick another.";
+            return RedirectToAction(nameof(Activate), new { id });
+        }
+
+        // Convert to With Activation and move into the activation pipeline
+        // (PM Surya Ghar / document upload). Never move the stage backwards.
+        entity.RequestType       = RequestType.WithActivation;
+        entity.ExternalProductId = externalProductId.Value;
+        if (entity.ApprovalStatus != ApprovalStatus.Approved)
+            entity.ApprovalStatus = ApprovalStatus.Approved;
+        if (entity.CurrentStage < ProjectStatus.PMSurvey)
+            entity.CurrentStage = ProjectStatus.PMSurvey;
+        var marker = $"[Activated by user (payment already complete) on {DateTime.UtcNow:yyyy-MM-dd HH:mm} UTC]";
+        entity.AdminNotes = string.IsNullOrWhiteSpace(entity.AdminNotes)
+            ? marker
+            : entity.AdminNotes + " | " + marker;
+        entity.UpdatedAt = DateTime.UtcNow;
+        entity.UpdatedBy = userId;
+        await _db.SaveChangesAsync();
+
+        // ─── Legacy SolFit activation bridge (mirrors the With-Activation flow) ───
+        // Insert a TrnProductorderDetail row so the legacy activation workflow
+        // processes this activation. Payment metadata is sourced from the user's
+        // existing verified payment (no new payment is collected). Non-fatal.
+        try
+        {
+            var payments = await _paymentService.GetByRequestIdAsync(id);
+            var lastVerified = payments.Where(p => p.IsVerified)
+                                       .OrderByDescending(p => p.PaymentDate)
+                                       .FirstOrDefault();
+            var idNo = NormalizeIdNo(_userManager.GetUserId(User) ?? userId);
+            var bridgeResult = await _legacyBridge.InsertWithActivationAsync(new LegacyProductRequestInput
+            {
+                MemberIdNo    = idNo,
+                ProductId     = externalProductId.Value,
+                Qty           = 1,
+                TxnId         = !string.IsNullOrWhiteSpace(lastVerified?.UTRNumber)
+                                    ? $"ACT-{lastVerified!.UTRNumber}"
+                                    : $"ACT-{entity.RequestNumber}",
+                TxnDate       = lastVerified?.PaymentDate ?? DateTime.UtcNow,
+                PayModeId     = MapPayMethodToLegacyPid(lastVerified?.PaymentMethod),
+                ImageFileName = !string.IsNullOrWhiteSpace(lastVerified?.ReceiptImagePath)
+                                    ? (_fileUploadService.BuildAbsoluteUrl(lastVerified!.ReceiptImagePath) ?? lastVerified.ReceiptImagePath)
+                                    : null,
+                Address       = entity.Address,
+                City          = entity.City,
+                District      = entity.City,
+                PinCode       = entity.PinCode,
+                StateName     = entity.State,
+                StateCode     = entity.State
+            });
+            if (!bridgeResult.Success)
+                TempData["Warning"] = "Activation done, but legacy product-order sync failed: "
+                                      + (bridgeResult.ErrorMessage ?? "unknown error") + ". Admin will reconcile.";
+        }
+        catch (Exception ex)
+        {
+            TempData["Warning"] = "Activation done, but legacy product-order sync threw: " + ex.Message;
+        }
+
+        await _notificationService.CreateAsync(new CreateNotificationDto
+        {
+            UserId = userId,
+            SolarRequestId = id,
+            Title = "ID activated",
+            Message = $"User activated their fully-paid Without-Activation ID for {entity.RequestNumber}.",
+            NotificationType = "Activation"
+        });
+
+        TempData["Success"] = "Activation started! Please upload your PM Surya Ghar documents to continue.";
+        return RedirectToAction("Upload", "PMSurya", new { id });
     }
 
     // AJAX: Get status flow JSON
@@ -1538,6 +1749,13 @@ public class SolarRequestController : Controller
     /// </summary>
     private async Task<(bool IsEligible, string? PriorRequestNumber)> IsReactivationEligibleAsync(string userId)
     {
+        // Reactivation flow disabled (per request): users who already have a request
+        // now see the standard "you already have a solar request" message instead of
+        // the reactivation form. Return early so reactivation is never eligible.
+        await Task.CompletedTask;
+        return (false, null);
+
+#pragma warning disable CS0162 // unreachable — kept for reference / easy re-enable
         // 1. Deactivated member?
         var member = await _db.Members
             .AsNoTracking()

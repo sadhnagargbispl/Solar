@@ -1,0 +1,67 @@
+@model List<SolarPortal.Domain.Entities.IncWithdrawal>
+@{
+    ViewData["Title"] = "Withdraw";
+    var net = (decimal)(ViewBag.NetIncome ?? 0m);
+    var available = (decimal)(ViewBag.Available ?? 0m);
+    string Cls(string s) => s == "Approved" ? "sts-act" : s == "Rejected" ? "sts-rej" : "sts-pend";
+}
+<div class="page active">
+    <div class="ph">
+        <div class="ph-bc">Installer / <span>Withdraw</span></div>
+        <div class="ph-title">Withdraw</div>
+        <div class="ph-sub">Request a payout from your available balance. Admin approves / rejects each request.</div>
+    </div>
+
+    <div class="g2" style="grid-template-columns:1fr 1fr;gap:14px;align-items:start">
+        <div class="card">
+            <div class="ct"><span class="ct-dot"></span>Request Withdrawal</div>
+            <div class="sr"><span class="srk">Net Income (after 1% TDS)</span><span class="srv" style="color:var(--green)">₹@net.ToString("N2")</span></div>
+            <div class="sr"><span class="srk">Available to Withdraw</span><span class="srv" style="color:#d97706;font-weight:600">₹@available.ToString("N2")</span></div>
+            <form asp-area="SolarPanelInstaller" asp-controller="Withdraw" asp-action="Request" method="post" style="margin-top:12px">
+                @Html.AntiForgeryToken()
+                <div class="fg">
+                    <label>Amount <span class="req">*</span></label>
+                    <input type="number" name="amount" step="0.01" min="1" max="@available" placeholder="Enter amount" required />
+                    <div class="hint">Cannot exceed available balance ₹@available.ToString("N2").</div>
+                </div>
+                <div class="fg">
+                    <label>Bank / UPI Details</label>
+                    <textarea name="bankDetails" placeholder="Account no / IFSC / UPI ID (optional)"></textarea>
+                </div>
+                <button type="submit" class="btn btn-p btn-full" @(available <= 0 ? "disabled" : "")>Request Withdrawal</button>
+                @if (available <= 0)
+                {
+                    <div class="hint" style="text-align:center;margin-top:6px">No balance available yet.</div>
+                }
+            </form>
+        </div>
+
+        <div class="card">
+            <div class="ct"><span class="ct-dot"></span>My Requests (@Model.Count)</div>
+            @if (!Model.Any())
+            {
+                <div class="text-muted" style="text-align:center;padding:22px">No withdrawal requests yet.</div>
+            }
+            else
+            {
+                <div class="tbl-wrap">
+                    <table>
+                        <thead><tr><th>Date</th><th style="text-align:right">Amount</th><th>Status</th><th>Remark</th></tr></thead>
+                        <tbody>
+                            @foreach (var w in Model)
+                            {
+                                var remark = !string.IsNullOrWhiteSpace(w.RejectionReason) ? w.RejectionReason : w.AdminNotes;
+                                <tr>
+                                    <td>@w.RequestedAt.ToLocalTime().ToString("dd MMM yyyy")</td>
+                                    <td style="text-align:right">₹@w.Amount.ToString("N2")</td>
+                                    <td><span class="sts @Cls(w.Status)">@w.Status</span></td>
+                                    <td style="font-size:12px">@(string.IsNullOrWhiteSpace(remark) ? "-" : remark)</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+        </div>
+    </div>
+</div>

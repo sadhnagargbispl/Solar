@@ -14,6 +14,10 @@ public class PMDocument : BaseEntity
     public ApprovalStatus Status { get; set; } = ApprovalStatus.Pending;
     public string? Remarks { get; set; }
 
+    // Spec task 11: documents uploaded by ADMIN on approval (PM Surya Ghar ID docs,
+    // sanction letters, etc.) that the USER can download. User uploads keep this false.
+    public bool IsAdminUpload { get; set; } = false;
+
     // Navigation
     public virtual SolarRequest? SolarRequest { get; set; }
 }

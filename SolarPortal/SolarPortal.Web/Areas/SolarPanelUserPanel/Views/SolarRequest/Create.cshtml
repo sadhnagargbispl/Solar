@@ -298,6 +298,48 @@
                     <input type="hidden" asp-for="AadharNumber" />
                     <input type="hidden" asp-for="PANNumber" />
 
+                    @* ===== Light Bill ownership (spec task 3) ===== *@
+                    <div class="fg">
+                        <label>Whose name is the electricity bill in? <span class="req">*</span></label>
+                        @{
+                            var lbo = Model.LightBillOwnership ?? "Self";
+                        }
+                        <div class="rc-group" style="grid-template-columns:1fr 1fr">
+                            <div class="rc @(lbo == "Self" ? "sel" : "")" data-val="Self" onclick="selectLightBill(this,'Self')">
+                                <div class="rci">🙂</div><div class="rcl">My own name</div><div class="rcs">Own name</div>
+                            </div>
+                            <div class="rc @(lbo == "BloodRelation" ? "sel" : "")" data-val="BloodRelation" onclick="selectLightBill(this,'BloodRelation')">
+                                <div class="rci">👨‍👩‍👦</div><div class="rcl">Blood relation</div><div class="rcs">Family member's name</div>
+                            </div>
+                        </div>
+                        <input type="hidden" asp-for="LightBillOwnership" id="lightBillOwnershipInput" value="@lbo" />
+                        <span asp-validation-for="LightBillOwnership" class="hint" style="color:var(--danger)"></span>
+                    </div>
+
+                    <div id="lightBillRelationWrap" style="@(lbo == "BloodRelation" ? "" : "display:none")">
+                        <div class="fg">
+                            <label asp-for="LightBillRelationName">Relation Holder's Name <span class="req">*</span></label>
+                            <input asp-for="LightBillRelationName" placeholder="Name on the bill (e.g., father / mother)" />
+                            <span asp-validation-for="LightBillRelationName" class="hint" style="color:var(--danger)"></span>
+                        </div>
+                        <div class="fg">
+                            <label>Proof (Light bill / relation proof) <span class="req">*</span></label>
+                            <div class="upload-area">
+                                <input type="file" asp-for="LightBillProof" id="lightBillProofInput" accept="image/*,.pdf" onchange="previewLightBillProof(this)" />
+                                <div class="upload-icon">📎</div>
+                                <div class="upload-txt">Upload light bill / proof</div>
+                                <div class="upload-hint">JPG, PNG, PDF • Max 10 MB</div>
+                                <div id="lightBillProofPreview" style="margin-top:8px;font-size:12px;color:var(--text2)">
+                                    @if (!string.IsNullOrEmpty(ViewBag.PreservedLightBillProofName as string))
+                                    {
+                                        <text>⚠ Previously selected: <strong>@ViewBag.PreservedLightBillProofName</strong>. Please re-attach.</text>
+                                    }
+                                </div>
+                            </div>
+                            <span asp-validation-for="LightBillProof" class="hint" style="color:var(--danger);margin-top:6px;display:block"></span>
+                        </div>
+                    </div>
+
                     @* "Location" (GPS photo) upload removed from this form per spec. *@
                 </div>
             </div>
@@ -598,11 +640,14 @@
             @if (!isReactivation)
             {
             <!-- === Combined first-payment block (per spec: request + payment in one form) === -->
-            <div class="card" style="margin-top:14px">
-                <div class="ct"><span class="ct-dot"></span>First Payment</div>
-                <div class="alert alert-i" style="font-size:13px">
+            <div class="card" id="paymentBlock" style="margin-top:14px">
+                <div class="ct"><span class="ct-dot"></span>First Payment <span id="paymentOptionalTag" class="pill" style="display:none;background:#ecfdf5;color:#047857;font-size:11px;padding:2px 10px;border-radius:20px;margin-left:8px">Optional</span></div>
+                <div class="alert alert-i" style="font-size:13px" id="paymentHint">
                     <span class="ai">ℹ</span>Minimum first payment is <strong>₹20,000</strong>. Cannot exceed project amount.
                     Payment is saved as <strong>Pending</strong> — admin will verify it.
+                </div>
+                <div class="alert alert-s" style="font-size:13px;display:none" id="paymentOptionalHint">
+                    <span class="ai">✅</span>Since your ID is already active, payment is <strong>optional</strong>. You can submit this request without entering any payment.
                 </div>
 
                 <div class="fr">
@@ -723,6 +768,8 @@
             const banner3 = document.getElementById('mode3Banner');
             if (reqType === 2 && banner2) banner2.style.display = 'block';
             if (reqType === 3 && banner3) banner3.style.display = 'block';
+            // Sync payment block visibility/labels for the initial mode.
+            if (typeof togglePaymentBlock === 'function') togglePaymentBlock(reqType);
             // Fill the matched-plan box + hidden inputs from the current Solar Type
             // + Connection Type (works for every mode).
             if (typeof applyFetchedPlan === 'function') applyFetchedPlan();
@@ -733,6 +780,50 @@
         });
     </script>
     <script>
+        // Show/hide + relabel the payment block based on the selected mode.
+        //   Mode 1 (With Activation): visible + mandatory
+        //   Mode 2 (Only Solar):      hidden — no payment taken
+        //   Mode 3 (Already Active):  visible + optional
+        function togglePaymentBlock(v) {
+            const block        = document.getElementById('paymentBlock');
+            const optTag       = document.getElementById('paymentOptionalTag');
+            const reqHint      = document.getElementById('paymentHint');
+            const optHint      = document.getElementById('paymentOptionalHint');
+            if (!block) return; // hidden in reactivation flow (block not rendered)
+
+            if (v === 2) {
+                block.style.display = 'none';
+                return;
+            }
+            block.style.display = '';
+            const optional = (v === 3);
+            if (optTag)  optTag.style.display  = optional ? '' : 'none';
+            if (reqHint) reqHint.style.display = optional ? 'none' : '';
+            if (optHint) optHint.style.display = optional ? '' : 'none';
+            // Toggle the required asterisks on payment fields
+            document.querySelectorAll('#paymentBlock .req').forEach(s => {
+                s.style.display = optional ? 'none' : '';
+            });
+        }
+
+        // Light Bill ownership picker (spec task 3). When "Blood relation" is chosen
+        // the relation name + proof upload become required.
+        function selectLightBill(el, val) {
+            el.closest('.rc-group').querySelectorAll('.rc').forEach(r => r.classList.remove('sel'));
+            el.classList.add('sel');
+            document.getElementById('lightBillOwnershipInput').value = val;
+            const wrap = document.getElementById('lightBillRelationWrap');
+            if (wrap) wrap.style.display = (val === 'BloodRelation') ? '' : 'none';
+        }
+
+        function previewLightBillProof(input) {
+            const box = document.getElementById('lightBillProofPreview');
+            if (!box) return;
+            if (!input.files || !input.files.length) { box.textContent = ''; return; }
+            const f = input.files[0];
+            box.textContent = `📎 ${f.name} (${(f.size / 1024).toFixed(1)} KB)`;
+        }
+
         function rcSel(el, group) {
             el.closest('.rc-group').querySelectorAll('.rc').forEach(r => r.classList.remove('sel'));
             el.classList.add('sel');
@@ -743,9 +834,9 @@
         // do nothing else — the hidden RequestType input stays at 3 (Already Active).
         function blockedByActiveMember() {
             if (typeof showWarning === 'function') {
-                showWarning('Aap pehle se active solar member hain. Sirf "Already Active — Only Request" mode allowed hai.');
+                showWarning('You are already an active solar member. Only the \"Already Active — Only Request\" mode is available.');
             } else {
-                alert('Aap pehle se active solar member hain. Sirf "Already Active — Only Request" mode allowed hai.');
+                alert('You are already an active solar member. Only the \"Already Active — Only Request\" mode is available.');
             }
             return false;
         }
@@ -754,7 +845,7 @@
         // (Only Solar / Already Active). In reactivation the only valid mode is
         // With Activation — show a clear toast explaining why the others are off.
         function blockedByReactivationOrActive() {
-            const msg = 'Reactivation mode me sirf "With Activation" allowed hai. Earlier payment carry over hota hai, isliye iss form me payment nahi liya jaata.';
+            const msg = 'In reactivation mode only \"With Activation\" is available. Your earlier payment carries over, so no payment is collected on this form.';
             if (typeof showWarning === 'function') { showWarning(msg); } else { alert(msg); }
             return false;
         }
@@ -772,6 +863,10 @@
             const banner2      = document.getElementById('mode2Banner');
             const banner3      = document.getElementById('mode3Banner');
             const v = parseInt(val, 10);
+
+            // Payment block visibility per mode (spec tasks 2 & 5):
+            //   Mode 1 → required, Mode 2 → hidden (no payment), Mode 3 → optional
+            togglePaymentBlock(v);
 
             if (v === 2 || v === 3) {
                 // Already Active (3) and Only Solar (2): user is not picking a basic
@@ -997,6 +1092,15 @@
                 return false;
             }
 
+            // Light Bill ownership (spec task 3): blood-relation case needs name + proof.
+            const lbo = (document.getElementById('lightBillOwnershipInput')?.value || 'Self');
+            if (lbo === 'BloodRelation') {
+                const relName = (document.querySelector('[name="LightBillRelationName"]')?.value || '').trim();
+                const proofFile = document.getElementById('lightBillProofInput')?.files?.length || 0;
+                if (!relName)   { showWarning('If the bill is in a blood relation's name, please enter the relation holder's name.'); return false; }
+                if (!proofFile) { showWarning('For a blood relation, attaching the light bill / proof is mandatory.'); return false; }
+            }
+
             // === Email validation removed per spec ===
             // "Email PAN sab valid form me na ho to bhi le le."
             // Profile fields are readonly and may carry weird/legacy/blank
@@ -1013,6 +1117,13 @@
             // because the inputs don't exist on the page in that flow.
             const isReactivationFlow = @(isReactivation ? "true" : "false");
             if (isReactivationFlow) {
+                return true;
+            }
+
+            // Payment is mandatory ONLY in With Activation (Mode 1). Mode 2 takes
+            // no payment; Mode 3 (Already Active) payment is optional — allow submit
+            // without it (spec tasks 2 & 5).
+            if (reqType !== 1) {
                 return true;
             }
 

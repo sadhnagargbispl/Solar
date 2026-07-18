@@ -14,5 +14,11 @@ public class Worker : BaseEntity
     public string? City { get; set; }
     public string? State { get; set; }
 
+    // INC worker login + commission. Only for INC-type workers.
+    // Mirrors the Admin project's Worker entity so both read the same columns.
+    public string? LoginUsername { get; set; }
+    public string? LoginPassword { get; set; }
+    public decimal? CommissionPercent { get; set; }
+
     public virtual ICollection<WorkerAssignment> Assignments { get; set; } = new List<WorkerAssignment>();
 }

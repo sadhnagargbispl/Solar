@@ -6,7 +6,7 @@
     var totalPaid = (decimal)ViewBag.TotalPaid;
     var totalDue = (decimal)ViewBag.TotalDue;
     // Pending payment = submitted but not yet verified by admin
-    var totalPending = payments.Where(p => !p.IsVerified).Sum(p => p.Amount);
+    var totalPending = payments.Where(p => !p.IsVerified && p.Status != SolarPortal.Domain.Enums.PaymentStatus.Rejected).Sum(p => p.Amount);
 }
 
 <div class="page active">
@@ -20,7 +20,7 @@
         <div class="sc">
             <div class="sc-label">Pending Amount</div>
             <div class="sc-val" style="color:#f59e0b">₹@totalPending.ToString("N0")</div>
-            <div class="sc-sub">@payments.Count(p => !p.IsVerified) awaiting admin approval</div>
+            <div class="sc-sub">@payments.Count(p => !p.IsVerified && p.Status != SolarPortal.Domain.Enums.PaymentStatus.Rejected) awaiting admin approval</div>
         </div>
         <div class="sc">
             <div class="sc-label">Project Amount</div>
@@ -101,7 +101,8 @@
         <div class="card">
             <div class="ct"><span class="ct-dot"></span>Payment History</div>
             @{
-                var pendingPayments  = payments.Where(p => !p.IsVerified).OrderByDescending(p => p.PaymentDate).ToList();
+                var pendingPayments  = payments.Where(p => !p.IsVerified && p.Status != SolarPortal.Domain.Enums.PaymentStatus.Rejected).OrderByDescending(p => p.PaymentDate).ToList();
+                var rejectedPayments = payments.Where(p => p.Status == SolarPortal.Domain.Enums.PaymentStatus.Rejected).OrderByDescending(p => p.PaymentDate).ToList();
                 var verifiedPayments = payments.Where(p => p.IsVerified).OrderByDescending(p => p.PaymentDate).ToList();
             }
 
@@ -138,6 +139,40 @@
                 </div>
             }
 
+            @* --- Rejected block (admin rejected these; user must re-submit) --- *@
+            @if (rejectedPayments.Any())
+            {
+                <div style="font-size:12.5px;font-weight:600;color:#991b1b;margin:6px 0 8px;letter-spacing:.05em;text-transform:uppercase">
+                    ❌ Rejected Payments (@rejectedPayments.Count)
+                </div>
+                <div class="tbl-wrap" style="margin-bottom:14px">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Receipt</th>
+                                <th>UTR</th>
+                                <th style="text-align:right">Amount</th>
+                                <th>Status</th>
+                                <th>Reason</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var pay in rejectedPayments)
+                            {
+                                <tr style="background:#fef2f2">
+                                    <td>@pay.PaymentDate.ToString("dd/MM/yyyy")</td>
+                                    <td class="td-b">@(pay.ReceiptNumber ?? "—")</td>
+                                    <td><code style="font-size:11.5px">@pay.UTRNumber</code></td>
+                                    <td style="text-align:right;color:#dc2626;font-weight:600">₹@pay.Amount.ToString("N0")</td>
+                                    <td><span class="sts sts-rej">❌ Rejected</span></td>
+                                    <td style="font-size:12px;color:#991b1b">@(string.IsNullOrWhiteSpace(pay.Notes) ? "—" : pay.Notes)</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
             @* --- Verified block (the real approved history) --- *@
             @if (verifiedPayments.Any())
             {
@@ -171,7 +206,7 @@
                 </div>
             }
 
-            @if (!pendingPayments.Any() && !verifiedPayments.Any())
+            @if (!pendingPayments.Any() && !verifiedPayments.Any() && !rejectedPayments.Any())
             {
                 <div style="text-align:center;padding:30px;color:var(--text3)">No payments yet.</div>
             }

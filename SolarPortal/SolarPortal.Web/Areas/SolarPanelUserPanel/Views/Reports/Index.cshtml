@@ -20,6 +20,8 @@
     // instead of a link that 404s. Records can have stale paths when test
     // data was created against a different deployment or files were wiped.
     var fileExists = ViewBag.FileExists as Dictionary<string, bool> ?? new();
+    var paidByReq  = ViewBag.PaidByRequest as Dictionary<int, decimal> ?? new();
+    decimal PaidOf(int id) => paidByReq.TryGetValue(id, out var _pv) ? _pv : 0m;
     bool Has(string? p) => !string.IsNullOrWhiteSpace(p) && fileExists.TryGetValue(p!, out var ok) && ok;
 
 
@@ -80,8 +82,13 @@
                             <th>Capacity</th>
                             <th>Connection</th>
                             <th>Project Amount</th>
+                            <th>Paid</th>
+                            <th>Due</th>
+                            <th>Loan</th>
+                            <th>Light Bill</th>
                             <th>Stage</th>
                             <th>Approval</th>
+                            <th>Approval Date</th>
                             <th>Submitted</th>
                         </tr>
                     </thead>
@@ -115,8 +122,13 @@
                                 <td data-label="Capacity">@r.KVCapacity kV</td>
                                 <td data-label="Connection">@r.ConnectionType</td>
                                 <td data-label="Project Amount">₹@r.PlanAmount.ToString("N0")</td>
+                                <td data-label="Paid">₹@PaidOf(r.Id).ToString("N0")</td>
+                                <td data-label="Due">₹@(((r.PlanAmount - PaidOf(r.Id)) > 0m ? (r.PlanAmount - PaidOf(r.Id)) : 0m).ToString("N0"))</td>
+                                <td data-label="Loan">@(string.IsNullOrWhiteSpace(r.PMSuryaLoanOption) ? "—" : (r.PMSuryaLoanOption == "Loan" ? "On Loan" : "Without Loan"))</td>
+                                <td data-label="Light Bill">@(r.LightBillOwnership == "BloodRelation" ? "Blood relation" : (r.LightBillOwnership == "Self" ? "Self" : "—"))</td>
                                 <td data-label="Stage"><span class="sts sts-disp">@r.CurrentStage.ToString().Replace("_", " ")</span></td>
                                 <td data-label="Approval">@Html.Raw(ApprovalBadge(effectiveApproval))</td>
+                                <td data-label="Approval Date">@((effectiveApproval == SolarPortal.Domain.Enums.ApprovalStatus.Approved || r.ApprovalStatus == SolarPortal.Domain.Enums.ApprovalStatus.Rejected) ? (r.UpdatedAt?.ToLocalTime().ToString("dd MMM yyyy") ?? r.CreatedAt.ToLocalTime().ToString("dd MMM yyyy")) : "—")</td>
                                 <td data-label="Submitted">@r.CreatedAt.ToLocalTime().ToString("dd MMM yyyy")</td>
                             </tr>
                         }
@@ -140,6 +152,8 @@
                                 <th>Method</th>
                                 <th>Date</th>
                                 <th>Status</th>
+                                <th>Approved / Rejected On</th>
+                                <th>Remark</th>
                                 <th>Receipt</th>
                             </tr>
                         </thead>
@@ -167,6 +181,8 @@
                                     <td>@(p.PaymentMethod ?? "—")</td>
                                     <td>@p.PaymentDate.ToLocalTime().ToString("dd MMM yyyy")</td>
                                     <td>@Html.Raw(PaymentBadge(p.Status))</td>
+                                    <td>@((p.VerifiedAt ?? p.UpdatedAt)?.ToLocalTime().ToString("dd MMM yyyy") ?? "—")</td>
+                                    <td>@(string.IsNullOrWhiteSpace(p.Notes) ? "—" : p.Notes)</td>
                                     <td>
                                         @if (!string.IsNullOrWhiteSpace(receiptUrl) && Has(p.ReceiptImagePath))
                                         {
@@ -200,7 +216,8 @@
                                 <th>Document Type</th>
                                 <th>Uploaded</th>
                                 <th>Status</th>
-                                <th>Reject Reason</th>
+                                <th>Approved / Rejected On</th>
+                                <th>Remark</th>
                                 <th>File</th>
                             </tr>
                         </thead>
@@ -212,9 +229,9 @@
                                     <td>@d.DocumentType</td>
                                     <td>@d.CreatedAt.ToLocalTime().ToString("dd MMM yyyy")</td>
                                     <td>@Html.Raw(ApprovalBadge(d.Status))</td>
+                                    <td>@(d.Status != SolarPortal.Domain.Enums.ApprovalStatus.Pending ? (d.UpdatedAt?.ToLocalTime().ToString("dd MMM yyyy") ?? "—") : "—")</td>
                                     <td>
-                                        @if (d.Status == SolarPortal.Domain.Enums.ApprovalStatus.Rejected
-                                             && !string.IsNullOrWhiteSpace(d.Remarks))
+                                        @if (!string.IsNullOrWhiteSpace(d.Remarks))
                                         {
                                             <span style="color:#dc3545;font-size:12px">@d.Remarks</span>
                                         }
@@ -263,7 +280,8 @@
                                 <th>DISCOM</th>
                                 <th>Survey Date</th>
                                 <th>Status</th>
-                                <th>Reject Reason</th>
+                                <th>Approved / Rejected On</th>
+                                <th>Remark</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -278,9 +296,9 @@
                                     <td>@(s.DiscomName ?? "—")</td>
                                     <td>@(s.SurveyDate?.ToLocalTime().ToString("dd MMM yyyy") ?? "—")</td>
                                     <td>@Html.Raw(ApprovalBadge(ss))</td>
+                                    <td>@(s.IsCompleted ? (s.CompletedAt?.ToLocalTime().ToString("dd MMM yyyy") ?? "—") : (s.ApprovalStatus == SolarPortal.Domain.Enums.ApprovalStatus.Rejected ? (s.RejectedAt?.ToLocalTime().ToString("dd MMM yyyy") ?? "—") : "—"))</td>
                                     <td>
-                                        @if (s.ApprovalStatus == SolarPortal.Domain.Enums.ApprovalStatus.Rejected
-                                             && !string.IsNullOrWhiteSpace(s.RejectionReason))
+                                        @if (!string.IsNullOrWhiteSpace(s.RejectionReason))
                                         {
                                             <span style="color:#dc3545;font-size:12px">@s.RejectionReason</span>
                                         }
@@ -445,7 +463,7 @@
                 <div class="tbl-wrap">
                     <table>
                         <thead>
-                            <tr><th>Request #</th><th>DCR #</th><th>DCR Date</th><th>Status</th><th>Reject Reason</th><th>Document</th></tr>
+                            <tr><th>Request #</th><th>DCR #</th><th>DCR Date</th><th>Status</th><th>Approved / Rejected On</th><th>Remark</th><th>Document</th></tr>
                         </thead>
                         <tbody>
                             @foreach (var d in dcrDocs)
@@ -455,13 +473,13 @@
                                     <td>@(d.DCRNumber ?? "—")</td>
                                     <td>@(d.DCRDate?.ToLocalTime().ToString("dd MMM yyyy") ?? "—")</td>
                                     <td>@Html.Raw(ApprovalBadge(d.ApprovalStatus))</td>
+                                    <td>@(d.ApprovalStatus == SolarPortal.Domain.Enums.ApprovalStatus.Approved ? (d.ApprovedAt?.ToLocalTime().ToString("dd MMM yyyy") ?? "—") : (d.ApprovalStatus == SolarPortal.Domain.Enums.ApprovalStatus.Rejected ? (d.UpdatedAt?.ToLocalTime().ToString("dd MMM yyyy") ?? "—") : "—"))</td>
                                     <td>
                                         @* DCRDocument has its own RejectionReason field (we added it earlier
                                            for the admin approve/reject workflow). PMDocument up above uses
                                            the generic Remarks field instead — that entity doesn't have a
                                            dedicated rejection-reason column. *@
-                                        @if (d.ApprovalStatus == SolarPortal.Domain.Enums.ApprovalStatus.Rejected
-                                             && !string.IsNullOrWhiteSpace(d.RejectionReason))
+                                        @if (!string.IsNullOrWhiteSpace(d.RejectionReason))
                                         {
                                             <span style="color:#dc3545;font-size:12px">@d.RejectionReason</span>
                                         }
