@@ -8,9 +8,13 @@
     //   • Rejected  → form unlocked, button visible (user must re-submit)
     //   • Pending   → form locked, no button (waiting for admin)
     //   • No survey → form unlocked, button visible (first submission)
-    var isApproved = latest != null && latest.IsCompleted;
-    var isRejected = latest != null && !latest.IsCompleted
-                     && !string.IsNullOrWhiteSpace(latest.OperationsRemark);
+    // The admin app records the verdict in ApprovalStatus (+ RejectionReason); older
+    // flows used IsCompleted / OperationsRemark - honour both conventions.
+    var isApproved = latest != null
+                     && (latest.IsCompleted || latest.ApprovalStatus == SolarPortal.Domain.Enums.ApprovalStatus.Approved);
+    var isRejected = latest != null && !isApproved
+                     && (latest.ApprovalStatus == SolarPortal.Domain.Enums.ApprovalStatus.Rejected
+                         || !string.IsNullOrWhiteSpace(latest.OperationsRemark));
     var isPending  = latest != null && !latest.IsCompleted && !isRejected;
 
     // Form is locked when either Approved OR Pending — user cannot edit/submit then.
@@ -72,7 +76,7 @@
         <div class="alert-pending" style="background:#fee2e2;border-left-color:#dc2626">
             <strong>❌ Survey Rejected by Admin.</strong>
             <div style="margin-top:6px">
-                <strong>Reason:</strong> @latest!.OperationsRemark
+                <strong>Reason:</strong> @(!string.IsNullOrWhiteSpace(latest!.RejectionReason) ? latest.RejectionReason : latest.OperationsRemark)
             </div>
             <div style="margin-top:6px;font-size:13px;color:#7f1d1d">
                 Please correct the issues and re-submit your survey below.

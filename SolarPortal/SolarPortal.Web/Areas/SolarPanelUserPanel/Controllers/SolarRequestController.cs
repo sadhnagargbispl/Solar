@@ -99,13 +99,14 @@ public class SolarRequestController : Controller
         bool isSyntheticEmail = rawEmail.EndsWith("@livedb.local", StringComparison.OrdinalIgnoreCase);
         string profileEmail = isSyntheticEmail ? "" : rawEmail;
 
-        // === Active-member gating ===
-        // Per spec: if m_membermaster.ActiveStatus = 'Y', the user is an existing
-        // active solar member. Such users CANNOT pick "With Activation" or
-        // "Only Solar Without Activation" — those flows are for new/inactive
-        // members. They can only file an "Already Active — Only Request".
-        // The view uses this flag to disable the other two mode cards, and
-        // the POST handler enforces it again (defense-in-depth).
+        // === Member-status gating (per spec 2026-07-22) ===
+        // m_membermaster.ActiveStatus decides which Request Type modes are allowed:
+        //   • Active ('Y') → sirf "Already Active" —
+        //                    "With Activation" + "Only Solar" locked.
+        //   • Deactive     → "With Activation" ya "Only Solar (Without Activation)" —
+        //                    "Already Active" locked.
+        // The view uses this flag to lock the disallowed mode card, and the POST
+        // handler enforces it again (defense-in-depth).
         bool isActiveMember = meMember != null
                               && string.Equals(
                                   (meMember.ActiveStatus ?? "").Trim(),
@@ -123,9 +124,11 @@ public class SolarRequestController : Controller
             //   • Deactivated members (MMemberMaster.ActiveStatus != 'Y') are allowed
             //     up to TWO real solar requests in their lifetime.
             //   • Active members (ActiveStatus = 'Y') stay capped at ONE.
-            //   • The second request is treated as a "reactivation": forced to
-            //     With Activation mode, payment skipped (prior request already paid),
-            //     auto-approved on save, stage advanced past Payment.
+            //   • The second request may be "With Activation" (reactivation:
+            //     payment skipped since prior request already paid, auto-approved
+            //     on save, stage advanced past Payment) OR "Only Solar — Without
+            //     Activation" (normal Mode-2 flow, admin approval). Only
+            //     "Already Active" is locked.
             //
             // Eligibility for the 2nd request:
             //   1. Member exists and is deactivated.
@@ -154,7 +157,9 @@ public class SolarRequestController : Controller
                     City          = profileCity,
                     State         = profileState,
                     PinCode       = profilePin,
-                    // Force With Activation — only valid mode for the 2nd request.
+                    // Default to With Activation — the user can also switch to
+                    // "Only Solar — Without Activation" on the form. Only
+                    // "Already Active" is locked for a deactivated ID.
                     RequestType = RequestType.WithActivation
                 });
             }
@@ -361,6 +366,26 @@ public class SolarRequestController : Controller
             return View(model);
         }
 
+        // === Deactive-member POST guard (per spec 2026-07-22) ===
+        // Deactive ID → modes 1 & 2 allowed, mode 3 ("Already Active") locked.
+        // Mirror of the active guard above — defense-in-depth against tampering.
+        if (!isActiveMemberPost && model.RequestType == RequestType.AlreadyActiveOnlyRequest)
+        {
+            ModelState.AddModelError(nameof(model.RequestType),
+                "Aapki ID deactivated hai — \"Already Active — Only Request\" file nahi kar sakte. " +
+                "Aap \"With Activation\" ya \"Only Solar (Without Activation)\" choose kariye.");
+            ViewBag.IsActiveMember = false;
+            ViewBag.Projects = await _solarProjectService.GetAllAsync(activeOnly: true);
+            ViewBag.BasicProducts = await _basicProducts.GetActiveAsync();
+            ViewBag.PayModes = await _payModes.GetActiveAsync();
+            ViewBag.States = await _states.GetActiveAsync();
+            ViewBag.ProfileReadonly = true;
+            ViewBag.PreservedReceiptName = model.PaymentReceipt?.FileName;
+            // Fall back to the deactive-member default mode for next render
+            model.RequestType = RequestType.WithActivation;
+            return View(model);
+        }
+
         var existingEarly = await _solarRequestService.GetByUserIdAsync(userIdEarly);
         SolarRequestDto? stubToUpdate = null;
         bool isResubmitOfRejected = false;
@@ -371,21 +396,24 @@ public class SolarRequestController : Controller
         var (canReactivate, reactivationBasedOn) = await IsReactivationEligibleAsync(userIdEarly);
         if (canReactivate)
         {
-            // Defense-in-depth — force the mode even if a tampered form posted
-            // something else, before we touch ModelState or do any work.
-            model.RequestType         = RequestType.WithActivation;
+            // Per spec (2026-07-22): the 2nd request from a deactivated ID may be
+            // "With Activation" (reactivation) OR "Only Solar — Without Activation"
+            // (normal flow). Only "Already Active" is invalid for a deactivated
+            // ID — defense-in-depth: coerce a tampered mode-3 post to mode 1.
+            if (model.RequestType == RequestType.AlreadyActiveOnlyRequest)
+                model.RequestType = RequestType.WithActivation;
             ViewBag.IsReactivation     = true;
             ViewBag.ReactivationBasedOn = reactivationBasedOn;
         }
 
         // ── Payment expectation per mode (spec tasks 2 & 5) ──────────────
         //  • Mode 1 (With Activation)          → payment is MANDATORY.
-        //  • Mode 2 (Only Solar Without Activ.) → NO payment is taken at all.
+        //  • Mode 2 (Only Solar Without Activ.) → payment is MANDATORY (admin verifies) — per spec 2026-07-22.
         //  • Mode 3 (Already Active)            → payment is OPTIONAL; the request
         //                                          submits with or without it.
         //  • Reactivation                       → payment carried over, none collected.
-        bool collectPayment   = !canReactivate && model.RequestType != RequestType.OnlySolarWithoutActivation;
-        bool paymentRequired  = collectPayment && model.RequestType == RequestType.WithActivation;
+        bool collectPayment   = !canReactivate;
+        bool paymentRequired  = collectPayment && model.RequestType != RequestType.AlreadyActiveOnlyRequest;
 
         if (!canReactivate && existingEarly.IsSuccess && existingEarly.Data != null && existingEarly.Data.Any())
         {
@@ -422,7 +450,7 @@ public class SolarRequestController : Controller
         //   1. walletreq.chqno — live cooperative master table
         //   2. Payments.UTRNumber — our own payment ledger
         //
-        // Reactivation & Mode-2 skip: no payment is collected.
+        // Reactivation skip: no payment is collected there.
         if (collectPayment && model.PaymentAmount > 0 && !string.IsNullOrWhiteSpace(model.PaymentUTR))
         {
             var dupReason = await CheckUtrDuplicateAsync(model.PaymentUTR.Trim());
@@ -438,8 +466,8 @@ public class SolarRequestController : Controller
             ModelState.AddModelError(nameof(model.PaymentMethod), "Payment Method is required.");
         }
 
-        // ─── Payment receipt mandatory ONLY when payment is required (Mode 1) ───
-        // Mode 2 takes no payment; Mode 3 payment is optional; reactivation carries
+        // ─── Payment receipt mandatory when payment is required (Modes 1 & 2) ───
+        // Mode 3 payment is optional; reactivation carries
         // the prior request's payment. In those cases the receipt is not required.
         if (paymentRequired && (model.PaymentReceipt == null || model.PaymentReceipt.Length == 0))
         {
@@ -449,9 +477,9 @@ public class SolarRequestController : Controller
 
         // Clear payment-field annotation errors (Required / Range on PaymentAmount,
         // PaymentUTR ...) whenever no payment is expected or entered:
-        //   • reactivation (carried over) / Mode 2 (no payment taken)  → always
+        //   • reactivation (carried over)                             → always
         //   • Mode 3 (optional) with the payment block left blank      → clear
-        // NEVER clear for Mode 1 (paymentRequired) — payment stays mandatory there
+        // NEVER clear for Modes 1 & 2 (paymentRequired) — payment stays mandatory there
         // even if the amount field was left blank.
         bool skipPaymentValidation = !collectPayment
                                      || (!paymentRequired && model.PaymentAmount <= 0);
@@ -676,6 +704,42 @@ public class SolarRequestController : Controller
             }
         }
 
+        // ─── Minimum first-payment enforcement (server-side) ─────────────
+        // Modes 1 & 2: first payment must be at least ₹20,000 — or the full
+        // project amount when the matched plan total is below ₹20,000. This
+        // mirrors confirmSubmit() on the client; enforced here too so a JS
+        // failure or DevTools tampering can never slip a smaller payment
+        // through (a ₹1,000 payment once got saved exactly this way).
+        if (paymentRequired)
+        {
+            const decimal hardMin = 20000m;
+            var effMin = (model.PlanAmount > 0 && model.PlanAmount < hardMin) ? model.PlanAmount : hardMin;
+            if (model.PaymentAmount < effMin)
+            {
+                ModelState.AddModelError(nameof(model.PaymentAmount),
+                    $"Minimum first payment is ₹{effMin:N0}. Aapne ₹{model.PaymentAmount:N0} dala hai — " +
+                    $"kam se kam ₹{effMin:N0} bharna zaroori hai.");
+            }
+            else if (model.PlanAmount > 0 && model.PaymentAmount > model.PlanAmount)
+            {
+                ModelState.AddModelError(nameof(model.PaymentAmount),
+                    $"Payment ₹{model.PaymentAmount:N0} cannot exceed the project amount ₹{model.PlanAmount:N0}.");
+            }
+            if (!ModelState.IsValid)
+            {
+                ViewBag.Projects = await _solarProjectService.GetAllAsync(activeOnly: true);
+                ViewBag.BasicProducts = await _basicProducts.GetActiveAsync();
+                ViewBag.PayModes = await _payModes.GetActiveAsync();
+                ViewBag.States = await _states.GetActiveAsync();
+                ViewBag.ProfileReadonly = true;
+                ViewBag.IsActiveMember = isActiveMemberPost;
+                ViewBag.IsReactivation = canReactivate;
+                ViewBag.ReactivationBasedOn = reactivationBasedOn;
+                ViewBag.PreservedReceiptName = model.PaymentReceipt?.FileName;
+                return View(model);
+            }
+        }
+
         var userId = _userManager.GetUserId(User)!;
         // Null-coalesce profile strings to "" — see the long comment further down
         // where stubToUpdate is populated. Same rationale here: the DB columns
@@ -832,7 +896,7 @@ public class SolarRequestController : Controller
         //
         // EXCEPTION: reactivation flow — no new payment is collected. Skip the whole
         // payment-save block; auto-approval below moves the request straight to PMSurvey.
-        // Mode 2 (Only Solar) also never records a payment (collectPayment == false).
+        // Mode 2 (Only Solar) records its payment too (per spec 2026-07-22).
         if (collectPayment && model.PaymentAmount > 0)
         {
             try
@@ -969,7 +1033,12 @@ public class SolarRequestController : Controller
         //
         // If either step fails, the request is still saved — admin can intervene
         // manually via the Payment Verification screen.
-        if (canReactivate && result.Data != null)
+        //
+        // NOTE: the auto-approve + PMSurvey jump apply ONLY when the 2nd request
+        // is in With Activation mode. If the deactivated user picked "Only Solar —
+        // Without Activation" instead, the request follows the normal Mode-2 flow
+        // (pending admin approval, no payment) — handled by the code below.
+        if (canReactivate && model.RequestType == RequestType.WithActivation && result.Data != null)
         {
             try
             {
@@ -1725,10 +1794,13 @@ public class SolarRequestController : Controller
     /// request lifetime (strict gate handles that).
     ///
     /// Deactivated members (ActiveStatus != 'Y'): allowed up to TWO real solar
-    /// requests. The SECOND request is treated as a reactivation:
-    ///   • Forced to With Activation mode (only sensible mode for re-activating an ID)
-    ///   • Payment block skipped (prior request's payment is the proof)
-    ///   • Auto-approved on save, stage jumps directly to PMSurvey
+    /// requests. For the SECOND request the user may pick either mode:
+    ///   • With Activation → reactivation semantics: payment skipped (prior
+    ///     request's payment is the proof), auto-approved on save, stage jumps
+    ///     directly to PMSurvey.
+    ///   • Only Solar — Without Activation → normal Mode-2 flow: no payment is
+    ///     collected (Mode 2 never takes payment), admin approves as usual.
+    ///   • Already Active is NOT allowed — the ID is deactivated.
     ///
     /// Eligibility for the reactivation (i.e. 2nd request):
     ///   1. Member exists in m_membermaster and ActiveStatus != 'Y'.
@@ -1749,13 +1821,21 @@ public class SolarRequestController : Controller
     /// </summary>
     private async Task<(bool IsEligible, string? PriorRequestNumber)> IsReactivationEligibleAsync(string userId)
     {
-        // Reactivation flow disabled (per request): users who already have a request
-        // now see the standard "you already have a solar request" message instead of
-        // the reactivation form. Return early so reactivation is never eligible.
+        // DISABLED (per user decision 2026-07-23): one IdNo = ONE solar request,
+        // lifetime - the earlier "deactive ID can file a 2nd / reactivation
+        // request" rule is withdrawn. New Request stays blocked once a real
+        // request exists (auto-stub fill-in and Rejected re-submit still work
+        // via the branches in Create()). To restore the old behaviour, remove
+        // this early return.
         await Task.CompletedTask;
         return (false, null);
 
-#pragma warning disable CS0162 // unreachable — kept for reference / easy re-enable
+        // Re-enabled (per request 2026-07-22): deactivated IDs can file a 2nd
+        // request again. The 2nd request may be either "With Activation"
+        // (reactivation semantics: no payment, auto-approve) or "Only Solar —
+        // Without Activation" (normal flow, admin approval). Only "Already
+        // Active" stays locked for deactivated IDs.
+
         // 1. Deactivated member?
         var member = await _db.Members
             .AsNoTracking()

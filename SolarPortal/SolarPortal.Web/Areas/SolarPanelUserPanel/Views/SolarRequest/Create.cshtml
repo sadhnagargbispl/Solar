@@ -7,8 +7,8 @@
     // Controller sets this when the user is a deactivated member filing their
     // 2nd lifetime solar request (per the "deactive id 2 baar laga sakti hai"
     // rule). In this flow:
-    //   • Activation Type mode is locked to "With Activation" — only valid mode
-    //     for reactivating a deactivated ID.
+    //   • Activation Type: "With Activation" or "Only Solar" both allowed —
+    //     only "Already Active" is locked for the deactivated ID.
     //   • Payment block is hidden — the prior completed request's payment is the
     //     proof of payment, no new payment is collected.
     //   • Server auto-approves the request on save + advances stage to PMSurvey.
@@ -75,8 +75,8 @@
             <div class="alert" style="background:#dcfce7;border-left:4px solid #16a34a;color:#065f46;padding:14px 18px;margin-bottom:16px;border-radius:6px">
                 <strong>🔁 Re-activation Request</strong>
                 <div style="margin-top:6px;font-size:14px">
-                    Aapki ID currently <strong>deactivated</strong> hai. Aap "With Activation" mode
-                    me ek follow-up request laga sakte hain — based on your earlier completed
+                    Aapki ID currently <strong>deactivated</strong> hai. Aap "With Activation" ya "Only Solar (Without Activation)" mode
+                    me follow-up request laga sakte hain — sirf "Already Active" locked hai — based on your earlier completed
                     request <strong>@reactivationBasedOn</strong>.
                 </div>
                 <div style="margin-top:6px;font-size:13px;opacity:0.9">
@@ -111,18 +111,18 @@
                 <div class="card">
                     <div class="ct"><span class="ct-dot"></span>Activation Type</div>
                     @{
-                        // Per spec: agar user m_membermaster.ActiveStatus = 'Y' hai,
-                        // user already an active solar member hai — sirf
-                        // "Already Active — Only Request" mode allowed hai.
-                        // Other two cards visually disable + click block, hidden
-                        // input ko 3 set kar deta hai.
+                        // Per spec (2026-07-22): m_membermaster.ActiveStatus se modes decide hote hain:
+                        //   Active (Y) → sirf "Already Active".
+                        //   Deactive   → "With Activation" ya "Only Solar (Without Activation)".
+                        // Locked card pe click karne par warning toast dikhta hai.
+                        //
                         bool isActiveMem = (bool)(ViewBag.IsActiveMember ?? false);
                         // Default hidden input value:
-                        //   • Reactivation → 1 (With Activation forced)
-                        //   • Active member → 3 (Already Active only)
+                        //   • Reactivation → 1 (With Activation default)
+                        //   • Locked mode se aaya model value ho to allowed mode pe coerce.
                         //   • else from model (or 1)
-                        var defaultReqType = isReactivation ? 1
-                                            : (isActiveMem ? 3 : (int)Model.RequestType);
+                        var defaultReqType = (int)Model.RequestType;
+                                            if (isReactivation) { defaultReqType = 1; } if (isActiveMem) { defaultReqType = 3; } if (!isActiveMem && defaultReqType == 3) { defaultReqType = 1; }
                     }
                     <div class="fg">
                         <label>Request Type <span class="req">*</span></label>
@@ -130,23 +130,26 @@
                         @if (isActiveMem && !isReactivation)
                         {
                             <div class="alert alert-i" style="font-size:13px;margin-bottom:8px">
-                                <span class="ai">ℹ</span>You are an existing active solar member. Only the "Already Active — Only Request" mode is available for your account.
+                                <span class="ai">ℹ</span>You are an existing active solar member. Aap sirf "Already Active — Only Request" mode choose kar sakte hain.
                             </div>
                         }
                         @if (isReactivation)
                         {
                             <div class="alert alert-i" style="font-size:13px;margin-bottom:8px;background:#d1fae5;border-left:3px solid #16a34a;color:#065f46">
-                                <span class="ai">🔁</span>Reactivation mode — only "With Activation" is available. The other modes are locked because this is your follow-up request to activate your deactivated ID.
+                                <span class="ai">🔁</span>Reactivation mode — aap "With Activation" ya "Only Solar (Without Activation)" dono choose kar sakte hain. Sirf "Already Active" locked hai (aapki ID deactivated hai).
                             </div>
                         }
                         @{
                             // Lock state per card:
-                            //   • Reactivation: cards 2 & 3 locked (only With Activation allowed)
-                            //   • Active member: cards 1 & 2 locked (only Already Active allowed)
-                            //   • Default: nothing locked
-                            bool card1Locked = isActiveMem && !isReactivation;
-                            bool card2Locked = isActiveMem || isReactivation;
-                            bool card3Locked = isReactivation;
+                            //   • Active ID   → sirf "Already Active" allowed;
+                            //                   "With Activation" + "Only Solar" locked.
+                            //   • Deactive ID → "With Activation" + "Only Solar" allowed;
+                            //                   "Already Active" locked. (spec 2026-07-22)
+                            //   • No member row → treated as deactive.
+                            //   • Reactivation (2nd request of deactive ID) → same as deactive.
+                            bool card1Locked = isActiveMem;    // "With Activation" — active ID ke liye locked
+                            bool card2Locked = isActiveMem;    // "Only Solar" — active ID ke liye locked
+                            bool card3Locked = !isActiveMem;   // "Already Active" — deactive ID ke liye locked
                         }
                         <div class="rc-group">
                             <div class="rc @(card1Locked ? "disabled-card" : (defaultReqType == 1 ? "sel" : ""))"
@@ -158,15 +161,15 @@
                             </div>
                             <div class="rc @(card2Locked ? "disabled-card" : (defaultReqType == 2 ? "sel" : ""))"
                                  data-val="2"
-                                 onclick="@(card2Locked ? "blockedByReactivationOrActive()" : "selectRequestType(this,2)")"
-                                 title="@(isReactivation ? "Locked — reactivation requires With Activation" : (card2Locked ? "Not available — you are already an active member" : ""))">
+                                 onclick="@(card2Locked ? "blockedByActiveMember()" : "selectRequestType(this,2)")"
+                                 title="@(card2Locked ? "Not available — you are already an active member" : "")">
                                 <div class="rci">⚡</div><div class="rcl">Only Solar</div><div class="rcs">Without activation</div>
                                 @if (card2Locked) { <div class="rcs" style="color:#dc2626;font-size:11px;margin-top:4px">🔒 Locked</div> }
                             </div>
                             <div class="rc @(card3Locked ? "disabled-card" : (defaultReqType == 3 ? "sel" : ""))"
                                  data-val="3"
                                  onclick="@(card3Locked ? "blockedByReactivationOrActive()" : "selectRequestType(this,3)")"
-                                 title="@(card3Locked ? "Locked — reactivation requires With Activation" : "")">
+                                 title="@(card3Locked ? "Locked — your ID is deactivated, so Already Active is not available" : "")">
                                 <div class="rci">✅</div><div class="rcl">Already Active</div><div class="rcs">Solar only</div>
                                 @if (card3Locked) { <div class="rcs" style="color:#dc2626;font-size:11px;margin-top:4px">🔒 Locked</div> }
                             </div>
@@ -722,7 +725,7 @@
                     <span class="ai">✅</span>
                     @if (isReactivation)
                     {
-                        <text>Submit will save your reactivation request. It will be auto-approved (no payment needed) and you'll be moved to PM Surya Ghar to upload documents.</text>
+                        <text>Submit will save your request — no payment is collected. "With Activation" will be auto-approved and move to PM Surya Ghar documents; "Only Solar (Without Activation)" will go for normal admin approval.</text>
                     }
                     else
                     {
@@ -780,9 +783,29 @@
         });
     </script>
     <script>
+        // ─── Global warning toast ────────────────────────────────────────
+        // showWarning() is called by every client-side validation handler on
+        // this page but was never actually defined anywhere — the resulting
+        // ReferenceError silently let the form submit even when validation
+        // failed (e.g. payment below the ₹20,000 minimum). Defined here so
+        // warnings really show and the submit is properly blocked.
+        function showWarning(msg) {
+            let t = document.getElementById('sp-warn-toast');
+            if (!t) {
+                t = document.createElement('div');
+                t.id = 'sp-warn-toast';
+                t.style.cssText = 'position:fixed;top:20px;left:50%;transform:translateX(-50%);z-index:99999;background:#fef3c7;color:#92400e;border:1px solid #f59e0b;border-left:5px solid #f59e0b;padding:12px 20px;border-radius:8px;font-size:14px;font-weight:600;box-shadow:0 6px 18px rgba(0,0,0,.18);max-width:560px;display:none';
+                document.body.appendChild(t);
+            }
+            t.textContent = '⚠ ' + msg;
+            t.style.display = 'block';
+            clearTimeout(t._hideTimer);
+            t._hideTimer = setTimeout(() => { t.style.display = 'none'; }, 6000);
+        }
+
         // Show/hide + relabel the payment block based on the selected mode.
         //   Mode 1 (With Activation): visible + mandatory
-        //   Mode 2 (Only Solar):      hidden — no payment taken
+        //   Mode 2 (Only Solar):      visible + mandatory (per spec 2026-07-22)
         //   Mode 3 (Already Active):  visible + optional
         function togglePaymentBlock(v) {
             const block        = document.getElementById('paymentBlock');
@@ -791,10 +814,6 @@
             const optHint      = document.getElementById('paymentOptionalHint');
             if (!block) return; // hidden in reactivation flow (block not rendered)
 
-            if (v === 2) {
-                block.style.display = 'none';
-                return;
-            }
             block.style.display = '';
             const optional = (v === 3);
             if (optTag)  optTag.style.display  = optional ? '' : 'none';
@@ -834,18 +853,18 @@
         // do nothing else — the hidden RequestType input stays at 3 (Already Active).
         function blockedByActiveMember() {
             if (typeof showWarning === 'function') {
-                showWarning('You are already an active solar member. Only the \"Already Active — Only Request\" mode is available.');
+                showWarning('Aap active solar member hain — sirf \"Already Active — Only Request\" mode available hai.');
             } else {
-                alert('You are already an active solar member. Only the \"Already Active — Only Request\" mode is available.');
+                alert('Aap active solar member hain — sirf \"Already Active — Only Request\" mode available hai.');
             }
             return false;
         }
 
         // Click handler for the cards that are locked in reactivation flow
-        // (Only Solar / Already Active). In reactivation the only valid mode is
-        // With Activation — show a clear toast explaining why the others are off.
+        // ("Already Active" card). A deactivated ID cannot file Already Active —
+        // show a toast telling the user which modes are available instead.
         function blockedByReactivationOrActive() {
-            const msg = 'In reactivation mode only \"With Activation\" is available. Your earlier payment carries over, so no payment is collected on this form.';
+            const msg = 'Aapki ID deactivated hai — \"Already Active\" mode available nahi hai. \"With Activation\" ya \"Only Solar (Without Activation)\" choose kariye.';
             if (typeof showWarning === 'function') { showWarning(msg); } else { alert(msg); }
             return false;
         }
@@ -865,7 +884,7 @@
             const v = parseInt(val, 10);
 
             // Payment block visibility per mode (spec tasks 2 & 5):
-            //   Mode 1 → required, Mode 2 → hidden (no payment), Mode 3 → optional
+            //   Mode 1 & 2 → required, Mode 3 → optional
             togglePaymentBlock(v);
 
             if (v === 2 || v === 3) {
@@ -1097,7 +1116,7 @@
             if (lbo === 'BloodRelation') {
                 const relName = (document.querySelector('[name="LightBillRelationName"]')?.value || '').trim();
                 const proofFile = document.getElementById('lightBillProofInput')?.files?.length || 0;
-                if (!relName)   { showWarning('If the bill is in a blood relation's name, please enter the relation holder's name.'); return false; }
+                if (!relName)   { showWarning("If the bill is in a blood relation's name, please enter the relation holder's name."); return false; }
                 if (!proofFile) { showWarning('For a blood relation, attaching the light bill / proof is mandatory.'); return false; }
             }
 
@@ -1120,10 +1139,10 @@
                 return true;
             }
 
-            // Payment is mandatory ONLY in With Activation (Mode 1). Mode 2 takes
-            // no payment; Mode 3 (Already Active) payment is optional — allow submit
+            // Payment is mandatory in Mode 1 & Mode 2 (per spec 2026-07-22). Mode 3
+            // (Already Active) payment is optional — allow submit
             // without it (spec tasks 2 & 5).
-            if (reqType !== 1) {
+            if (reqType === 3) {
                 return true;
             }
 

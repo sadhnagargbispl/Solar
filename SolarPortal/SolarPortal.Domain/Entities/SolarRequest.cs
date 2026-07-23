@@ -47,6 +47,7 @@ public class SolarRequest : BaseEntity
     // ─── PM Surya Ghar options (spec tasks 7 & 11) ───────────────────────
     public string? PMSuryaLoanOption { get; set; }       // "Loan" | "WithoutLoan"
     public string? PMSuryaGharIdNo { get; set; }         // set by admin on approval
+    public string? PmSuryaApplicationNo { get; set; }    // PM Surya Ghar ID written by the ADMIN panel app (shared DB column)
 
     // Status
     public ProjectStatus CurrentStage { get; set; } = ProjectStatus.Registration;

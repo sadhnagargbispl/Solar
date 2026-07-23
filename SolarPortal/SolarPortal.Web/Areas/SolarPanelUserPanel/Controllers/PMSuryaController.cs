@@ -23,6 +23,8 @@ public class PMSuryaController : Controller
     private readonly ISolarRequestService _requestService;
     private readonly INotificationService _notifications;
     private readonly UserManager<ApplicationUser> _userManager;
+    private readonly IWebHostEnvironment _env;
+    private readonly IConfiguration _config;
 
     public PMSuryaController(
         IUnitOfWork uow,
@@ -30,7 +32,9 @@ public class PMSuryaController : Controller
         IFileUploadService fileUpload,
         ISolarRequestService requestService,
         INotificationService notifications,
-        UserManager<ApplicationUser> userManager)
+        UserManager<ApplicationUser> userManager,
+        IWebHostEnvironment env,
+        IConfiguration config)
     {
         _uow = uow;
         _pmDocs = pmDocs;
@@ -38,6 +42,8 @@ public class PMSuryaController : Controller
         _requestService = requestService;
         _notifications = notifications;
         _userManager = userManager;
+        _env = env;
+        _config = config;
     }
 
     // GET: /User/PMSurya/Upload         → picks user's latest project
@@ -73,10 +79,64 @@ public class PMSuryaController : Controller
             return RedirectToAction("Status", "SolarRequest", new { id });
         }
 
-        var docs = await _pmDocs.GetByRequestIdAsync(req.Id);
+        var docs = (await _pmDocs.GetByRequestIdAsync(req.Id)).ToList();
+
+        // The ADMIN panel is a separate app on its own server (shared DB). Its uploaded
+        // approval files are not mirrored into this app's wwwroot - point such links at
+        // the admin site so the user can still view/download them.
+        var adminBase = (_config["AdminPanelBaseUrl"] ?? "https://solaradmin.solfit.in").TrimEnd('/');
+        foreach (var d in docs)
+        {
+            if (string.IsNullOrWhiteSpace(d.FilePath) || !d.FilePath.StartsWith("/")) continue;
+            var localPath = Path.Combine(_env.WebRootPath, d.FilePath.TrimStart('/').Replace('/', Path.DirectorySeparatorChar));
+            if (!System.IO.File.Exists(localPath))
+                d.FilePath = adminBase + d.FilePath;
+        }
+
         ViewBag.Request = req;
         ViewBag.Documents = docs;
         return View();
+    }
+
+    // Shared HttpClient for proxying admin-server files.
+    private static readonly HttpClient _http = new HttpClient();
+
+    // GET: /User/PMSurya/DownloadAdminDoc?id=51
+    // Streams a PM document as a download. Admin-panel uploads physically live on the
+    // ADMIN server, so cross-origin links cannot force a download - this proxies them.
+    public async Task<IActionResult> DownloadAdminDoc(int id)
+    {
+        var userId = _userManager.GetUserId(User)!;
+        var doc = await _pmDocs.GetByIdAsync(id);
+        if (doc == null) return NotFound();
+
+        var req = await _uow.SolarRequests.GetByIdAsync(doc.SolarRequestId);
+        if (req == null || !string.Equals(req.UserId?.Trim(), userId?.Trim(), StringComparison.OrdinalIgnoreCase))
+            return NotFound();
+
+        var path = doc.FilePath ?? string.Empty;
+        var ext  = Path.GetExtension(path.Split('?')[0]);
+        var name = (string.IsNullOrWhiteSpace(doc.FileName) ? "document" : doc.FileName) + ext;
+        var contentType = string.IsNullOrWhiteSpace(doc.ContentType) ? "application/octet-stream" : doc.ContentType;
+
+        if (path.StartsWith("/"))
+        {
+            var local = Path.Combine(_env.WebRootPath, path.TrimStart('/').Replace('/', Path.DirectorySeparatorChar));
+            if (System.IO.File.Exists(local))
+                return PhysicalFile(local, contentType, name);
+            path = (_config["AdminPanelBaseUrl"] ?? "https://solaradmin.solfit.in").TrimEnd('/') + path;
+        }
+        if (!path.StartsWith("http", StringComparison.OrdinalIgnoreCase)) return NotFound();
+
+        try
+        {
+            var bytes = await _http.GetByteArrayAsync(path);
+            return File(bytes, contentType, name);
+        }
+        catch (HttpRequestException)
+        {
+            return NotFound();
+        }
     }
 
     // POST: /User/PMSurya/UploadDocument  (AJAX)
@@ -162,6 +222,17 @@ public class PMSuryaController : Controller
         var docs = (await _pmDocs.GetByRequestIdAsync(requestId)).ToList();
         if (!docs.Any())
             return Json(new { success = false, message = "Upload at least one PM Surya Ghar document first." });
+
+        // Only pending (not-yet-reviewed) documents can be submitted. Approved docs are final;
+        // rejected docs must be replaced (which resets them to Pending) before re-submitting.
+        var userDocs = docs.Where(d => !d.IsAdminUpload).ToList();
+        if (!userDocs.Any(d => d.Status == ApprovalStatus.Pending))
+        {
+            var msg = userDocs.Any(d => d.Status == ApprovalStatus.Rejected)
+                ? "Replace the rejected document(s) first — only pending documents can be submitted."
+                : "All documents are already reviewed. Nothing pending to submit.";
+            return Json(new { success = false, message = msg });
+        }
 
         // Just record an "awaiting admin" notification — the stage advances when admin approves.
         await _notifications.CreateAsync(new CreateNotificationDto

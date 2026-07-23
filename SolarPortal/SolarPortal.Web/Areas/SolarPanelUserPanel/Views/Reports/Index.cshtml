@@ -15,15 +15,20 @@
 
     string Cls(string name) => f == name ? "btn btn-p" : "btn btn-outline";
 
-    // File-existence map: controller pre-checked every stored path against
-    // wwwroot/. If a file is missing on disk we render "Missing" inline
-    // instead of a link that 404s. Records can have stale paths when test
-    // data was created against a different deployment or files were wiped.
     var fileExists = ViewBag.FileExists as Dictionary<string, bool> ?? new();
     var paidByReq  = ViewBag.PaidByRequest as Dictionary<int, decimal> ?? new();
     decimal PaidOf(int id) => paidByReq.TryGetValue(id, out var _pv) ? _pv : 0m;
-    bool Has(string? p) => !string.IsNullOrWhiteSpace(p) && fileExists.TryGetValue(p!, out var ok) && ok;
 
+    // Resolved URL per stored path (controller-built): local wwwroot when present,
+    // otherwise the admin server (admin-panel uploads live there).
+    var fileUrls = ViewBag.FileUrl as Dictionary<string, string> ?? new();
+    string? FileUrlOf(string? p) => !string.IsNullOrWhiteSpace(p) && fileUrls.TryGetValue(p!, out var u) ? u : null;
+
+    // DocumentType values 11-14 belong to the ADMIN project (no enum member here).
+    string DocTypeLabel(SolarPortal.Domain.Enums.DocumentType t) =>
+        (int)t >= 11 && (int)t <= 14 ? "Admin Approval Document" : t.ToString();
+
+    string Dash(string? v) => string.IsNullOrWhiteSpace(v) ? "—" : v;
 
     // Status pill helpers used across all sections
     string PaymentBadge(SolarPortal.Domain.Enums.PaymentStatus s) => s switch
@@ -40,9 +45,35 @@
     };
 }
 
+<style>
+    /* ── My Reports professional polish ─────────────────────────────── */
+    .rpt-card { background:#fff; border:1px solid #e5e7eb; border-radius:10px; margin-bottom:16px; overflow:hidden; box-shadow:0 1px 2px rgba(0,0,0,.04); }
+    .rpt-head { display:flex; align-items:center; gap:10px; padding:13px 16px; border-bottom:1px solid #e5e7eb; background:linear-gradient(180deg,#f8fafc,#f1f5f9); }
+    .rpt-head .ttl { font-weight:700; font-size:14px; color:#0f172a; }
+    .rpt-head .cnt { background:#16a34a; color:#fff; font-size:11.5px; font-weight:700; border-radius:999px; padding:2px 9px; }
+    .rpt-card table { width:100%; border-collapse:collapse; }
+    .rpt-card thead th { font-size:11px; letter-spacing:.4px; text-transform:uppercase; color:#64748b; text-align:left; padding:9px 12px; background:#fafafa; border-bottom:1px solid #e5e7eb; white-space:nowrap; }
+    .rpt-card tbody td { padding:10px 12px; font-size:13px; color:#1e293b; border-bottom:1px solid #f1f5f9; vertical-align:middle; }
+    .rpt-card tbody tr:hover:not(.det-tr) { background:#f8fafc; }
+    .btn-det { border:1px solid #16a34a; color:#16a34a; background:#fff; border-radius:6px; padding:3px 10px; font-size:12px; font-weight:600; cursor:pointer; white-space:nowrap; }
+    .btn-det:hover { background:#16a34a; color:#fff; }
+    .det-tr > td { background:#f8fafc !important; padding:0 !important; }
+    .det-box { padding:16px 18px; }
+    .det-sec { margin-bottom:14px; }
+    .det-sec:last-child { margin-bottom:0; }
+    .det-sec-ttl { font-size:12px; font-weight:700; color:#166534; text-transform:uppercase; letter-spacing:.5px; margin-bottom:8px; border-bottom:1px dashed #cbd5e1; padding-bottom:4px; }
+    .kv-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(220px,1fr)); gap:10px 22px; }
+    .kv .k { font-size:11px; color:#64748b; margin-bottom:2px; }
+    .kv .v { font-size:13px; font-weight:600; color:#0f172a; word-break:break-word; }
+    .kv .v a { color:#d97706; text-decoration:none; }
+    .tbl-wrap { overflow-x:auto; }
+    .inner-tbl { background:#fff; border:1px solid #e5e7eb; border-radius:8px; overflow:hidden; }
+    .inner-tbl thead th { background:#f1f5f9; }
+</style>
+
 <div class="page-header" style="padding:16px">
     <h2>My Reports</h2>
-    <p class="text-muted">Your full history across all modules — payments, documents, surveys, dispatch, DCR.</p>
+    <p class="text-muted">Your full history across all modules — every stage, every value you filled, every admin action.</p>
 </div>
 
 <div class="container-fluid">
@@ -69,27 +100,24 @@
     }
     else
     {
-        @* ─── 1. Solar Requests ───────────────────────────────────────── *@
-        <div class="card" style="margin-bottom:14px">
-            <div class="ct"><span class="ct-dot"></span>Solar Requests (@requests.Count)</div>
+        @* ─── 1. Solar Requests (every request incl. with/without activation) ── *@
+        <div class="rpt-card">
+            <div class="rpt-head"><span>🗂️</span><span class="ttl">Solar Requests</span><span class="cnt">@requests.Count</span></div>
             <div class="tbl-wrap">
-                <table class="report-table">
+                <table>
                     <thead>
                         <tr>
                             <th>Request #</th>
                             <th>Request Type</th>
                             <th>Package</th>
                             <th>Capacity</th>
-                            <th>Connection</th>
                             <th>Project Amount</th>
                             <th>Paid</th>
                             <th>Due</th>
-                            <th>Loan</th>
-                            <th>Light Bill</th>
                             <th>Stage</th>
                             <th>Approval</th>
-                            <th>Approval Date</th>
                             <th>Submitted</th>
+                            <th>Full Details</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -108,28 +136,77 @@
                                 SolarPortal.Domain.Enums.RequestType.AlreadyActiveOnlyRequest    => "✅ Already Active",
                                 _ => r.RequestType.ToString()
                             };
+                            var pmGharId = !string.IsNullOrWhiteSpace(r.PMSuryaGharIdNo) ? r.PMSuryaGharIdNo : r.PmSuryaApplicationNo;
+                            var due = (r.PlanAmount - PaidOf(r.Id)) > 0m ? (r.PlanAmount - PaidOf(r.Id)) : 0m;
+                            var lightBillProofUrl = FileUrlOf(r.LightBillProofPath);
 
                             <tr>
-                                <td data-label="Request #" class="td-b">
+                                <td class="td-b">
                                     <a asp-action="Status" asp-controller="SolarRequest"
                                        asp-area="SolarPanelUserPanel" asp-route-id="@r.Id"
-                                       style="color:var(--green)">@r.RequestNumber</a>
+                                       style="color:var(--green);font-weight:700">@r.RequestNumber</a>
                                 </td>
-                                <td data-label="Request Type" style="font-size:12.5px">@reqTypeLabel</td>
-                                <td data-label="Package" style="font-size:12.5px;max-width:160px" title="@r.SelectedPlan">
-                                    @(string.IsNullOrWhiteSpace(r.SelectedPlan) ? "—" : r.SelectedPlan)
+                                <td style="font-size:12.5px;white-space:nowrap">@reqTypeLabel</td>
+                                <td style="font-size:12.5px;max-width:160px" title="@r.SelectedPlan">@Dash(r.SelectedPlan)</td>
+                                <td>@r.KVCapacity kV</td>
+                                <td>₹@r.PlanAmount.ToString("N0")</td>
+                                <td style="color:#16a34a;font-weight:600">₹@PaidOf(r.Id).ToString("N0")</td>
+                                <td style="color:@(due > 0 ? "#dc2626" : "#16a34a");font-weight:600">₹@due.ToString("N0")</td>
+                                <td><span class="sts sts-disp">@r.CurrentStage.ToString().Replace("_", " ")</span></td>
+                                <td>@Html.Raw(ApprovalBadge(effectiveApproval))</td>
+                                <td style="white-space:nowrap">@r.CreatedAt.ToLocalTime().ToString("dd MMM yyyy")</td>
+                                <td><button type="button" class="btn-det" onclick="toggleDet('rq-@r.Id', this)">▸ Details</button></td>
+                            </tr>
+                            <tr id="rq-@r.Id" class="det-tr" style="display:none">
+                                <td colspan="11">
+                                    <div class="det-box">
+                                        <div class="det-sec">
+                                            <div class="det-sec-ttl">👤 Applicant</div>
+                                            <div class="kv-grid">
+                                                <div class="kv"><div class="k">Name</div><div class="v">@Dash(r.ApplicantName)</div></div>
+                                                <div class="kv"><div class="k">Mobile</div><div class="v">@Dash(r.MobileNumber)</div></div>
+                                                <div class="kv"><div class="k">Alternate Mobile</div><div class="v">@Dash(r.AlternateMobile)</div></div>
+                                                <div class="kv"><div class="k">Email</div><div class="v">@Dash(r.Email)</div></div>
+                                                <div class="kv"><div class="k">Address</div><div class="v">@Dash(r.Address)</div></div>
+                                                <div class="kv"><div class="k">City / State / PIN</div><div class="v">@Dash(r.City) / @Dash(r.State) / @Dash(r.PinCode)</div></div>
+                                                <div class="kv"><div class="k">Aadhaar</div><div class="v">@Dash(r.AadharNumber)</div></div>
+                                                <div class="kv"><div class="k">PAN</div><div class="v">@Dash(r.PANNumber)</div></div>
+                                            </div>
+                                        </div>
+                                        <div class="det-sec">
+                                            <div class="det-sec-ttl">📦 Plan &amp; Product</div>
+                                            <div class="kv-grid">
+                                                <div class="kv"><div class="k">Request Type</div><div class="v">@reqTypeLabel</div></div>
+                                                <div class="kv"><div class="k">Package</div><div class="v">@Dash(r.SelectedPlan)</div></div>
+                                                <div class="kv"><div class="k">Capacity</div><div class="v">@r.KVCapacity kV</div></div>
+                                                <div class="kv"><div class="k">Connection Type</div><div class="v">@r.ConnectionType</div></div>
+                                                <div class="kv"><div class="k">Project Amount</div><div class="v">₹@r.PlanAmount.ToString("N0")</div></div>
+                                                <div class="kv"><div class="k">Paid (Verified)</div><div class="v" style="color:#16a34a">₹@PaidOf(r.Id).ToString("N0")</div></div>
+                                                <div class="kv"><div class="k">Due</div><div class="v" style="color:@(due > 0 ? "#dc2626" : "#16a34a")">₹@due.ToString("N0")</div></div>
+                                            </div>
+                                        </div>
+                                        <div class="det-sec">
+                                            <div class="det-sec-ttl">💡 Light Bill</div>
+                                            <div class="kv-grid">
+                                                <div class="kv"><div class="k">Ownership</div><div class="v">@(r.LightBillOwnership == "BloodRelation" ? "Blood relation" : (r.LightBillOwnership == "Self" ? "Self" : "—"))</div></div>
+                                                <div class="kv"><div class="k">Relation Holder Name</div><div class="v">@Dash(r.LightBillRelationName)</div></div>
+                                                <div class="kv"><div class="k">Relation Proof</div><div class="v">@if (lightBillProofUrl != null) { <a href="javascript:void(0)" onclick="openFileModal('@lightBillProofUrl')">📄 View</a> } else { <text>—</text> }</div></div>
+                                            </div>
+                                        </div>
+                                        <div class="det-sec">
+                                            <div class="det-sec-ttl">🌞 PM Surya Ghar &amp; Workflow</div>
+                                            <div class="kv-grid">
+                                                <div class="kv"><div class="k">Loan Preference</div><div class="v">@(string.IsNullOrWhiteSpace(r.PMSuryaLoanOption) ? "—" : (r.PMSuryaLoanOption == "Loan" ? "On Loan" : "Without Loan"))</div></div>
+                                                <div class="kv"><div class="k">PM Surya Ghar ID</div><div class="v">@Dash(pmGharId)</div></div>
+                                                <div class="kv"><div class="k">Current Stage</div><div class="v">@r.CurrentStage</div></div>
+                                                <div class="kv"><div class="k">Approval</div><div class="v">@Html.Raw(ApprovalBadge(effectiveApproval))</div></div>
+                                                <div class="kv"><div class="k">Rejection Reason</div><div class="v">@Dash(r.RejectionReason)</div></div>
+                                                <div class="kv"><div class="k">Submitted On</div><div class="v">@r.CreatedAt.ToLocalTime().ToString("dd MMM yyyy HH:mm")</div></div>
+                                                <div class="kv"><div class="k">Last Updated</div><div class="v">@(r.UpdatedAt?.ToLocalTime().ToString("dd MMM yyyy HH:mm") ?? "—")</div></div>
+                                            </div>
+                                        </div>
+                                    </div>
                                 </td>
-                                <td data-label="Capacity">@r.KVCapacity kV</td>
-                                <td data-label="Connection">@r.ConnectionType</td>
-                                <td data-label="Project Amount">₹@r.PlanAmount.ToString("N0")</td>
-                                <td data-label="Paid">₹@PaidOf(r.Id).ToString("N0")</td>
-                                <td data-label="Due">₹@(((r.PlanAmount - PaidOf(r.Id)) > 0m ? (r.PlanAmount - PaidOf(r.Id)) : 0m).ToString("N0"))</td>
-                                <td data-label="Loan">@(string.IsNullOrWhiteSpace(r.PMSuryaLoanOption) ? "—" : (r.PMSuryaLoanOption == "Loan" ? "On Loan" : "Without Loan"))</td>
-                                <td data-label="Light Bill">@(r.LightBillOwnership == "BloodRelation" ? "Blood relation" : (r.LightBillOwnership == "Self" ? "Self" : "—"))</td>
-                                <td data-label="Stage"><span class="sts sts-disp">@r.CurrentStage.ToString().Replace("_", " ")</span></td>
-                                <td data-label="Approval">@Html.Raw(ApprovalBadge(effectiveApproval))</td>
-                                <td data-label="Approval Date">@((effectiveApproval == SolarPortal.Domain.Enums.ApprovalStatus.Approved || r.ApprovalStatus == SolarPortal.Domain.Enums.ApprovalStatus.Rejected) ? (r.UpdatedAt?.ToLocalTime().ToString("dd MMM yyyy") ?? r.CreatedAt.ToLocalTime().ToString("dd MMM yyyy")) : "—")</td>
-                                <td data-label="Submitted">@r.CreatedAt.ToLocalTime().ToString("dd MMM yyyy")</td>
                             </tr>
                         }
                     </tbody>
@@ -140,8 +217,8 @@
         @* ─── 2. Payments ────────────────────────────────────────────── *@
         @if (payments.Any())
         {
-            <div class="card" style="margin-bottom:14px">
-                <div class="ct"><span class="ct-dot"></span>Payments (@payments.Count)</div>
+            <div class="rpt-card">
+                <div class="rpt-head"><span>💳</span><span class="ttl">Payments</span><span class="cnt">@payments.Count</span></div>
                 <div class="tbl-wrap">
                     <table>
                         <thead>
@@ -160,20 +237,7 @@
                         <tbody>
                             @foreach (var p in payments)
                             {
-                                @* Normalize the stored receipt path the same way the admin
-                                   Payment Verification view does — older records sometimes
-                                   carried a stray "wwwroot/" prefix or Windows backslashes
-                                   because of how the upload service used to write them.
-                                   We strip both and prefix "/" so the URL resolves under
-                                   the web root regardless of which format was saved. *@
-                                string? receiptUrl = null;
-                                if (!string.IsNullOrEmpty(p.ReceiptImagePath))
-                                {
-                                    var rel = p.ReceiptImagePath.Replace("\\", "/").TrimStart('/');
-                                    if (rel.StartsWith("wwwroot/", StringComparison.OrdinalIgnoreCase))
-                                        rel = rel.Substring("wwwroot/".Length);
-                                    receiptUrl = "/" + rel;
-                                }
+                                string? receiptUrl = FileUrlOf(p.ReceiptImagePath);
                                 <tr>
                                     <td>@ReqNum(p.SolarRequestId)</td>
                                     <td>₹@p.Amount.ToString("N0")</td>
@@ -182,16 +246,11 @@
                                     <td>@p.PaymentDate.ToLocalTime().ToString("dd MMM yyyy")</td>
                                     <td>@Html.Raw(PaymentBadge(p.Status))</td>
                                     <td>@((p.VerifiedAt ?? p.UpdatedAt)?.ToLocalTime().ToString("dd MMM yyyy") ?? "—")</td>
-                                    <td>@(string.IsNullOrWhiteSpace(p.Notes) ? "—" : p.Notes)</td>
+                                    <td>@Dash(p.Notes)</td>
                                     <td>
-                                        @if (!string.IsNullOrWhiteSpace(receiptUrl) && Has(p.ReceiptImagePath))
+                                        @if (!string.IsNullOrWhiteSpace(receiptUrl))
                                         {
                                             <a href="javascript:void(0)" onclick="openFileModal('@receiptUrl')" style="color:var(--sun)">📷 View</a>
-                                        }
-                                        else if (!string.IsNullOrWhiteSpace(p.ReceiptImagePath))
-                                        {
-                                            <span class="text-muted" style="font-size:11px"
-                                                  title="@p.ReceiptImagePath">⚠ File missing</span>
                                         }
                                         else { <span class="text-muted">—</span> }
                                     </td>
@@ -203,60 +262,82 @@
             </div>
         }
 
-        @* ─── 3. PM Surya Ghar Documents ─────────────────────────────── *@
+        @* ─── 3. PM Surya Ghar Documents — one summary row per request ── *@
         @if (pmDocs.Any())
         {
-            <div class="card" style="margin-bottom:14px">
-                <div class="ct"><span class="ct-dot"></span>PM Surya Ghar Documents (@pmDocs.Count)</div>
+            <div class="rpt-card">
+                <div class="rpt-head"><span>🌞</span><span class="ttl">PM Surya Ghar Documents</span><span class="cnt">@pmDocs.Count</span></div>
                 <div class="tbl-wrap">
                     <table>
                         <thead>
                             <tr>
                                 <th>Request #</th>
-                                <th>Document Type</th>
-                                <th>Uploaded</th>
-                                <th>Status</th>
-                                <th>Approved / Rejected On</th>
-                                <th>Remark</th>
-                                <th>File</th>
+                                <th>Total Documents</th>
+                                <th>Approved</th>
+                                <th>Pending</th>
+                                <th>Rejected</th>
+                                <th>Last Updated</th>
+                                <th>Full Details</th>
                             </tr>
                         </thead>
                         <tbody>
-                            @foreach (var d in pmDocs)
+                            @foreach (var grp in pmDocs.GroupBy(x => x.SolarRequestId))
                             {
+                                var aprCnt = grp.Count(x => x.Status == SolarPortal.Domain.Enums.ApprovalStatus.Approved);
+                                var penCnt = grp.Count(x => x.Status == SolarPortal.Domain.Enums.ApprovalStatus.Pending);
+                                var rejCnt = grp.Count(x => x.Status == SolarPortal.Domain.Enums.ApprovalStatus.Rejected);
+                                var lastUpd = grp.Max(x => x.UpdatedAt ?? x.CreatedAt);
                                 <tr>
-                                    <td>@ReqNum(d.SolarRequestId)</td>
-                                    <td>@d.DocumentType</td>
-                                    <td>@d.CreatedAt.ToLocalTime().ToString("dd MMM yyyy")</td>
-                                    <td>@Html.Raw(ApprovalBadge(d.Status))</td>
-                                    <td>@(d.Status != SolarPortal.Domain.Enums.ApprovalStatus.Pending ? (d.UpdatedAt?.ToLocalTime().ToString("dd MMM yyyy") ?? "—") : "—")</td>
-                                    <td>
-                                        @if (!string.IsNullOrWhiteSpace(d.Remarks))
-                                        {
-                                            <span style="color:#dc3545;font-size:12px">@d.Remarks</span>
-                                        }
-                                        else { <span class="text-muted">—</span> }
-                                    </td>
-                                    <td>
-                                        @{
-                                            string? pmDocUrl = null;
-                                            if (!string.IsNullOrEmpty(d.FilePath))
-                                            {
-                                                var rel = d.FilePath.Replace("\\", "/").TrimStart('/');
-                                                if (rel.StartsWith("wwwroot/", StringComparison.OrdinalIgnoreCase))
-                                                    rel = rel.Substring("wwwroot/".Length);
-                                                pmDocUrl = "/" + rel;
-                                            }
-                                        }
-                                        @if (!string.IsNullOrWhiteSpace(pmDocUrl) && Has(d.FilePath))
-                                        {
-                                            <a href="javascript:void(0)" onclick="openFileModal('@pmDocUrl')" style="color:var(--sun)">📄 View</a>
-                                        }
-                                        else if (!string.IsNullOrWhiteSpace(d.FilePath))
-                                        {
-                                            <span class="text-muted" style="font-size:11px" title="@d.FilePath">⚠ File missing</span>
-                                        }
-                                        else { <span class="text-muted">—</span> }
+                                    <td class="td-b" style="font-weight:700">@ReqNum(grp.Key)</td>
+                                    <td>@grp.Count()</td>
+                                    <td><span class="sts sts-act">✅ @aprCnt</span></td>
+                                    <td>@(penCnt > 0 ? Html.Raw($"<span class='sts sts-pen'>⏳ {penCnt}</span>") : Html.Raw("<span class='text-muted'>0</span>"))</td>
+                                    <td>@(rejCnt > 0 ? Html.Raw($"<span class='sts sts-rej'>❌ {rejCnt}</span>") : Html.Raw("<span class='text-muted'>0</span>"))</td>
+                                    <td style="white-space:nowrap">@lastUpd.ToLocalTime().ToString("dd MMM yyyy")</td>
+                                    <td><button type="button" class="btn-det" onclick="toggleDet('pm-@grp.Key', this)">▸ Details</button></td>
+                                </tr>
+                                <tr id="pm-@grp.Key" class="det-tr" style="display:none">
+                                    <td colspan="7">
+                                        <div class="det-box">
+                                            <table class="inner-tbl">
+                                                <thead>
+                                                    <tr>
+                                                        <th>Document Type</th>
+                                                        <th>Uploaded</th>
+                                                        <th>Status</th>
+                                                        <th>Approved / Rejected On</th>
+                                                        <th>Remark</th>
+                                                        <th>File</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    @foreach (var d in grp)
+                                                    {
+                                                        string? pmDocUrl = FileUrlOf(d.FilePath);
+                                                        <tr>
+                                                            <td>@DocTypeLabel(d.DocumentType)</td>
+                                                            <td>@d.CreatedAt.ToLocalTime().ToString("dd MMM yyyy")</td>
+                                                            <td>@Html.Raw(ApprovalBadge(d.Status))</td>
+                                                            <td>@(d.Status != SolarPortal.Domain.Enums.ApprovalStatus.Pending ? (d.UpdatedAt?.ToLocalTime().ToString("dd MMM yyyy") ?? "—") : "—")</td>
+                                                            <td>
+                                                                @if (!string.IsNullOrWhiteSpace(d.Remarks))
+                                                                {
+                                                                    <span style="color:#dc3545;font-size:12px">@d.Remarks</span>
+                                                                }
+                                                                else { <span class="text-muted">—</span> }
+                                                            </td>
+                                                            <td>
+                                                                @if (!string.IsNullOrWhiteSpace(pmDocUrl))
+                                                                {
+                                                                    <a href="javascript:void(0)" onclick="openFileModal('@pmDocUrl')" style="color:var(--sun)">📄 View</a>
+                                                                }
+                                                                else { <span class="text-muted">—</span> }
+                                                            </td>
+                                                        </tr>
+                                                    }
+                                                </tbody>
+                                            </table>
+                                        </div>
                                     </td>
                                 </tr>
                             }
@@ -266,11 +347,11 @@
             </div>
         }
 
-        @* ─── 4. Site Surveys ─────────────────────────────────────────── *@
+        @* ─── 4. Site Surveys — full detail of everything filled ──────── *@
         @if (surveys.Any())
         {
-            <div class="card" style="margin-bottom:14px">
-                <div class="ct"><span class="ct-dot"></span>Site Surveys (@surveys.Count)</div>
+            <div class="rpt-card">
+                <div class="rpt-head"><span>📐</span><span class="ttl">Site Surveys</span><span class="cnt">@surveys.Count</span></div>
                 <div class="tbl-wrap">
                     <table>
                         <thead>
@@ -282,6 +363,7 @@
                                 <th>Status</th>
                                 <th>Approved / Rejected On</th>
                                 <th>Remark</th>
+                                <th>Full Details</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -290,10 +372,16 @@
                                 var ss = s.IsCompleted
                                     ? SolarPortal.Domain.Enums.ApprovalStatus.Approved
                                     : s.ApprovalStatus;
+                                var roofUrl  = FileUrlOf(s.RoofPhotoPath);
+                                var houseUrl = FileUrlOf(s.GpsPhotoPath);
+                                var roofTypeTxt = s.RoofType == "Other" && !string.IsNullOrWhiteSpace(s.RoofTypeOther)
+                                    ? $"Other ({s.RoofTypeOther})" : Dash(s.RoofType);
+                                var dirTxt = s.RoofDirection == "Other" && !string.IsNullOrWhiteSpace(s.RoofDirectionOther)
+                                    ? $"Other ({s.RoofDirectionOther})" : Dash(s.RoofDirection);
                                 <tr>
                                     <td>@ReqNum(s.SolarRequestId)</td>
-                                    <td>@(s.PropertyType ?? "—")</td>
-                                    <td>@(s.DiscomName ?? "—")</td>
+                                    <td>@Dash(s.PropertyType)</td>
+                                    <td>@Dash(s.DiscomName)</td>
                                     <td>@(s.SurveyDate?.ToLocalTime().ToString("dd MMM yyyy") ?? "—")</td>
                                     <td>@Html.Raw(ApprovalBadge(ss))</td>
                                     <td>@(s.IsCompleted ? (s.CompletedAt?.ToLocalTime().ToString("dd MMM yyyy") ?? "—") : (s.ApprovalStatus == SolarPortal.Domain.Enums.ApprovalStatus.Rejected ? (s.RejectedAt?.ToLocalTime().ToString("dd MMM yyyy") ?? "—") : "—"))</td>
@@ -302,7 +390,55 @@
                                         {
                                             <span style="color:#dc3545;font-size:12px">@s.RejectionReason</span>
                                         }
+                                        else if (!string.IsNullOrWhiteSpace(s.OperationsRemark))
+                                        {
+                                            <span style="color:#dc3545;font-size:12px">@s.OperationsRemark</span>
+                                        }
                                         else { <span class="text-muted">—</span> }
+                                    </td>
+                                    <td><button type="button" class="btn-det" onclick="toggleDet('ss-@s.Id', this)">▸ Details</button></td>
+                                </tr>
+                                <tr id="ss-@s.Id" class="det-tr" style="display:none">
+                                    <td colspan="8">
+                                        <div class="det-box">
+                                            <div class="det-sec">
+                                                <div class="det-sec-ttl">🏠 General Information</div>
+                                                <div class="kv-grid">
+                                                    <div class="kv"><div class="k">Connection Type</div><div class="v">@Dash(s.PropertyType)</div></div>
+                                                    <div class="kv"><div class="k">Roof Available</div><div class="v">@Dash(s.RoofAvailable)</div></div>
+                                                    <div class="kv"><div class="k">Roof Type</div><div class="v">@roofTypeTxt</div></div>
+                                                    <div class="kv"><div class="k">Roof Total Area</div><div class="v">@(s.RoofTotalAreaSqft?.ToString("N2") ?? "—") sq ft</div></div>
+                                                </div>
+                                            </div>
+                                            <div class="det-sec">
+                                                <div class="det-sec-ttl">⚡ Electrical / Connection</div>
+                                                <div class="kv-grid">
+                                                    <div class="kv"><div class="k">DISCOM</div><div class="v">@Dash(s.DiscomName)</div></div>
+                                                    <div class="kv"><div class="k">Meter Type</div><div class="v">@Dash(s.MeterType)</div></div>
+                                                    <div class="kv"><div class="k">Grid Connection Type</div><div class="v">@Dash(s.GridType)</div></div>
+                                                </div>
+                                            </div>
+                                            <div class="det-sec">
+                                                <div class="det-sec-ttl">🌤️ Site Conditions</div>
+                                                <div class="kv-grid">
+                                                    <div class="kv"><div class="k">Shadow on Roof</div><div class="v">@Dash(s.ShadowOnRoof)</div></div>
+                                                    <div class="kv"><div class="k">Obstructions</div><div class="v">@(string.IsNullOrWhiteSpace(s.Obstructions) ? "—" : s.Obstructions.Replace(",", ", "))</div></div>
+                                                    <div class="kv"><div class="k">Roof Direction</div><div class="v">@dirTxt</div></div>
+                                                    <div class="kv"><div class="k">Earthing Available</div><div class="v">@Dash(s.EarthingAvailable)</div></div>
+                                                    <div class="kv"><div class="k">Internet Available</div><div class="v">@Dash(s.InternetAvailable)</div></div>
+                                                </div>
+                                            </div>
+                                            <div class="det-sec">
+                                                <div class="det-sec-ttl">📷 Photos &amp; Notes</div>
+                                                <div class="kv-grid">
+                                                    <div class="kv"><div class="k">Roof Photo</div><div class="v">@if (roofUrl != null) { <a href="javascript:void(0)" onclick="openFileModal('@roofUrl')">📷 View</a> } else { <text>—</text> }</div></div>
+                                                    <div class="kv"><div class="k">House Photo</div><div class="v">@if (houseUrl != null) { <a href="javascript:void(0)" onclick="openFileModal('@houseUrl')">📷 View</a> } else { <text>—</text> }</div></div>
+                                                    <div class="kv"><div class="k">Survey Notes</div><div class="v">@Dash(s.SurveyNotes)</div></div>
+                                                    <div class="kv"><div class="k">Submitted On</div><div class="v">@s.CreatedAt.ToLocalTime().ToString("dd MMM yyyy HH:mm")</div></div>
+                                                    <div class="kv"><div class="k">Status</div><div class="v">@Html.Raw(ApprovalBadge(ss))</div></div>
+                                                </div>
+                                            </div>
+                                        </div>
                                     </td>
                                 </tr>
                             }
@@ -315,8 +451,8 @@
         @* ─── 5. Meter Dispatch (read-only — admin action) ────────────── *@
         @if (meters.Any() && (f == "all" || f == "approved"))
         {
-            <div class="card" style="margin-bottom:14px">
-                <div class="ct"><span class="ct-dot"></span>Meter Dispatch (@meters.Count)</div>
+            <div class="rpt-card">
+                <div class="rpt-head"><span>⚡</span><span class="ttl">Meter Dispatch</span><span class="cnt">@meters.Count</span></div>
                 <div class="tbl-wrap">
                     <table>
                         <thead>
@@ -325,30 +461,17 @@
                         <tbody>
                             @foreach (var m in meters)
                             {
+                                string? mDispUrl = FileUrlOf(m.DispatchDocumentPath);
                                 <tr>
                                     <td>@ReqNum(m.SolarRequestId)</td>
-                                    <td>@(m.MeterNumber ?? "—")</td>
-                                    <td>@(m.MeterType ?? "—")</td>
+                                    <td>@Dash(m.MeterNumber)</td>
+                                    <td>@Dash(m.MeterType)</td>
                                     <td>@(m.DispatchDate?.ToLocalTime().ToString("dd MMM yyyy") ?? "—")</td>
-                                    <td>@(m.Remark ?? "—")</td>
+                                    <td>@Dash(m.Remark)</td>
                                     <td>
-                                        @{
-                                            string? mDispUrl = null;
-                                            if (!string.IsNullOrWhiteSpace(m.DispatchDocumentPath))
-                                            {
-                                                var rel = m.DispatchDocumentPath.Replace("\\", "/").TrimStart('/');
-                                                if (rel.StartsWith("wwwroot/", StringComparison.OrdinalIgnoreCase))
-                                                    rel = rel.Substring("wwwroot/".Length);
-                                                mDispUrl = "/" + rel;
-                                            }
-                                        }
-                                        @if (!string.IsNullOrWhiteSpace(mDispUrl) && Has(m.DispatchDocumentPath))
+                                        @if (!string.IsNullOrWhiteSpace(mDispUrl))
                                         {
                                             <a href="javascript:void(0)" onclick="openFileModal('@mDispUrl')" style="color:var(--sun)">📄 View</a>
-                                        }
-                                        else if (!string.IsNullOrWhiteSpace(m.DispatchDocumentPath))
-                                        {
-                                            <span class="text-muted" style="font-size:11px" title="@m.DispatchDocumentPath">⚠ File missing</span>
                                         }
                                         else { <span class="text-muted">—</span> }
                                     </td>
@@ -363,8 +486,8 @@
         @* ─── 6. Material Dispatch ────────────────────────────────────── *@
         @if (materials.Any() && (f == "all" || f == "approved"))
         {
-            <div class="card" style="margin-bottom:14px">
-                <div class="ct"><span class="ct-dot"></span>Material Dispatch (@materials.Count)</div>
+            <div class="rpt-card">
+                <div class="rpt-head"><span>🚚</span><span class="ttl">Material Dispatch</span><span class="cnt">@materials.Count</span></div>
                 <div class="tbl-wrap">
                     <table>
                         <thead>
@@ -373,30 +496,17 @@
                         <tbody>
                             @foreach (var m in materials)
                             {
+                                string? mDispUrl = FileUrlOf(m.DispatchDocumentPath);
                                 <tr>
                                     <td>@ReqNum(m.SolarRequestId)</td>
-                                    <td>@(m.MaterialDetails ?? "—")</td>
-                                    <td>@(m.VehicleDetails ?? "—")</td>
+                                    <td>@Dash(m.MaterialDetails)</td>
+                                    <td>@Dash(m.VehicleDetails)</td>
                                     <td>@(m.DispatchDate?.ToLocalTime().ToString("dd MMM yyyy") ?? "—")</td>
-                                    <td>@(m.Remark ?? "—")</td>
+                                    <td>@Dash(m.Remark)</td>
                                     <td>
-                                        @{
-                                            string? mDispUrl = null;
-                                            if (!string.IsNullOrWhiteSpace(m.DispatchDocumentPath))
-                                            {
-                                                var rel = m.DispatchDocumentPath.Replace("\\", "/").TrimStart('/');
-                                                if (rel.StartsWith("wwwroot/", StringComparison.OrdinalIgnoreCase))
-                                                    rel = rel.Substring("wwwroot/".Length);
-                                                mDispUrl = "/" + rel;
-                                            }
-                                        }
-                                        @if (!string.IsNullOrWhiteSpace(mDispUrl) && Has(m.DispatchDocumentPath))
+                                        @if (!string.IsNullOrWhiteSpace(mDispUrl))
                                         {
                                             <a href="javascript:void(0)" onclick="openFileModal('@mDispUrl')" style="color:var(--sun)">📄 View</a>
-                                        }
-                                        else if (!string.IsNullOrWhiteSpace(m.DispatchDocumentPath))
-                                        {
-                                            <span class="text-muted" style="font-size:11px" title="@m.DispatchDocumentPath">⚠ File missing</span>
                                         }
                                         else { <span class="text-muted">—</span> }
                                     </td>
@@ -411,8 +521,8 @@
         @* ─── 7. Installation ─────────────────────────────────────────── *@
         @if (installs.Any() && (f == "all" || f == "approved"))
         {
-            <div class="card" style="margin-bottom:14px">
-                <div class="ct"><span class="ct-dot"></span>Installation (@installs.Count)</div>
+            <div class="rpt-card">
+                <div class="rpt-head"><span>🔧</span><span class="ttl">Installation</span><span class="cnt">@installs.Count</span></div>
                 <div class="tbl-wrap">
                     <table>
                         <thead>
@@ -421,29 +531,16 @@
                         <tbody>
                             @foreach (var i in installs)
                             {
+                                string? iPhotoUrl = FileUrlOf(i.CompletionPhotoPath);
                                 <tr>
                                     <td>@ReqNum(i.SolarRequestId)</td>
                                     <td>@(i.InstallationDate?.ToLocalTime().ToString("dd MMM yyyy") ?? "—")</td>
-                                    <td>@(i.Notes ?? "—")</td>
-                                    <td>@(i.Remark ?? "—")</td>
+                                    <td>@Dash(i.Notes)</td>
+                                    <td>@Dash(i.Remark)</td>
                                     <td>
-                                        @{
-                                            string? iPhotoUrl = null;
-                                            if (!string.IsNullOrWhiteSpace(i.CompletionPhotoPath))
-                                            {
-                                                var rel = i.CompletionPhotoPath.Replace("\\", "/").TrimStart('/');
-                                                if (rel.StartsWith("wwwroot/", StringComparison.OrdinalIgnoreCase))
-                                                    rel = rel.Substring("wwwroot/".Length);
-                                                iPhotoUrl = "/" + rel;
-                                            }
-                                        }
-                                        @if (!string.IsNullOrWhiteSpace(iPhotoUrl) && Has(i.CompletionPhotoPath))
+                                        @if (!string.IsNullOrWhiteSpace(iPhotoUrl))
                                         {
                                             <a href="javascript:void(0)" onclick="openFileModal('@iPhotoUrl')" style="color:var(--sun)">📷 View</a>
-                                        }
-                                        else if (!string.IsNullOrWhiteSpace(i.CompletionPhotoPath))
-                                        {
-                                            <span class="text-muted" style="font-size:11px" title="@i.CompletionPhotoPath">⚠ File missing</span>
                                         }
                                         else { <span class="text-muted">—</span> }
                                     </td>
@@ -458,8 +555,8 @@
         @* ─── 8. DCR Documents ────────────────────────────────────────── *@
         @if (dcrDocs.Any())
         {
-            <div class="card" style="margin-bottom:14px">
-                <div class="ct"><span class="ct-dot"></span>DCR Documents (@dcrDocs.Count)</div>
+            <div class="rpt-card">
+                <div class="rpt-head"><span>📑</span><span class="ttl">DCR Documents</span><span class="cnt">@dcrDocs.Count</span></div>
                 <div class="tbl-wrap">
                     <table>
                         <thead>
@@ -468,17 +565,14 @@
                         <tbody>
                             @foreach (var d in dcrDocs)
                             {
+                                string? dDocUrl = FileUrlOf(d.DocumentPath);
                                 <tr>
                                     <td>@ReqNum(d.SolarRequestId)</td>
-                                    <td>@(d.DCRNumber ?? "—")</td>
+                                    <td>@Dash(d.DCRNumber)</td>
                                     <td>@(d.DCRDate?.ToLocalTime().ToString("dd MMM yyyy") ?? "—")</td>
                                     <td>@Html.Raw(ApprovalBadge(d.ApprovalStatus))</td>
                                     <td>@(d.ApprovalStatus == SolarPortal.Domain.Enums.ApprovalStatus.Approved ? (d.ApprovedAt?.ToLocalTime().ToString("dd MMM yyyy") ?? "—") : (d.ApprovalStatus == SolarPortal.Domain.Enums.ApprovalStatus.Rejected ? (d.UpdatedAt?.ToLocalTime().ToString("dd MMM yyyy") ?? "—") : "—"))</td>
                                     <td>
-                                        @* DCRDocument has its own RejectionReason field (we added it earlier
-                                           for the admin approve/reject workflow). PMDocument up above uses
-                                           the generic Remarks field instead — that entity doesn't have a
-                                           dedicated rejection-reason column. *@
                                         @if (!string.IsNullOrWhiteSpace(d.RejectionReason))
                                         {
                                             <span style="color:#dc3545;font-size:12px">@d.RejectionReason</span>
@@ -486,23 +580,9 @@
                                         else { <span class="text-muted">—</span> }
                                     </td>
                                     <td>
-                                        @{
-                                            string? dDocUrl = null;
-                                            if (!string.IsNullOrWhiteSpace(d.DocumentPath))
-                                            {
-                                                var rel = d.DocumentPath.Replace("\\", "/").TrimStart('/');
-                                                if (rel.StartsWith("wwwroot/", StringComparison.OrdinalIgnoreCase))
-                                                    rel = rel.Substring("wwwroot/".Length);
-                                                dDocUrl = "/" + rel;
-                                            }
-                                        }
-                                        @if (!string.IsNullOrWhiteSpace(dDocUrl) && Has(d.DocumentPath))
+                                        @if (!string.IsNullOrWhiteSpace(dDocUrl))
                                         {
                                             <a href="javascript:void(0)" onclick="openFileModal('@dDocUrl')" style="color:var(--sun)">📄 View</a>
-                                        }
-                                        else if (!string.IsNullOrWhiteSpace(d.DocumentPath))
-                                        {
-                                            <span class="text-muted" style="font-size:11px" title="@d.DocumentPath">⚠ File missing</span>
                                         }
                                         else { <span class="text-muted">—</span> }
                                     </td>
@@ -515,6 +595,17 @@
         }
     }
 </div>
+
+<script>
+    // Expand / collapse a "Full Details" row
+    function toggleDet(id, btn) {
+        var row = document.getElementById(id);
+        if (!row) return;
+        var open = row.style.display !== 'none';
+        row.style.display = open ? 'none' : 'table-row';
+        if (btn) btn.innerHTML = open ? '▸ Details' : '▾ Hide';
+    }
+</script>
 
 @* In-page file preview modal (no new tab) *@
 @await Html.PartialAsync("_FileModal")

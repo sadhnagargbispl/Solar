@@ -60,13 +60,12 @@ public class SiteSurveyController : Controller
         var req = await _uow.SolarRequests.GetByIdAsync(id.Value);
         if (req == null || !string.Equals(req.UserId?.Trim(), userId?.Trim(), StringComparison.OrdinalIgnoreCase)) return NotFound();
 
-        // Spec task 12: once PM Surya Ghar is approved, Meter Dispatch AND Site Survey
-        // open together. PM approval advances the request to the MeterDispatch stage, so
-        // the Site Survey unlocks from MeterDispatch onward (it no longer waits for the
-        // request to reach the SiteSurvey stage specifically).
-        if (req.CurrentStage < ProjectStatus.MeterDispatch)
+        // Strict stage-wise flow: Site Survey opens only once the admin completes
+        // Meter Dispatch and advances the request to the SiteSurvey stage.
+        // (Supersedes spec task 12, which opened it together with Meter Dispatch.)
+        if (req.CurrentStage < ProjectStatus.SiteSurvey)
         {
-            TempData["Info"] = "Site survey unlocks after PM Surya Ghar is approved by admin.";
+            TempData["Info"] = "Site Survey unlocks after Meter Dispatch is completed by admin.";
             return RedirectToAction("Status", "SolarRequest", new { id });
         }
 
@@ -193,6 +192,10 @@ public class SiteSurveyController : Controller
             if (roofPath  != null) existing.RoofPhotoPath = roofPath;
             if (housePath != null) existing.GpsPhotoPath  = housePath;  // repurposed as House Photo
             existing.OperationsRemark    = null;  // clear prior reject reason — this is a fresh re-submission
+            existing.ApprovalStatus      = ApprovalStatus.Pending;  // back to pending for admin re-review
+            existing.RejectionReason     = null;
+            existing.RejectedAt          = null;
+            existing.RejectedBy          = null;
             existing.UpdatedAt           = DateTime.UtcNow;
             existing.UpdatedBy           = userId;
             await _uow.SaveChangesAsync();

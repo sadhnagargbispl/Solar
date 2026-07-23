@@ -1546,10 +1546,10 @@ C:\Users\Claude1\AppData\Local\Temp\solarbuild_v2\refs\WindowsBase.dll
 \\localhost\Sadhna\GitHub\New folder\Solar\SolarPortal\SolarPortal.Web\obj\Debug\net8.0\staticwebassets.development.json
 \\localhost\Sadhna\GitHub\New folder\Solar\SolarPortal\SolarPortal.Web\obj\Debug\net8.0\staticwebassets.build.endpoints.json
 \\localhost\Sadhna\GitHub\New folder\Solar\SolarPortal\SolarPortal.Web\obj\Debug\net8.0\swae.build.ex.cache
-\\localhost\Sadhna\GitHub\New folder\Solar\SolarPortal\SolarPortal.Web\obj\Debug\net8.0\staticwebassets.upToDateCheck.txt
 \\localhost\Sadhna\GitHub\New folder\Solar\SolarPortal\SolarPortal.Web\obj\Debug\net8.0\SolarPor.FEE2856E.Up2Date
 \\localhost\Sadhna\GitHub\New folder\Solar\SolarPortal\SolarPortal.Web\obj\Debug\net8.0\SolarPortal.Web.dll
 \\localhost\Sadhna\GitHub\New folder\Solar\SolarPortal\SolarPortal.Web\obj\Debug\net8.0\refint\SolarPortal.Web.dll
 \\localhost\Sadhna\GitHub\New folder\Solar\SolarPortal\SolarPortal.Web\obj\Debug\net8.0\SolarPortal.Web.pdb
 \\localhost\Sadhna\GitHub\New folder\Solar\SolarPortal\SolarPortal.Web\obj\Debug\net8.0\SolarPortal.Web.genruntimeconfig.cache
 \\localhost\Sadhna\GitHub\New folder\Solar\SolarPortal\SolarPortal.Web\obj\Debug\net8.0\ref\SolarPortal.Web.dll
+\\localhost\Sadhna\GitHub\New folder\Solar\SolarPortal\SolarPortal.Web\obj\Debug\net8.0\staticwebassets.upToDateCheck.txt

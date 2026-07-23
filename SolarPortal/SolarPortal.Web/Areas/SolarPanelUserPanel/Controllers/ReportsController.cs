@@ -26,13 +26,15 @@ public class ReportsController : Controller
     private readonly IUnitOfWork _uow;
     private readonly UserManager<ApplicationUser> _userManager;
     private readonly IWebHostEnvironment _env;
+    private readonly IConfiguration _config;
 
     public ReportsController(IUnitOfWork uow, UserManager<ApplicationUser> userManager,
-        IWebHostEnvironment env)
+        IWebHostEnvironment env, IConfiguration config)
     {
         _uow = uow;
         _userManager = userManager;
         _env = env;
+        _config = config;
     }
 
     // Resolve a stored relative path (e.g. "/uploads/payments/abc.jpg") to a
@@ -135,10 +137,29 @@ public class ReportsController : Controller
             .Concat(materials.Select(m => m.DispatchDocumentPath))
             .Concat(installations.Select(i => i.CompletionPhotoPath))
             .Concat(dcrDocs.Select(d => d.DocumentPath))
+            .Concat(siteSurveys.Select(s => s.RoofPhotoPath))
+            .Concat(siteSurveys.Select(s => s.GpsPhotoPath))
+            .Concat(siteSurveys.Select(s => s.SurveyPhotoPath))
+            .Concat(myRequests.Select(r => r.LightBillProofPath))
             .Where(p => !string.IsNullOrWhiteSpace(p))
             .Distinct()
             .ToList();
         ViewBag.FileExists = allPaths!.ToDictionary(p => p!, p => FileExistsOnDisk(p));
+
+        // Resolved URL per stored path. Files uploaded by the ADMIN panel physically live
+        // on the admin server (shared DB, separate wwwroot) - when a path is not found
+        // locally, point it at the admin site instead of rendering "File missing".
+        var adminBase = (_config["AdminPanelBaseUrl"] ?? "https://solaradmin.solfit.in").TrimEnd('/');
+        string NormalizeUrl(string storedPath)
+        {
+            var rel = storedPath.Replace("\\", "/").TrimStart('/');
+            if (rel.StartsWith("wwwroot/", StringComparison.OrdinalIgnoreCase))
+                rel = rel.Substring("wwwroot/".Length);
+            return "/" + rel;
+        }
+        ViewBag.FileUrl = allPaths!.ToDictionary(
+            p => p!,
+            p => FileExistsOnDisk(p) ? NormalizeUrl(p!) : adminBase + NormalizeUrl(p!));
 
         return View();
     }

@@ -5,8 +5,19 @@
     var isLocked = (int)req.CurrentStage > (int)SolarPortal.Domain.Enums.ProjectStatus.PMSurvey;
 
     var loanOpt   = req.PMSuryaLoanOption;
-    var adminDocs = docs.Where(x => x.IsAdminUpload).ToList();
-    var userDocs  = docs.Where(x => !x.IsAdminUpload).ToList();
+
+    // The ADMIN panel (separate app, shared DB) saves its approval uploads with
+    // DocumentType 11-14 and/or under a "pmsurya-approval" folder, without setting
+    // IsAdminUpload - detect all three markers so they show as admin documents.
+    bool IsAdminDoc(SolarPortal.Application.DTOs.PMDocumentDto x) =>
+        x.IsAdminUpload
+        || ((int)x.DocumentType >= 11 && (int)x.DocumentType <= 14)
+        || (x.FilePath != null && x.FilePath.IndexOf("pmsurya-approval", StringComparison.OrdinalIgnoreCase) >= 0);
+    var adminDocs = docs.Where(x => IsAdminDoc(x)).ToList();
+    var userDocs  = docs.Where(x => !IsAdminDoc(x)).ToList();
+
+    // PM Surya Ghar ID: this app writes PMSuryaGharIdNo, the admin app writes PmSuryaApplicationNo.
+    var pmGharId = !string.IsNullOrWhiteSpace(req.PMSuryaGharIdNo) ? req.PMSuryaGharIdNo : req.PmSuryaApplicationNo;
 
     var requiredDocs = new[]
     {
@@ -22,6 +33,10 @@
     var doneCount = requiredDocs.Count(d => userDocs.Any(x => x.DocumentType.ToString() == d.Type));
     var totalCount = requiredDocs.Length;
     var pct = totalCount > 0 ? (int)Math.Round(doneCount * 100.0 / totalCount) : 0;
+
+    // Submit is only allowed while something is actually pending admin review.
+    var hasPending  = userDocs.Any(x => x.Status == SolarPortal.Domain.Enums.ApprovalStatus.Pending);
+    var hasRejected = userDocs.Any(x => x.Status == SolarPortal.Domain.Enums.ApprovalStatus.Rejected);
 
     string StsClass(SolarPortal.Domain.Enums.ApprovalStatus s) => s switch
     {
@@ -71,14 +86,21 @@
                             <div class="pm-doc-name">@d.Label</div>
                             <div class="pm-doc-sub">
                                 @if (uploaded != null) { <text>Uploaded</text> } else { <text>Not uploaded yet</text> }
-                            </div>
+                            </div>                            @if (uploaded != null && !string.IsNullOrWhiteSpace(uploaded.Remarks))
+                            {
+                                <div class="pm-doc-remark">Admin remark: @uploaded.Remarks</div>
+                            }
                         </div>
                         @if (uploaded != null)
                         {
                             <span class="sts @StsClass(uploaded.Status)">@uploaded.Status</span>
                         }
                         <div class="pm-doc-act">
-                            @if (!isLocked)
+                            @{
+                                // Approved documents are final - no Replace / re-capture allowed.
+                                var canUpload = !isLocked && (uploaded == null || uploaded.Status != SolarPortal.Domain.Enums.ApprovalStatus.Approved);
+                            }
+                            @if (canUpload)
                             {
                                 <input type="file" class="d-none pm-file" id="file-@d.Type" data-type="@d.Type" accept=".pdf,.png,.jpg,.jpeg" style="display:none" />
                                 @if (d.Type == "Photo")
@@ -110,12 +132,20 @@
                 }
                 else
                 {
-                    <button id="btnSubmit" class="btn btn-g btn-full" style="margin-top:16px" @(userDocs.Any() ? "" : "disabled")>
+                    <button id="btnSubmit" class="btn btn-g btn-full" style="margin-top:16px" @(hasPending ? "" : "disabled")>
                         Submit for Admin Verification
                     </button>
                     @if (!userDocs.Any())
                     {
                         <div class="hint" style="text-align:center;margin-top:8px">Upload at least one document to enable submit.</div>
+                    }
+                    else if (!hasPending && hasRejected)
+                    {
+                        <div class="hint" style="text-align:center;margin-top:8px">Replace the rejected document(s) first - submit enables once a document is pending review.</div>
+                    }
+                    else if (!hasPending)
+                    {
+                        <div class="hint" style="text-align:center;margin-top:8px">All documents are already reviewed. Nothing pending to submit.</div>
                     }
                 }
             </div>
@@ -136,6 +166,14 @@
                     {
                         pmLabel = "Verified by Admin"; pmCls = "sts-act";
                     }
+                    else if (anyDocs && userDocs.All(x => x.Status == SolarPortal.Domain.Enums.ApprovalStatus.Approved))
+                    {
+                        pmLabel = "Approved by Admin"; pmCls = "sts-act";
+                    }
+                    else if (hasRejected)
+                    {
+                        pmLabel = "Rejected - document replacement needed"; pmCls = "sts-rej";
+                    }
                     else if (anyDocs) { pmLabel = "Awaiting admin review"; pmCls = "sts-pend"; }
                     else { pmLabel = "Not uploaded yet"; pmCls = "sts-pend"; }
                 }
@@ -147,20 +185,24 @@
                 <div class="hint" style="margin-top:10px">After admin verifies your documents, you'll be able to download the Site Survey form.</div>
             </div>
 
-            @if (!string.IsNullOrWhiteSpace(req.PMSuryaGharIdNo) || adminDocs.Any())
+            @if (!string.IsNullOrWhiteSpace(pmGharId) || adminDocs.Any())
             {
                 <div class="card" style="border-left:4px solid var(--green)">
-                    <div class="ct"><span class="ct-dot"></span>Approval Documents</div>
-                    @if (!string.IsNullOrWhiteSpace(req.PMSuryaGharIdNo))
+                    <div class="ct"><span class="ct-dot"></span>Other Documents</div>
+                    @if (!string.IsNullOrWhiteSpace(pmGharId))
                     {
-                        <div class="sr"><span class="srk">PM Surya Ghar ID</span><span class="srv">@req.PMSuryaGharIdNo</span></div>
+                        <div class="sr"><span class="srk">PM Surya Ghar ID</span><span class="srv">@pmGharId</span></div>
                     }
                     @if (adminDocs.Any())
                     {
-                        <div class="hint" style="margin:10px 0 6px">Issued by admin - click to download:</div>
+                        <div class="hint" style="margin:10px 0 6px">Issued by admin - click to view / download:</div>
                         @foreach (var ad in adminDocs)
                         {
-                            <a href="@ad.FilePath" download target="_blank" class="pm-dl">@(string.IsNullOrWhiteSpace(ad.FileName) ? ad.DocumentType.ToString() : ad.FileName)</a>
+                            <a href="javascript:void(0)" onclick="openAdminDoc('@ad.FilePath', @ad.Id)" class="pm-dl">@(string.IsNullOrWhiteSpace(ad.FileName) ? "Approval Document" : ad.FileName)</a>
+                            @if (!string.IsNullOrWhiteSpace(ad.Remarks))
+                            {
+                                <div class="hint" style="margin:2px 0 4px">@ad.Remarks</div>
+                            }
                         }
                     }
                     else
@@ -185,6 +227,7 @@
         .pm-doc-sub  { font-size:11.5px; color:var(--text3); margin-top:2px; }
         .pm-doc.done .pm-doc-sub { color:var(--green); }
         .pm-doc-act { display:flex; gap:6px; flex-shrink:0; }
+        .pm-doc-remark { font-size:11.5px; color:#b45309; margin-top:3px; font-weight:500; }
         .pm-dl { display:block; padding:8px 12px; margin-top:6px; background:var(--bg3); border:1px solid var(--border); border-radius:var(--r-sm); color:var(--accent-dark); text-decoration:none; font-size:13px; font-weight:500; transition:all .15s ease; word-break:break-all; }
         .pm-dl:hover { background:var(--accent-light); border-color:var(--accent); }
         @@media (max-width:900px) { .g2 { grid-template-columns:1fr !important; } .pm-doc-act { flex-direction:column; } }
@@ -201,6 +244,12 @@
 <script>
 $(function () {
     const token = $('input[name="__RequestVerificationToken"]').val();
+
+    // "Other Documents" (admin uploads): everything previews in the modal (images inline,
+    // PDFs in an iframe); the modal shows a Download button that streams via DownloadAdminDoc.
+    window.openAdminDoc = function (path, id) {
+        openFileModal(path, '@Url.Action("DownloadAdminDoc", "PMSurya")' + '?id=' + id);
+    };
 
     $('.pm-pick').on('click', function () {
         $('#' + $(this).data('target')).trigger('click');
@@ -250,7 +299,7 @@ $(function () {
         $.ajax({
             url: '@Url.Action("Submit", "PMSurya")',
             type: 'POST', data: fd, processData: false, contentType: false,
-            success: function (r) { if (r.success) setTimeout(() => { window.location.href = '@Url.Action("Status", "SolarRequest", new { id = req.Id })'; }, 900); }
+            success: function (r) { if (r.success) { setTimeout(() => { window.location.href = '@Url.Action("Status", "SolarRequest", new { id = req.Id })'; }, 900); } else { alert(r.message || 'Submit failed.'); } }
         });
     });
 });

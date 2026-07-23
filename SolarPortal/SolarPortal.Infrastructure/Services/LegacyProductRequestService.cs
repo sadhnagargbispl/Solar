@@ -130,7 +130,30 @@ WHERE ProdId = @ProdId;";
             cmdI.Parameters.AddWithValue("@Addr",      (object?)input.Address ?? DBNull.Value);
             cmdI.Parameters.AddWithValue("@City",      (object?)input.City ?? DBNull.Value);
             cmdI.Parameters.AddWithValue("@Dist",      (object?)input.District ?? DBNull.Value);
-            cmdI.Parameters.AddWithValue("@Pin",       (object?)input.PinCode ?? DBNull.Value);
+            // ===== PinCode: legacy column is numeric(18) =====
+            // The profile PinCode is free-text in the new app and is often blank
+            // (''), which SQL cannot convert to numeric — that exact case produced
+            //   "Error converting data type nvarchar to numeric"
+            // when a user activated their ID (SCR-018 had PinCode = ''). Strip
+            // non-digits; blank/unparseable → NULL (the legacy column is nullable).
+            object pinParam = DBNull.Value;
+            if (!string.IsNullOrWhiteSpace(input.PinCode))
+            {
+                var pinDigits = new string(input.PinCode.Where(char.IsDigit).ToArray());
+                if (pinDigits.Length > 0 &&
+                    decimal.TryParse(pinDigits, System.Globalization.NumberStyles.None,
+                                     System.Globalization.CultureInfo.InvariantCulture,
+                                     out var pinVal))
+                {
+                    pinParam = pinVal;
+                }
+            }
+            cmdI.Parameters.Add(new SqlParameter("@Pin", System.Data.SqlDbType.Decimal)
+            {
+                Precision = 18,
+                Scale     = 0,
+                Value     = pinParam
+            });
             cmdI.Parameters.AddWithValue("@StateNm",   (object?)input.StateName ?? DBNull.Value);
 
             // ===== Resolve numeric StateCode for legacy column =====
