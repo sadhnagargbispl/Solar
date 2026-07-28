@@ -121,6 +121,13 @@ wwwroot\uploads\SCR-020\pmsurya\c0614f3d-b474-41a1-9e02-cb14c454f37d.png
 wwwroot\uploads\SCR-020\pmsurya\c8426abe-80a8-49e4-90c5-8f204432afaa.png
 wwwroot\uploads\SCR-020\sitesurvey\house\418b89fd-c5ec-4801-b8ad-83cdd3a36926.png
 wwwroot\uploads\SCR-020\sitesurvey\roof\c8ee5851-6e48-409c-8629-e9c04c96717a.jpeg
+wwwroot\uploads\SCR-023\lightbill\8f9b2ab9-ed1c-45f3-9a9d-5b14eb307217.png
+wwwroot\uploads\SCR-023\lightbill\ab6f50dc-c2d9-4763-951e-dc27cb5aeb46.png
+wwwroot\uploads\SCR-023\lightbill\bebc1765-22b8-4ce0-a7c9-fab0f1482751.jpeg
+wwwroot\uploads\SCR-023\payments\11d7fd3c-576d-40c3-ba07-7644e212ed56.png
+wwwroot\uploads\SCR-023\payments\5560411d-262a-4d43-9f89-a7e4ea5bb76f.png
+wwwroot\uploads\SCR-023\payments\581d0df8-8c8a-4573-8276-83d184a4fcc7.png
+wwwroot\uploads\SCR-023\payments\c8de2145-f986-44da-8e1f-11eb82a265f1.png
 wwwroot\uploads\inc\12\053d4ac7-8a35-4c7c-adef-8ef582fdb47f.jpeg
 wwwroot\uploads\inc\5\033c011c-39b7-4043-8874-31129d8402aa.jpeg
 wwwroot\uploads\payments\b12b5b85-fa66-48d9-8ca5-43996624ae60.jpg

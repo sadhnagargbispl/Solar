@@ -34,8 +34,8 @@ public class LegacyProductRequestService : ILegacyProductRequestService
         ILogger<LegacyProductRequestService> log)
     {
         _config = config;
-        _db     = db;
-        _log    = log;
+        _db = db;
+        _log = log;
     }
 
     public async Task<LegacyInsertResult> InsertWithActivationAsync(LegacyProductRequestInput input)
@@ -90,7 +90,7 @@ INSERT INTO TrnProductorderDetail
      MRP, DP, ProductName, ImgPath, RP, BV,
      FSEssId, Prodtype, PV, txnid, txndate, ImageUpload,
      ForType, PID,
-     UserAddress, City, District, PinCode, UserState, StateCode)
+     UserAddress, City, District, PinCode, UserState, StateCode, IsApprove)
 SELECT
     @OrderNo, @FormNo, ProdId, @Qty, DP, DP * @Qty, GETDATE(),
     NULL, 'N', 0, @Qty, 0,
@@ -98,22 +98,22 @@ SELECT
     (SELECT ISNULL(MAX(FsessID), 1) FROM solfitenergyinv..M_FiscalMaster),
     'P', PV, @TxnId, @TxnDate, @ImageFile,
     'A', @PayMode,
-    @Addr, @City, @Dist, @Pin, @StateNm, @StateCd
+    @Addr, @City, @Dist, @Pin, @StateNm, @StateCd, 'N'
 FROM [V#SpProductDetail]
 WHERE ProdId = @ProdId;";
 
             await using var cmdI = new SqlCommand(insertSql, conn);
-            cmdI.Parameters.AddWithValue("@OrderNo",   orderNo);
-            cmdI.Parameters.AddWithValue("@FormNo",    formNo);
-            cmdI.Parameters.AddWithValue("@ProdId",    input.ProductId);
-            cmdI.Parameters.AddWithValue("@Qty",       Math.Max(1, input.Qty));
-            cmdI.Parameters.AddWithValue("@TxnId",     (object?)input.TxnId ?? DBNull.Value);
-            cmdI.Parameters.AddWithValue("@TxnDate",   (object?)input.TxnDate ?? DBNull.Value);
+            cmdI.Parameters.AddWithValue("@OrderNo", orderNo);
+            cmdI.Parameters.AddWithValue("@FormNo", formNo);
+            cmdI.Parameters.AddWithValue("@ProdId", input.ProductId);
+            cmdI.Parameters.AddWithValue("@Qty", Math.Max(1, input.Qty));
+            cmdI.Parameters.AddWithValue("@TxnId", (object?)input.TxnId ?? DBNull.Value);
+            cmdI.Parameters.AddWithValue("@TxnDate", (object?)input.TxnDate ?? DBNull.Value);
             cmdI.Parameters.AddWithValue("@ImageFile", (object?)input.ImageFileName ?? DBNull.Value);
-            cmdI.Parameters.AddWithValue("@PayMode",   input.PayModeId);
-            cmdI.Parameters.AddWithValue("@Addr",      (object?)input.Address ?? DBNull.Value);
-            cmdI.Parameters.AddWithValue("@City",      (object?)input.City ?? DBNull.Value);
-            cmdI.Parameters.AddWithValue("@Dist",      (object?)input.District ?? DBNull.Value);
+            cmdI.Parameters.AddWithValue("@PayMode", input.PayModeId);
+            cmdI.Parameters.AddWithValue("@Addr", (object?)input.Address ?? DBNull.Value);
+            cmdI.Parameters.AddWithValue("@City", (object?)input.City ?? DBNull.Value);
+            cmdI.Parameters.AddWithValue("@Dist", (object?)input.District ?? DBNull.Value);
             object pinParam = DBNull.Value;
             if (!string.IsNullOrWhiteSpace(input.PinCode))
             {
@@ -129,16 +129,16 @@ WHERE ProdId = @ProdId;";
             cmdI.Parameters.Add(new SqlParameter("@Pin", System.Data.SqlDbType.Decimal)
             {
                 Precision = 18,
-                Scale     = 0,
-                Value     = pinParam
+                Scale = 0,
+                Value = pinParam
             });
-            cmdI.Parameters.AddWithValue("@StateNm",   (object?)input.StateName ?? DBNull.Value);
+            cmdI.Parameters.AddWithValue("@StateNm", (object?)input.StateName ?? DBNull.Value);
             object stateCodeParam = await ResolveStateCodeAsync(input.StateCode, input.StateName);
             var stateCdSqlParam = new SqlParameter("@StateCd", System.Data.SqlDbType.Decimal)
             {
                 Precision = 18,
-                Scale     = 0,
-                Value     = stateCodeParam
+                Scale = 0,
+                Value = stateCodeParam
             };
             cmdI.Parameters.Add(stateCdSqlParam);
 
@@ -152,7 +152,7 @@ WHERE ProdId = @ProdId;";
 
             result.Success = true;
             result.OrderNo = orderNo;
-            _log.LogInformation("Legacy product order created: OrderNo={OrderNo}, FormNo={FormNo}, ProductId={ProdId}, Qty={Qty}",orderNo, formNo, input.ProductId, input.Qty);
+            _log.LogInformation("Legacy product order created: OrderNo={OrderNo}, FormNo={FormNo}, ProductId={ProdId}, Qty={Qty}", orderNo, formNo, input.ProductId, input.Qty);
             if (input.AutoProcessApproval)
             {
                 // Amount drives the kit (TopUp) lookup (BV <= @Amount) and the
@@ -194,6 +194,15 @@ WHERE ProdId = @ProdId;";
                     _log.LogWarning(
                         "Legacy bridge: insert for OrderNo={OrderNo} succeeded but auto-approval failed: {Error}",
                         orderNo, approvalResult.ErrorMessage);
+
+                    // Surface it. From the caller's point of view "sync" means
+                    // insert + approve: if approval fails the row sits at
+                    // IsApprove='N' with no TrnOrder header and the member never
+                    // activates. Reporting Success=true here made these failures
+                    // completely invisible in the UI.
+                    result.Success = false;
+                    result.ErrorMessage =
+                        $"OrderNo {orderNo} inserted, but approval failed: {approvalResult.ErrorMessage}";
                 }
             }
 
@@ -399,7 +408,7 @@ WHERE ProdId = @ProdId;";
             return result;
         }
     }
-    private async Task ApproveCashPathAsync(SqlConnection conn, SqlTransaction tx, LegacyApprovalInput input,long sessid, string productStatus, string productKitId, decimal totalPv, string remark)
+    private async Task ApproveCashPathAsync(SqlConnection conn, SqlTransaction tx, LegacyApprovalInput input, long sessid, string productStatus, string productKitId, decimal totalPv, string remark)
     {
         // Existing PVvalue already posted for this member (used for the
         // activation threshold check together with TotalPV).
@@ -445,7 +454,7 @@ WHERE ProdId = @ProdId;";
         upd.Parameters.AddWithValue("@OrderNo", input.OrderNo);
         await upd.ExecuteNonQueryAsync();
     }
-    private async Task ApproveNonCashPathAsync(SqlConnection conn, SqlTransaction tx, LegacyApprovalInput input,long sessid, string productStatus, string productKitId, decimal totalPv,string remark, string kitName, string orderType, string invDb)
+    private async Task ApproveNonCashPathAsync(SqlConnection conn, SqlTransaction tx, LegacyApprovalInput input, long sessid, string productStatus, string productKitId, decimal totalPv, string remark, string kitName, string orderType, string invDb)
     {
         // 1) Copy each pending TrnProductorderDetail row into TrnorderDetail,
         //    pulling fresh MRP/DP/BV/PV/ProductName from the linked product
@@ -480,7 +489,7 @@ SELECT @OrderNo, CAST(CONVERT(varchar, GETDATE(), 106) AS datetime), MemFirstNam
        Address1, Address2, CountryID, CountryName, StateCode, City,
        CASE WHEN PinCode = '' THEN 0 ELSE PinCode END, Mobl, EMail, @FormNo, '', Passw, '', 0, '', 0,
        '', '', @ApproveRemark, 0, 0, 0, 'Y', 'H', GETDATE(), 'Y', '', 'N', 0, 0, 0,
-       @Sessid, 0, '', 0, '', 'Y', @OrderType, 0, '', 'Y', @MemberIdNo, 1, 0, 0, 0, 0, @KitName, 'N'
+       0, @Sessid, 0, '', 0, '', 'Y', @OrderType, 0, 0, 'Y', @MemberIdNo, 1, 0, 0, 0, 0, @KitName, 'N'
 FROM M_MemberMaster WHERE Formno = @FormNo;", conn, tx))
         {
             cmd.Parameters.AddWithValue("@OrderNo", input.OrderNo);
@@ -611,7 +620,7 @@ FROM {invDb}..TrnPaymentConfirmation;", conn, tx))
         }
         return (0m, 0m);
     }
-    private static async Task InsertRepurchincomeAsync(SqlConnection conn, SqlTransaction tx, long sessid, string formNo, string orderNo,decimal repurchincome, string billType, string soldBy, decimal pvValue, string? fromId)
+    private static async Task InsertRepurchincomeAsync(SqlConnection conn, SqlTransaction tx, long sessid, string formNo, string orderNo, decimal repurchincome, string billType, string soldBy, decimal pvValue, string? fromId)
     {
         var sql = fromId is null
             ? "INSERT INTO Repurchincome (Sessid, Formno, BillNo, Billdate, Repurchincome, Imported, BillType, " +
@@ -637,7 +646,7 @@ FROM {invDb}..TrnPaymentConfirmation;", conn, tx))
         }
         await cmd.ExecuteNonQueryAsync();
     }
-    private static async Task MaybeActivateMemberAsync(SqlConnection conn, SqlTransaction tx, string memberIdNo, string orderNo,decimal pvTotal, decimal bv, bool onlyThresholdBranches = false)
+    private static async Task MaybeActivateMemberAsync(SqlConnection conn, SqlTransaction tx, string memberIdNo, string orderNo, decimal pvTotal, decimal bv, bool onlyThresholdBranches = false)
     {
         int? level = pvTotal switch
         {
