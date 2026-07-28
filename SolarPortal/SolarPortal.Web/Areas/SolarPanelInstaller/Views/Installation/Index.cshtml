@@ -1,0 +1,175 @@
+@using SolarPortal.Web.Areas.SolarPanelInstaller.Controllers
+@model List<InstallationController.InstallationRow>
+@{
+    ViewData["Title"] = "My Installations";
+    var filter = (string)(ViewBag.Filter ?? "all");
+    var today = DateTime.Today.ToString("yyyy-MM-dd");
+    string TabCls(string f) => filter == f ? "btn btn-p btn-sm" : "btn btn-s btn-sm";
+}
+<div class="page active">
+    <div class="ph">
+        <div class="ph-bc">Installer / <span>Installations</span></div>
+        <div class="ph-title">My Installations</div>
+        <div class="ph-sub">Material dispatch mein aapko assign ki gayi installations — yahan se Mark Complete kijiye.</div>
+    </div>
+
+    @* Default tab "All" — admin reports ke jaisa hi. *@
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px">
+        <a class="@TabCls("all")" asp-action="Index" asp-route-filter="all">&#128203; All</a>
+        <a class="@TabCls("pending")" asp-action="Index" asp-route-filter="pending">&#8987; Pending (@(ViewBag.PendingCount ?? 0))</a>
+        <a class="@TabCls("done")" asp-action="Index" asp-route-filter="done">&#9989; Completed</a>
+    </div>
+
+    <div class="card">
+        <div class="ct"><span class="ct-dot"></span>Installations (@Model.Count)</div>
+        @if (!Model.Any())
+        {
+            <div class="text-muted" style="text-align:center;padding:26px">
+                Abhi koi installation assign nahi hui. Jab admin Material Dispatch mein aapko
+                despatch person banayega, wo yahan aa jayegi.
+            </div>
+        }
+        else
+        {
+            <div class="tbl-wrap">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Request #</th>
+                            <th>Customer</th>
+                            <th>City / State</th>
+                            <th>Plan</th>
+                            <th>Material Dispatch</th>
+                            <th>Admin Remark</th>
+                            <th>Status</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var row in Model)
+                        {
+                            var r = row.Request;
+                            var canAct = !row.IsCompleted && r.CurrentStage == Domain.Enums.ProjectStatus.Installation;
+                            <tr>
+                                <td class="td-b">@r.RequestNumber</td>
+                                <td>
+                                    @r.ApplicantName
+                                    <div style="font-size:11px;color:#6b7280">@r.MobileNumber</div>
+                                </td>
+                                <td>
+                                    @r.City
+                                    <div style="font-size:11px;color:#6b7280">@r.State</div>
+                                </td>
+                                <td>
+                                    <div>@r.SelectedPlan</div>
+                                    <div style="font-size:11px;color:#6b7280">@r.KVCapacity kV &bull; @r.ConnectionType</div>
+                                </td>
+                                <td style="font-size:12px">
+                                    @if (row.DispatchDate.HasValue)
+                                    {
+                                        <div>@row.DispatchDate.Value.ToLocalTime().ToString("dd MMM yyyy")</div>
+                                    }
+                                    @if (!string.IsNullOrWhiteSpace(row.MaterialDetails))
+                                    {
+                                        <div style="color:#6b7280">@row.MaterialDetails</div>
+                                    }
+                                    @if (!string.IsNullOrWhiteSpace(row.VehicleDetails))
+                                    {
+                                        <div style="color:#6b7280">&#128666; @row.VehicleDetails</div>
+                                    }
+                                </td>
+                                <td style="font-size:12px;color:#6b7280">
+                                    @(string.IsNullOrWhiteSpace(row.AdminRemark) ? "—" : row.AdminRemark)
+                                </td>
+                                <td>
+                                    @if (row.IsCompleted)
+                                    {
+                                        <span class="sts sts-act">&#9989; Completed</span>
+                                        @if (row.Installation?.CompletedAt != null)
+                                        {
+                                            <div style="font-size:11px;color:#6b7280">
+                                                @row.Installation.CompletedAt.Value.ToLocalTime().ToString("dd MMM yyyy")
+                                            </div>
+                                        }
+                                    }
+                                    else if (canAct)
+                                    {
+                                        <span class="sts sts-pend">&#8987; Pending</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="sts sts-disp">@r.CurrentStage.ToString().Replace("_", " ")</span>
+                                    }
+                                </td>
+                                <td>
+                                    @if (canAct)
+                                    {
+                                        <button type="button" class="btn btn-p btn-sm"
+                                                onclick="openMark(@r.Id, '@r.RequestNumber')">
+                                            &#128295; Mark Installation
+                                        </button>
+                                    }
+                                    else
+                                    {
+                                        <span class="text-muted">—</span>
+                                    }
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+    </div>
+</div>
+
+@* Mark-installation form. Hidden by default; openMark() fills in the request and
+   reveals it, so one form serves every row (file upload needs a real form post). *@
+<div id="markWrap" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:1050">
+    <div style="max-width:520px;margin:6vh auto;background:#fff;border-radius:12px;padding:20px">
+        <h3 style="margin:0 0 4px" id="markTitle">Mark Installation</h3>
+        <p style="font-size:12px;color:#6b7280;margin:0 0 14px">
+            Ye installation complete mark karne par project agli stage par chala jayega.
+        </p>
+        <form asp-area="SolarPanelInstaller" asp-controller="Installation" asp-action="MarkComplete"
+              method="post" enctype="multipart/form-data">
+            @Html.AntiForgeryToken()
+            <input type="hidden" name="requestId" id="markRequestId" />
+
+            <div class="fg">
+                <label>Installation Date</label>
+                <input type="date" name="installationDate" value="@today" required />
+            </div>
+            <div class="fg">
+                <label>Notes</label>
+                <textarea name="notes" rows="2" placeholder="Panels installed, inverter SN, meter reading..."></textarea>
+            </div>
+            <div class="fg">
+                <label>Remark</label>
+                <textarea name="remark" rows="2" placeholder="Apna remark (khaali chhodenge to admin ka remark bana rahega)"></textarea>
+            </div>
+            <div class="fg">
+                <label>Completion Photo</label>
+                <input type="file" name="completionPhoto" accept="image/*" />
+            </div>
+
+            <div style="display:flex;gap:8px;margin-top:14px">
+                <button type="submit" class="btn btn-p">&#9989; Mark Complete</button>
+                <button type="button" class="btn btn-s" onclick="closeMark()">Cancel</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        function openMark(requestId, requestNumber) {
+            document.getElementById('markRequestId').value = requestId;
+            document.getElementById('markTitle').textContent = 'Mark Installation — ' + requestNumber;
+            document.getElementById('markWrap').style.display = 'block';
+        }
+        function closeMark() {
+            document.getElementById('markWrap').style.display = 'none';
+        }
+    </script>
+}

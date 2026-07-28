@@ -1,4 +1,4 @@
-@{
+﻿@{
     var cur = ViewContext.RouteData.Values["controller"]?.ToString();
     var act = ViewContext.RouteData.Values["action"]?.ToString();
     string A(string c) => cur == c ? "active" : "";
@@ -10,6 +10,7 @@
     <a class="sb-item @A("Dashboard")" asp-area="SolarPanelInstaller" asp-controller="Dashboard" asp-action="Index"><span class="sbi">&#128202;</span>Dashboard</a>
     <a class="sb-item @AA("Connections","Create")" asp-area="SolarPanelInstaller" asp-controller="Connections" asp-action="Create"><span class="sbi">&#10133;</span>New Installer</a>
     <a class="sb-item @AA("Connections","Index")" asp-area="SolarPanelInstaller" asp-controller="Connections" asp-action="Index"><span class="sbi">&#128203;</span>Reports</a>
+    <a class="sb-item @A("Installation")" asp-area="SolarPanelInstaller" asp-controller="Installation" asp-action="Index"><span class="sbi">&#128295;</span>Installations</a>
 </div>
 @if (isInc)
 {

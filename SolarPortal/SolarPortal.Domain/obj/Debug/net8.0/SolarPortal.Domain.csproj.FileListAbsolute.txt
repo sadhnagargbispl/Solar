@@ -30,3 +30,15 @@ C:\Users\Claude1\AppData\Local\Temp\solarbuild_v3\SolarPortal.Domain.pdb
 \\localhost\Sadhna\GitHub\New folder\Solar\SolarPortal\SolarPortal.Domain\obj\Debug\net8.0\refint\SolarPortal.Domain.dll
 \\localhost\Sadhna\GitHub\New folder\Solar\SolarPortal\SolarPortal.Domain\obj\Debug\net8.0\SolarPortal.Domain.pdb
 \\localhost\Sadhna\GitHub\New folder\Solar\SolarPortal\SolarPortal.Domain\obj\Debug\net8.0\ref\SolarPortal.Domain.dll
+E:\Sadhna Garg\SadhnaGithubC#\GithubC#\Solar\SolarPortal\SolarPortal.Domain\bin\Debug\net8.0\SolarPortal.Domain.deps.json
+E:\Sadhna Garg\SadhnaGithubC#\GithubC#\Solar\SolarPortal\SolarPortal.Domain\bin\Debug\net8.0\SolarPortal.Domain.dll
+E:\Sadhna Garg\SadhnaGithubC#\GithubC#\Solar\SolarPortal\SolarPortal.Domain\bin\Debug\net8.0\SolarPortal.Domain.pdb
+E:\Sadhna Garg\SadhnaGithubC#\GithubC#\Solar\SolarPortal\SolarPortal.Domain\obj\Debug\net8.0\SolarPortal.Domain.GeneratedMSBuildEditorConfig.editorconfig
+E:\Sadhna Garg\SadhnaGithubC#\GithubC#\Solar\SolarPortal\SolarPortal.Domain\obj\Debug\net8.0\SolarPortal.Domain.AssemblyInfoInputs.cache
+E:\Sadhna Garg\SadhnaGithubC#\GithubC#\Solar\SolarPortal\SolarPortal.Domain\obj\Debug\net8.0\SolarPortal.Domain.AssemblyInfo.cs
+E:\Sadhna Garg\SadhnaGithubC#\GithubC#\Solar\SolarPortal\SolarPortal.Domain\obj\Debug\net8.0\SolarPortal.Domain.csproj.CoreCompileInputs.cache
+E:\Sadhna Garg\SadhnaGithubC#\GithubC#\Solar\SolarPortal\SolarPortal.Domain\obj\Debug\net8.0\SolarPortal.Domain.sourcelink.json
+E:\Sadhna Garg\SadhnaGithubC#\GithubC#\Solar\SolarPortal\SolarPortal.Domain\obj\Debug\net8.0\SolarPortal.Domain.dll
+E:\Sadhna Garg\SadhnaGithubC#\GithubC#\Solar\SolarPortal\SolarPortal.Domain\obj\Debug\net8.0\refint\SolarPortal.Domain.dll
+E:\Sadhna Garg\SadhnaGithubC#\GithubC#\Solar\SolarPortal\SolarPortal.Domain\obj\Debug\net8.0\SolarPortal.Domain.pdb
+E:\Sadhna Garg\SadhnaGithubC#\GithubC#\Solar\SolarPortal\SolarPortal.Domain\obj\Debug\net8.0\ref\SolarPortal.Domain.dll

@@ -996,7 +996,18 @@ public class SolarRequestController : Controller
                                 District = model.City,    // legacy schema has District; we don't collect it separately
                                 PinCode = model.PinCode,
                                 StateName = model.State,
-                                StateCode = model.State    // closest we have without a state code lookup
+                                StateCode = model.State,   // closest we have without a state code lookup
+
+                                // Run the legacy APPROVE step right after the insert.
+                                // Without this the row just sat in TrnProductorderDetail at
+                                // IsApprove = 'N' and the member stayed deactive until someone
+                                // approved it by hand in the old SolFit admin panel — which is
+                                // why "With Activation" requests never activated the ID.
+                                // The approve step is what posts Repurchincome and calls
+                                // Sp_ActivateMember_New (ActiveStatus -> 'Y').
+                                AutoProcessApproval = true,
+                                PayModeName   = model.PaymentMethod,   // "Cash" picks the cash-only path
+                                ApproveRemark = "Auto-approved by SolarPortal (With Activation submit)"
                             });
                             if (!bridgeResult.Success)
                             {
@@ -1087,6 +1098,7 @@ public class SolarRequestController : Controller
                     string priorUtr   = $"REACT-{result.Data.RequestNumber}";
                     DateTime priorDate = DateTime.UtcNow;
                     int priorPayMode  = 1;   // 1 = UPI default in legacy
+                    string priorPayModeNm = "UPI";   // name form, drives Cash vs non-Cash path
                     string? priorReceiptFile = null;
 
                     if (!string.IsNullOrWhiteSpace(reactivationBasedOn))
@@ -1106,6 +1118,8 @@ public class SolarRequestController : Controller
                                     priorUtr = $"REACT-{lastVerified.UTRNumber}";
                                 priorDate = lastVerified.PaymentDate;
                                 priorPayMode = MapPayMethodToLegacyPid(lastVerified.PaymentMethod);
+                                if (!string.IsNullOrWhiteSpace(lastVerified.PaymentMethod))
+                                    priorPayModeNm = lastVerified.PaymentMethod;
                                 if (!string.IsNullOrWhiteSpace(lastVerified.ReceiptImagePath))
                                     // Pass the FULL absolute URL to legacy ImageUpload column
                                     // so the legacy SolFit app can display the receipt directly.
@@ -1131,7 +1145,14 @@ public class SolarRequestController : Controller
                         District      = model.City,
                         PinCode       = model.PinCode,
                         StateName     = model.State,
-                        StateCode     = model.State
+                        StateCode     = model.State,
+
+                        // Same auto-approve as the normal With Activation path — a
+                        // reactivation is still an activation, so it must reach
+                        // Sp_ActivateMember_New too.
+                        AutoProcessApproval = true,
+                        PayModeName   = priorPayModeNm,
+                        ApproveRemark = "Auto-approved by SolarPortal (reactivation)"
                     });
                     if (!bridgeResult.Success)
                     {
@@ -1745,7 +1766,13 @@ public class SolarRequestController : Controller
                 District      = entity.City,
                 PinCode       = entity.PinCode,
                 StateName     = entity.State,
-                StateCode     = entity.State
+                StateCode     = entity.State,
+
+                // Auto-approve so the legacy activation actually fires for a
+                // fully-paid Without-Activation ID pressing "Activate Now".
+                AutoProcessApproval = true,
+                PayModeName   = lastVerified?.PaymentMethod,
+                ApproveRemark = "Auto-approved by SolarPortal (Activate Now)"
             });
             if (!bridgeResult.Success)
                 TempData["Warning"] = "Activation done, but legacy product-order sync failed: "

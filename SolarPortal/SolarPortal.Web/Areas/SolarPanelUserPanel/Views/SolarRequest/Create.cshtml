@@ -247,7 +247,9 @@
                         </div>
                         <div class="fg">
                             <label asp-for="Email">Email <span class="req">*</span></label>
-                            <input asp-for="Email" type="email" placeholder="Email address" id="emailInput" />
+                            <input asp-for="Email" type="email" placeholder="Email address" id="emailInput"
+                                   readonly="@roReadonly" style="@roStyle" />
+                            <div class="hint">⚠ Not editable after submit</div>
                             <span asp-validation-for="Email" class="hint" style="color:var(--danger)"></span>
                             <div id="emailCheckMsg" class="hint" style="font-size:11px;margin-top:2px"></div>
                         </div>
