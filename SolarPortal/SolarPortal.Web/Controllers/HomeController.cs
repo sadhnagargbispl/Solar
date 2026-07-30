@@ -13,9 +13,20 @@ public class HomeController : Controller
         _logger = logger;
     }
 
+    // "/" must land on the signed-in user's own dashboard. Each panel lives in
+    // its own area, so the role picks the dashboard. Without this the root URL
+    // served the scaffolded welcome view - sidebar rendered, but no content.
+    // There is no public landing page in this portal, so a signed-out visitor
+    // goes to login and comes back here afterwards.
     public IActionResult Index()
     {
-        return View();
+        if (User.Identity?.IsAuthenticated != true)
+            return RedirectToAction("Login", "Account");
+
+        if (User.IsInRole("Installer"))
+            return RedirectToAction("Index", "Dashboard", new { area = "SolarPanelInstaller" });
+
+        return RedirectToAction("Index", "Dashboard", new { area = "SolarPanelUserPanel" });
     }
 
     public IActionResult Privacy()
