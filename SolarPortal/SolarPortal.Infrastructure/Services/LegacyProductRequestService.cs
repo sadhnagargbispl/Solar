@@ -90,7 +90,7 @@ INSERT INTO TrnProductorderDetail
      MRP, DP, ProductName, ImgPath, RP, BV,
      FSEssId, Prodtype, PV, txnid, txndate, ImageUpload,
      ForType, PID,
-     UserAddress, City, District, PinCode, UserState, StateCode)
+     UserAddress, City, District, PinCode, UserState, StateCode, IsApprove)
 SELECT
     @OrderNo, @FormNo, ProdId, @Qty, DP, DP * @Qty, GETDATE(),
     NULL, 'N', 0, @Qty, 0,
@@ -98,7 +98,7 @@ SELECT
     (SELECT ISNULL(MAX(FsessID), 1) FROM solfitenergyinv..M_FiscalMaster),
     'P', PV, @TxnId, @TxnDate, @ImageFile,
     'A', @PayMode,
-    @Addr, @City, @Dist, @Pin, @StateNm, @StateCd
+    @Addr, @City, @Dist, @Pin, @StateNm, @StateCd, 'N'
 FROM [V#SpProductDetail]
 WHERE ProdId = @ProdId;";
 
@@ -194,6 +194,15 @@ WHERE ProdId = @ProdId;";
                     _log.LogWarning(
                         "Legacy bridge: insert for OrderNo={OrderNo} succeeded but auto-approval failed: {Error}",
                         orderNo, approvalResult.ErrorMessage);
+
+                    // Surface it. From the caller's point of view "sync" means
+                    // insert + approve: if approval fails the row sits at
+                    // IsApprove='N' with no TrnOrder header and the member never
+                    // activates. Reporting Success=true here made these failures
+                    // completely invisible in the UI.
+                    result.Success = false;
+                    result.ErrorMessage =
+                        $"OrderNo {orderNo} inserted, but approval failed: {approvalResult.ErrorMessage}";
                 }
             }
 
@@ -480,7 +489,7 @@ SELECT @OrderNo, CAST(CONVERT(varchar, GETDATE(), 106) AS datetime), MemFirstNam
        Address1, Address2, CountryID, CountryName, StateCode, City,
        CASE WHEN PinCode = '' THEN 0 ELSE PinCode END, Mobl, EMail, @FormNo, '', Passw, '', 0, '', 0,
        '', '', @ApproveRemark, 0, 0, 0, 'Y', 'H', GETDATE(), 'Y', '', 'N', 0, 0, 0,
-       @Sessid, 0, '', 0, '', 'Y', @OrderType, 0, '', 'Y', @MemberIdNo, 1, 0, 0, 0, 0, @KitName, 'N'
+       0, @Sessid, 0, '', 0, '', 'Y', @OrderType, 0, 0, 'Y', @MemberIdNo, 1, 0, 0, 0, 0, @KitName, 'N'
 FROM M_MemberMaster WHERE Formno = @FormNo;", conn, tx))
         {
             cmd.Parameters.AddWithValue("@OrderNo", input.OrderNo);

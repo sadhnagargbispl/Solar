@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using SolarPortal.Application.DTOs;
 using SolarPortal.Application.Interfaces;
 using SolarPortal.Application.Interfaces.Services;
+using SolarPortal.Application.Services;
 using SolarPortal.Domain.Entities;
 using SolarPortal.Domain.Enums;
 
@@ -28,16 +29,19 @@ public class InstallationController : Controller
     private readonly IUnitOfWork _uow;
     private readonly ISolarRequestService _requestService;
     private readonly IFileUploadService _fileUpload;
+    private readonly IIncWalletService _incWallet;
 
     public InstallationController(IUnitOfWork uow, ISolarRequestService requestService,
-        IFileUploadService fileUpload)
+        IFileUploadService fileUpload, IIncWalletService incWallet)
     {
         _uow = uow;
         _requestService = requestService;
         _fileUpload = fileUpload;
+        _incWallet = incWallet;
     }
 
     private int WorkerId => int.TryParse(User.FindFirst("WorkerId")?.Value, out var id) ? id : 0;
+    private bool IsInc => User.FindFirst("WorkerType")?.Value == "INC";
 
     // GET: /SolarPanelInstaller/Installation
     // ?filter=pending | done | all   (default all, same as the admin reports)
@@ -199,11 +203,30 @@ public class InstallationController : Controller
                 Notes = $"Installation completed by installer on {installation.InstallationDate:dd/MM/yyyy}"
             }, "worker-" + wid);
 
-            TempData["Success"] = stageResult.IsSuccess
+            // Commission: an INC worker earns the percentage the admin set for this
+            // plan (CommissionMasters) the moment he marks the installation complete.
+            // A wallet problem must never undo a finished installation - report it
+            // and carry on. JOB workers are not on commission.
+            var commissionMsg = string.Empty;
+            if (IsInc)
+            {
+                try
+                {
+                    var commission = await _incWallet.CreditInstallationCommissionAsync(
+                        requestId, wid, "worker-" + wid);
+                    commissionMsg = " " + commission.Message;
+                }
+                catch (Exception cex)
+                {
+                    commissionMsg = $" Commission could not be credited: {cex.InnerException?.Message ?? cex.Message}";
+                }
+            }
+
+            TempData["Success"] = (stageResult.IsSuccess
                 ? (nextStage == ProjectStatus.DCRUpdate
                     ? "Installation marked complete. DCR pending."
                     : "Installation marked complete. Project completed.")
-                : $"Installation saved, but stage update failed: {stageResult.Message}";
+                : $"Installation saved, but stage update failed: {stageResult.Message}") + commissionMsg;
         }
         catch (Exception ex)
         {

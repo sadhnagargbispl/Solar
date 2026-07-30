@@ -138,7 +138,7 @@
             const pid = (document.getElementById('externalProductIdInput').value || '').trim();
             if (!pid) {
                 if (typeof showWarning === 'function') showWarning('Please select a product to activate.');
-                else alert('Please select a product to activate.');
+                else toastMsg('warning', 'Please select a product to activate.');
                 return false;
             }
             return true;

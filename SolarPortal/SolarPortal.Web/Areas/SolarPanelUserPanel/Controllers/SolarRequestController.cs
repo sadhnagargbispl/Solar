@@ -448,7 +448,7 @@ public class SolarRequestController : Controller
         // The same UTR / Transaction No. must not exist anywhere in the system.
         // We cross-check against:
         //   1. walletreq.chqno — live cooperative master table
-        //   2. Payments.UTRNumber — our own payment ledger
+        //   2. Payments.UTRNumber — our own payment ledger (Rejected rows excluded)
         //
         // Reactivation skip: no payment is collected there.
         if (collectPayment && model.PaymentAmount > 0 && !string.IsNullOrWhiteSpace(model.PaymentUTR))
@@ -1255,7 +1255,8 @@ public class SolarRequestController : Controller
     /// <summary>
     /// Cross-checks a UTR / Transaction number against both:
     ///   1. walletreq.chqno   — live cooperative DB master
-    ///   2. Payments.UTRNumber — our own ledger
+    ///   2. Payments.UTRNumber — our own ledger, EXCLUDING Rejected payments
+    ///      (a rejected submission releases its UTR for re-use).
     /// Returns a user-friendly error message if the UTR is already in use, else null.
     /// </summary>
     private async Task<string?> CheckUtrDuplicateAsync(string utr)
@@ -1294,10 +1295,15 @@ public class SolarRequestController : Controller
             // we still check our own Payments ledger below. Production should log this.
         }
 
-        // 2. Our own Payments table
+        // 2. Our own Payments table.
+        //    REJECTED payments are ignored on purpose: admin rejected that
+        //    submission, so the UTR was never actually consumed and the user
+        //    must be able to re-submit it (e.g. it was rejected for a bad
+        //    receipt image, not a bad UTR). Pending / Partial / Completed rows
+        //    DO block reuse — those are live or settled claims on the UTR.
         var existsHere = await _db.Payments
             .AsNoTracking()
-            .AnyAsync(p => p.UTRNumber == trimmed);
+            .AnyAsync(p => p.UTRNumber == trimmed && p.Status != PaymentStatus.Rejected);
         if (existsHere)
             return "This UTR / Transaction No. is already used. Please use a different one.";
 

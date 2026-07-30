@@ -1,22 +1,40 @@
+@model SolarPortal.Web.ViewModels.InstallerDashboardViewModel
 @{
     ViewData["Title"] = "Installer Dashboard";
-    var isInc = User.FindFirst("WorkerType")?.Value == "INC";
-    var workerName = User.Identity?.Name ?? "Installer";
 }
 <div class="page active">
     <div class="ph">
         <div class="ph-bc">Installer / <span>Dashboard</span></div>
-        <div class="ph-title">@(isInc ? "INC" : "JOB") Panel &mdash; @workerName</div>
-        <div class="ph-sub">Welcome! Manage your connections and documents here.@(isInc ? " Income & withdrawals are available to INC workers." : "")</div>
+        <div class="ph-title">@(Model.IsInc ? "INC" : "JOB") Panel &mdash; @Model.WorkerName</div>
+        <div class="ph-sub">Welcome! Manage your connections and documents here.@(Model.IsInc ? " Income & withdrawals are available to INC workers." : "")</div>
     </div>
 
-    <div class="@(isInc ? "g4" : "g2")" style="margin-bottom:18px">
-        <div class="sc"><div class="sc-label">My Connections</div><div class="sc-val blue">0</div><div class="sc-sub">Total registered</div></div>
-        <div class="sc"><div class="sc-label">Pending</div><div class="sc-val gold">0</div><div class="sc-sub">Awaiting approval</div></div>
-        @if (isInc)
+    <div class="@(Model.IsInc ? "g4" : "g2")" style="margin-bottom:18px">
+        <div class="sc">
+            <div class="sc-label">My Connections</div>
+            <div class="sc-val blue">@Model.TotalConnections</div>
+            @* Two different things land in an installer's panel: connections he
+               registered himself, and projects the admin assigned to him. Show the
+               total, then break it down so the number is never a mystery. *@
+            <div class="sc-sub">@Model.RegisteredConnections registered &middot; @Model.AssignedProjects assigned</div>
+        </div>
+        <div class="sc">
+            <div class="sc-label">Pending</div>
+            <div class="sc-val gold">@Model.TotalPending</div>
+            <div class="sc-sub">@Model.RegisteredAwaitingApproval awaiting approval &middot; @Model.AssignedPending to install</div>
+        </div>
+        @if (Model.IsInc)
         {
-            <div class="sc"><div class="sc-label">Income (after 1% TDS)</div><div class="sc-val green">₹0</div><div class="sc-sub">Per-connection income</div></div>
-            <div class="sc"><div class="sc-label">Available to Withdraw</div><div class="sc-val gold">₹0</div><div class="sc-sub">Balance</div></div>
+            <div class="sc">
+                <div class="sc-label">Income</div>
+                <div class="sc-val green">&#8377;@Model.NetIncome.ToString("N0")</div>
+                <div class="sc-sub">Connections + installations</div>
+            </div>
+            <div class="sc">
+                <div class="sc-label">Available to Withdraw</div>
+                <div class="sc-val gold">&#8377;@Model.AvailableToWithdraw.ToString("N0")</div>
+                <div class="sc-sub">Balance</div>
+            </div>
         }
     </div>
 </div>

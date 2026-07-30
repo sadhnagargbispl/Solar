@@ -169,12 +169,12 @@ $('#dcrForm').on('submit', function (e) {
         processData: false,
         contentType: false,
         success: function (r) {
-            alert(r.message);
+            toastMsg('error', r.message);
             if (r.success) window.location.href = '@Url.Action("Status", "SolarRequest", new { id = req.Id })';
             else $btn.prop('disabled', false).text('Submit DCR');
         },
         error: function () {
-            alert('Server error. Please try again.');
+            toastMsg('error', 'Server error. Please try again.');
             $btn.prop('disabled', false).text('Submit DCR');
         }
     });

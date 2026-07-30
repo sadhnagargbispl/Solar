@@ -1,0 +1,191 @@
+========================================================================
+SOLARPORTAL - DATABASE TABLES
+========================================================================
+Database  : solfitenergy  (Microsoft SQL Server)
+Defined in: SolarPortal.Infrastructure\Data\ApplicationDbContext.cs
+Migrations: SolarPortal.Infrastructure\Data\Migrations\
+Last migr.: 20260513071256_AddNewEntities
+========================================================================
+
+
+------------------------------------------------------------------------
+1. IDENTITY TABLES  (renamed from AspNet* -> short names)
+------------------------------------------------------------------------
+TABLE            ENTITY                  PURPOSE
+---------------  ----------------------  --------------------------------
+Users            ApplicationUser         Login + profile. Columns include
+                                         FullName, IsActive, AadharNumber,
+                                         PANNumber, FatherName, Address,
+                                         City, State, PinCode,
+                                         MobileNumber, CreatedAt, UpdatedAt
+Roles            IdentityRole            Role definitions
+UserRoles        IdentityUserRole        User <-> Role mapping
+UserClaims       IdentityUserClaim       Per-user claims
+RoleClaims       IdentityRoleClaim       Per-role claims
+UserLogins       IdentityUserLogin       External login providers
+UserTokens       IdentityUserToken       Auth tokens
+
+Setup script: SETUP-IdentityTables.sql
+
+
+------------------------------------------------------------------------
+2. CORE BUSINESS TABLES
+------------------------------------------------------------------------
+TABLE            ENTITY                  PURPOSE / KEY COLUMNS
+---------------  ----------------------  --------------------------------
+SolarRequests    SolarRequest            Main workflow record.
+                                         RequestNumber (max 20, UNIQUE),
+                                         PlanAmount decimal(18,2),
+                                         KVCapacity decimal(8,2),
+                                         FK UserId (Restrict),
+                                         FK SolarProjectId (SetNull)
+SolarProjects    SolarProject            Project / plan catalog.
+                                         Name (max 100),
+                                         SolarTypeKV decimal(8,2),
+                                         DiscomWork, DealClose, SCZMenue,
+                                         SportainTeam, TotalAmount
+                                         all decimal(18,2)
+SolarAccounts    SolarAccount            AccountNumber (max 20, UNIQUE),
+                                         ProjectAmount, DepositAmount,
+                                         DueAmount decimal(18,2),
+                                         FK UserId (Restrict),
+                                         FK SolarRequestId (Cascade)
+Payments         Payment                 Payments against a request.
+                                         Amount decimal(18,2),
+                                         payment ref + method,
+                                         FK SolarRequestId (Cascade)
+Commissions      Commission              1:1 with SolarRequest.
+                                         ProjectAmount, CommissionAmount
+                                         decimal(18,2),
+                                         CommissionPercentage decimal(5,2),
+                                         FK SolarRequestId UNIQUE (Cascade)
+
+
+------------------------------------------------------------------------
+3. OPERATIONS / PROCESS TABLES
+------------------------------------------------------------------------
+TABLE              ENTITY                PURPOSE
+-----------------  --------------------  ------------------------------
+SiteSurveys        SiteSurvey            Site survey stage per request
+MeterDispatches    MeterDispatch         Meter dispatch tracking
+MaterialDispatches MaterialDispatch      Material dispatch tracking
+Installations      Installation          Installation stage
+Documents          Document              Request documents
+                                         (FK SolarRequestId, Cascade)
+DCRDocuments       DCRDocument           DCR compliance documents
+PMDocuments        PMDocument            PM-Surya-Ghar documents.
+                                         FileName (max 255),
+                                         FilePath (max 500),
+                                         FK SolarRequestId (Cascade)
+
+
+------------------------------------------------------------------------
+4. WORKER / INC (INSTALLER) TABLES
+------------------------------------------------------------------------
+TABLE              ENTITY                PURPOSE
+-----------------  --------------------  ------------------------------
+Workers            Worker                Worker / installer master
+WorkerAssignments  WorkerAssignment      Worker <-> job assignments
+                                         FK WorkerId (Restrict)
+IncConnections     IncConnection         Connections registered by an INC
+                                         worker. WorkerId, CustomerName,
+                                         MobileNumber, Address, City,
+                                         State, ConnectionType,
+                                         KVCapacity, DocumentPath,
+                                         Status (Pending / Complete /
+                                         Approved / Rejected),
+                                         CommissionAmount, AdminRemark
+IncWithdrawals     IncWithdrawal         INC withdrawal requests.
+                                         Id, WorkerId, RequestNumber,
+                                         Amount, BankDetails, Status,
+                                         RequestedAt, ProcessedAt,
+                                         ProcessedBy, AdminNotes,
+                                         RejectionReason,
+                                         BankName, IFSCode, BranchName,
+                                         AccountNo
+                                         (bank cols added by
+                                          ADD-IncWithdrawalBank.sql;
+                                          BankName comes from
+                                          M_BankMaster)
+                                         (NO IsDeleted / CreatedAt)
+
+
+------------------------------------------------------------------------
+5. WALLET & AUDIT TABLES
+------------------------------------------------------------------------
+TABLE              ENTITY                PURPOSE
+-----------------  --------------------  ------------------------------
+Wallets            Wallet                TotalIncome, TDS, NetAmount,
+                                         WithdrawnAmount, PendingBalance
+                                         all decimal(18,2),
+                                         FK UserId (Cascade)
+WalletTransactions WalletTransaction     Credit / debit ledger.
+                                         Amount decimal(18,2),
+                                         FK WalletId (Cascade),
+                                         FK SolarAccountId (SetNull)
+Withdrawals        Withdrawal            Withdrawal requests off a wallet.
+                                         Amount decimal(18,2),
+                                         FK WalletId (Cascade)
+Notifications      Notification          Per-user notifications
+                                         (FK UserId)
+ActivityLogs       ActivityLog           Audit trail.
+                                         Action (max 100),
+                                         EntityName (max 100),
+                                         EntityId (max 50),
+                                         IpAddress (max 45)
+
+
+------------------------------------------------------------------------
+6. LEGACY LIVE TABLES  (READ-ONLY - ExcludeFromMigrations)
+------------------------------------------------------------------------
+TABLE              ENTITY                PRIMARY KEY
+-----------------  --------------------  ------------------------------
+m_membermaster     MMemberMaster         MId
+m_usermaster       MUserMaster           UId
+m_statedivmaster   MStateDivMaster       StateCode
+
+EF Core NEVER generates CREATE / ALTER / DROP for these tables.
+They exist as queryable entities only, for authentication and for
+reading state / division data from the existing live database.
+
+
+------------------------------------------------------------------------
+7. EF-MANAGED
+------------------------------------------------------------------------
+__EFMigrationsHistory   - migration tracking table (created by EF Core)
+
+
+========================================================================
+IMPORTANT NOTES
+========================================================================
+
+1) IncConnections and IncWithdrawals have NO MIGRATION.
+   Both are registered as DbSets in ApplicationDbContext.cs (lines 26-27)
+   but neither appears in any migration file nor in
+   ApplicationDbContextModelSnapshot.cs. They must be created
+   out-of-band in the live database (the IncWithdrawal entity comment
+   says it "maps to the EXISTING IncWithdrawals table").
+   => Running Update-Database on a fresh DB will NOT create them.
+
+2) SOFT DELETE.
+   Every entity deriving from BaseEntity has a global query filter
+   HasQueryFilter(x => !x.IsDeleted), so rows are never physically
+   removed - they are flagged with IsDeleted = 1.
+   EXCEPTION: IncWithdrawal is a plain class with no IsDeleted column.
+
+3) AUDIT TIMESTAMPS.
+   SaveChangesAsync() automatically sets CreatedAt (on insert) and
+   UpdatedAt (on update) for all BaseEntity types, using DateTime.UtcNow.
+
+4) TABLE COUNT.
+   7  Identity tables
+   5  Core business tables
+   7  Operations / process tables
+   4  Worker / INC tables
+   5  Wallet & audit tables
+   3  Legacy live read-only tables
+   1  __EFMigrationsHistory
+   ---
+   32 total
+
+========================================================================

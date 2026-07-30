@@ -1,0 +1,33 @@
+2026-07-30 11:18:15.519 +05:30 [INF] DbSeeder: skipping all DB schema work (live DB managed externally).
+2026-07-30 11:18:16.160 +05:30 [INF] User profile is available. Using 'C:\Users\Claude1\AppData\Local\ASP.NET\DataProtection-Keys' as key repository and Windows DPAPI to encrypt keys at rest.
+2026-07-30 11:18:17.623 +05:30 [INF] Now listening on: https://localhost:7050
+2026-07-30 11:18:17.632 +05:30 [INF] Now listening on: http://localhost:5038
+2026-07-30 11:18:17.780 +05:30 [INF] Application started. Press Ctrl+C to shut down.
+2026-07-30 11:18:17.956 +05:30 [INF] Hosting environment: Development
+2026-07-30 11:18:17.993 +05:30 [INF] Content root path: \\localhost\Sadhna\SolerGithub\Solar\SolarPortal\SolarPortal.Web
+2026-07-30 11:18:32.735 +05:30 [INF] Request starting HTTP/2 GET https://localhost:7050/ - null null
+2026-07-30 11:18:32.740 +05:30 [INF] Request starting HTTP/2 GET https://localhost:7050/SolarPanelInstaller/Withdraw - null null
+2026-07-30 11:18:35.062 +05:30 [INF] Identity.Application was not authenticated. Failure message: Ticket expired
+2026-07-30 11:18:35.074 +05:30 [INF] Identity.Application was not authenticated. Failure message: Ticket expired
+2026-07-30 11:18:35.097 +05:30 [INF] Authorization failed. These requirements were not met:
+RolesAuthorizationRequirement:User.IsInRole must be true for one of the following roles: (Installer)
+2026-07-30 11:18:35.109 +05:30 [INF] Executing endpoint 'SolarPortal.Web.Controllers.HomeController.Index (SolarPortal.Web)'
+2026-07-30 11:18:35.145 +05:30 [INF] AuthenticationScheme: Identity.Application was challenged.
+2026-07-30 11:18:35.168 +05:30 [INF] Request finished HTTP/2 GET https://localhost:7050/SolarPanelInstaller/Withdraw - 302 null null 2426.6776ms
+2026-07-30 11:18:35.251 +05:30 [INF] Route matched with {action = "Index", controller = "Home", area = ""}. Executing controller action with signature Microsoft.AspNetCore.Mvc.IActionResult Index() on controller SolarPortal.Web.Controllers.HomeController (SolarPortal.Web).
+2026-07-30 11:18:35.298 +05:30 [INF] Authorization failed. These requirements were not met:
+DenyAnonymousAuthorizationRequirement: Requires an authenticated user.
+2026-07-30 11:18:35.307 +05:30 [INF] Authorization failed for the request at filter 'Microsoft.AspNetCore.Mvc.Authorization.AuthorizeFilter'.
+2026-07-30 11:18:35.327 +05:30 [INF] Executing ChallengeResult with authentication schemes ([]).
+2026-07-30 11:18:35.341 +05:30 [INF] AuthenticationScheme: Identity.Application was challenged.
+2026-07-30 11:18:35.483 +05:30 [INF] Executed action SolarPortal.Web.Controllers.HomeController.Index (SolarPortal.Web) in 183.9809ms
+2026-07-30 11:18:35.613 +05:30 [INF] Executed endpoint 'SolarPortal.Web.Controllers.HomeController.Index (SolarPortal.Web)'
+2026-07-30 11:18:35.617 +05:30 [INF] Request finished HTTP/2 GET https://localhost:7050/ - 302 null null 2885.1929ms
+2026-07-30 11:18:37.511 +05:30 [INF] Request starting HTTP/2 GET https://localhost:7050/Account/Login?ReturnUrl=%2FSolarPanelInstaller%2FWithdraw - null null
+2026-07-30 11:18:37.526 +05:30 [INF] Identity.Application was not authenticated. Failure message: Ticket expired
+2026-07-30 11:18:37.528 +05:30 [INF] Executing endpoint 'SolarPortal.Web.Controllers.AccountController.Login (SolarPortal.Web)'
+2026-07-30 11:18:37.538 +05:30 [INF] Request starting HTTP/2 GET https://localhost:7050/Account/Login?ReturnUrl=%2F - null null
+2026-07-30 11:18:37.548 +05:30 [INF] Identity.Application was not authenticated. Failure message: Ticket expired
+2026-07-30 11:18:37.551 +05:30 [INF] Executing endpoint 'SolarPortal.Web.Controllers.AccountController.Login (SolarPortal.Web)'
+2026-07-30 11:18:37.570 +05:30 [INF] Route matched with {action = "Login", controller = "Account", area = ""}. Executing controller action with signature Microsoft.AspNetCore.Mvc.IActionResult Login(System.String, System.String) on controller SolarPortal.Web.Controllers.AccountController (SolarPortal.Web).
+2026-07-30 11:18:37.570 +05:30 [INF] Route matched with {action = "Login", controller = "Account", area = ""}. Executing controller action with signature Microsoft.AspNetCore.Mvc.IActionResult Login(System.String, System.String) on controller SolarPortal.Web.Controllers.AccountController (SolarPortal.Web).

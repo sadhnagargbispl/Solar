@@ -15,4 +15,9 @@ public class PMDocumentDto
     public string? Remarks { get; set; }
     public bool IsAdminUpload { get; set; }
     public DateTime CreatedAt { get; set; }
+
+    // Set when an existing document is re-uploaded (replace). With CreatedAt this
+    // gives the "last touched" time, which the PM Surya page compares against
+    // SolarRequest.PMSuryaSubmittedAt to decide if the user may still replace it.
+    public DateTime? UpdatedAt { get; set; }
 }

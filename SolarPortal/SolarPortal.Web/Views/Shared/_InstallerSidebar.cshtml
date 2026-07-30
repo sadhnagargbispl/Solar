@@ -1,4 +1,4 @@
-﻿@{
+@{
     var cur = ViewContext.RouteData.Values["controller"]?.ToString();
     var act = ViewContext.RouteData.Values["action"]?.ToString();
     string A(string c) => cur == c ? "active" : "";
@@ -16,7 +16,7 @@
 {
     <div class="sb-section">
         <div class="sb-label">Income (INC only)</div>
-        <a class="sb-item @A("Payout")" asp-area="SolarPanelInstaller" asp-controller="Payout" asp-action="Index"><span class="sbi">&#128176;</span>Payout</a>
+        <a class="sb-item @A("Payout")" asp-area="SolarPanelInstaller" asp-controller="Payout" asp-action="Index"><span class="sbi">&#128176;</span>Wallet</a>
         <a class="sb-item @A("Withdraw")" asp-area="SolarPanelInstaller" asp-controller="Withdraw" asp-action="Index"><span class="sbi">&#127974;</span>Withdraw</a>
     </div>
 }

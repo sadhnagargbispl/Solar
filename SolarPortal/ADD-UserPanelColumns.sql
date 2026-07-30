@@ -31,6 +31,12 @@ IF COL_LENGTH('dbo.SolarRequests', 'PMSuryaLoanOption') IS NULL
 IF COL_LENGTH('dbo.SolarRequests', 'PMSuryaGharIdNo') IS NULL
     ALTER TABLE dbo.SolarRequests ADD PMSuryaGharIdNo NVARCHAR(100) NULL;
 
+/* Timestamp of the user's "Submit for Admin Verification" press on the PM Surya
+   page. Documents untouched since then are with the admin and the user can no
+   longer replace them; anything uploaded after it is still an editable draft. */
+IF COL_LENGTH('dbo.SolarRequests', 'PMSuryaSubmittedAt') IS NULL
+    ALTER TABLE dbo.SolarRequests ADD PMSuryaSubmittedAt DATETIME2 NULL;
+
 /* ---- PMDocuments --------------------------------------------------------- */
 IF COL_LENGTH('dbo.PMDocuments', 'IsAdminUpload') IS NULL
     ALTER TABLE dbo.PMDocuments ADD IsAdminUpload BIT NOT NULL CONSTRAINT DF_PMDocuments_IsAdminUpload DEFAULT(0);

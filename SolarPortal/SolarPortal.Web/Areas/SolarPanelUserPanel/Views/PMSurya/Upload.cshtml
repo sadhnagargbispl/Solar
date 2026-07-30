@@ -38,6 +38,17 @@
     var hasPending  = userDocs.Any(x => x.Status == SolarPortal.Domain.Enums.ApprovalStatus.Pending);
     var hasRejected = userDocs.Any(x => x.Status == SolarPortal.Domain.Enums.ApprovalStatus.Rejected);
 
+    // A document counts as SUBMITTED once it was part of a "Submit for Admin
+    // Verification" press - i.e. it has not been touched since PMSuryaSubmittedAt.
+    // Those files are with the admin. Anything newer (or uploaded before the user
+    // ever submitted) is still the user's own draft and stays replaceable.
+    bool IsSubmitted(SolarPortal.Application.DTOs.PMDocumentDto x) =>
+        req.PMSuryaSubmittedAt.HasValue && (x.UpdatedAt ?? x.CreatedAt) <= req.PMSuryaSubmittedAt.Value;
+
+    // Something worth sending to the admin: pending AND not already submitted.
+    var hasUnsubmitted = userDocs.Any(x =>
+        x.Status == SolarPortal.Domain.Enums.ApprovalStatus.Pending && !IsSubmitted(x));
+
     string StsClass(SolarPortal.Domain.Enums.ApprovalStatus s) => s switch
     {
         SolarPortal.Domain.Enums.ApprovalStatus.Approved => "sts-act",
@@ -57,14 +68,31 @@
         <div>
             <div class="card">
                 <div class="ct"><span class="ct-dot"></span>Loan Preference</div>
-                <p class="text-muted" style="font-size:13.5px;margin-bottom:12px">
-                    Do you want to avail this PM Surya Ghar installation on <strong>Loan</strong> or <strong>Without Loan</strong>?
-                </p>
-                <div class="loan-seg">
-                    <button type="button" class="btn @(loanOpt == "Loan" ? "btn-success" : "btn-outline-success") loan-opt" data-opt="Loan">On Loan</button>
-                    <button type="button" class="btn @(loanOpt == "WithoutLoan" ? "btn-success" : "btn-outline-success") loan-opt" data-opt="WithoutLoan">Without Loan</button>
-                    <span id="loanSavedMsg" class="text-success" style="font-size:13px;align-self:center"></span>
-                </div>
+                @* Once admin has verified the PM Surya stage the loan choice is part of
+                   that approved submission - show it, but no longer let the user change it. *@
+                @if (isLocked)
+                {
+                    <p class="text-muted" style="font-size:13.5px;margin-bottom:12px">
+                        Your loan preference for this PM Surya Ghar installation:
+                    </p>
+                    <div class="loan-seg loan-locked">
+                        <span class="sts @(string.IsNullOrWhiteSpace(loanOpt) ? "sts-pend" : "sts-act")">
+                            @(loanOpt == "Loan" ? "On Loan" : loanOpt == "WithoutLoan" ? "Without Loan" : "Not selected")
+                        </span>
+                    </div>
+                    <div class="hint" style="margin-top:10px">Locked - admin has verified this stage. Please contact admin to change your loan preference.</div>
+                }
+                else
+                {
+                    <p class="text-muted" style="font-size:13.5px;margin-bottom:12px">
+                        Do you want to avail this PM Surya Ghar installation on <strong>Loan</strong> or <strong>Without Loan</strong>?
+                    </p>
+                    <div class="loan-seg">
+                        <button type="button" class="btn @(loanOpt == "Loan" ? "btn-success" : "btn-outline-success") loan-opt" data-opt="Loan">On Loan</button>
+                        <button type="button" class="btn @(loanOpt == "WithoutLoan" ? "btn-success" : "btn-outline-success") loan-opt" data-opt="WithoutLoan">Without Loan</button>
+                        <span id="loanSavedMsg" class="text-success" style="font-size:13px;align-self:center"></span>
+                    </div>
+                }
             </div>
 
             <div class="card">
@@ -85,7 +113,9 @@
                         <div class="pm-doc-body">
                             <div class="pm-doc-name">@d.Label</div>
                             <div class="pm-doc-sub">
-                                @if (uploaded != null) { <text>Uploaded</text> } else { <text>Not uploaded yet</text> }
+                                @if (uploaded == null) { <text>Not uploaded yet</text> }
+                                else if (uploaded.Status == SolarPortal.Domain.Enums.ApprovalStatus.Pending && !IsSubmitted(uploaded)) { <text>Uploaded - not submitted yet</text> }
+                                else { <text>Uploaded</text> }
                             </div>                            @if (uploaded != null && !string.IsNullOrWhiteSpace(uploaded.Remarks))
                             {
                                 <div class="pm-doc-remark">Admin remark: @uploaded.Remarks</div>
@@ -97,8 +127,15 @@
                         }
                         <div class="pm-doc-act">
                             @{
-                                // Approved documents are final - no Replace / re-capture allowed.
-                                var canUpload = !isLocked && (uploaded == null || uploaded.Status != SolarPortal.Domain.Enums.ApprovalStatus.Approved);
+                                // Upload when nothing is there yet. Replace stays available for a
+                                // rejected document, and for one that is uploaded but NOT yet
+                                // submitted - until "Submit for Admin Verification" is pressed the
+                                // file is only the user's draft. Once submitted (or approved) it is
+                                // with the admin, so Replace / re-capture disappears.
+                                var canUpload = !isLocked && (uploaded == null
+                                    || uploaded.Status == SolarPortal.Domain.Enums.ApprovalStatus.Rejected
+                                    || (uploaded.Status == SolarPortal.Domain.Enums.ApprovalStatus.Pending
+                                        && !IsSubmitted(uploaded)));
                             }
                             @if (canUpload)
                             {
@@ -132,12 +169,16 @@
                 }
                 else
                 {
-                    <button id="btnSubmit" class="btn btn-g btn-full" style="margin-top:16px" @(hasPending ? "" : "disabled")>
+                    <button id="btnSubmit" class="btn btn-g btn-full" style="margin-top:16px" @(hasUnsubmitted ? "" : "disabled")>
                         Submit for Admin Verification
                     </button>
                     @if (!userDocs.Any())
                     {
                         <div class="hint" style="text-align:center;margin-top:8px">Upload at least one document to enable submit.</div>
+                    }
+                    else if (hasPending && !hasUnsubmitted)
+                    {
+                        <div class="hint" style="text-align:center;margin-top:8px">Already submitted - awaiting admin review. Documents can no longer be changed.</div>
                     }
                     else if (!hasPending && hasRejected)
                     {
@@ -174,6 +215,7 @@
                     {
                         pmLabel = "Rejected - document replacement needed"; pmCls = "sts-rej";
                     }
+                    else if (hasUnsubmitted) { pmLabel = "Not submitted yet"; pmCls = "sts-pend"; }
                     else if (anyDocs) { pmLabel = "Awaiting admin review"; pmCls = "sts-pend"; }
                     else { pmLabel = "Not uploaded yet"; pmCls = "sts-pend"; }
                 }
@@ -299,7 +341,7 @@ $(function () {
         $.ajax({
             url: '@Url.Action("Submit", "PMSurya")',
             type: 'POST', data: fd, processData: false, contentType: false,
-            success: function (r) { if (r.success) { setTimeout(() => { window.location.href = '@Url.Action("Status", "SolarRequest", new { id = req.Id })'; }, 900); } else { alert(r.message || 'Submit failed.'); } }
+            success: function (r) { if (r.success) { setTimeout(() => { window.location.href = '@Url.Action("Status", "SolarRequest", new { id = req.Id })'; }, 900); } else { toastMsg('error', r.message || 'Submit failed.'); } }
         });
     });
 });
@@ -329,10 +371,10 @@ $(function () {
   window.openLivePhoto=function(){
     var modal=document.getElementById('livePhotoModal'); if(!modal) return; modal.style.display='flex';
     var video=document.getElementById('lpVideo');
-    if(!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia){ alert('Camera is not supported in this browser.'); closeLivePhoto(); return; }
+    if(!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia){ toastMsg('warning', 'Camera is not supported in this browser.'); closeLivePhoto(); return; }
     navigator.mediaDevices.getUserMedia({ video:{ facingMode:'user' }, audio:false })
       .then(function(s){ lpStream=s; video.srcObject=s; video.style.display=''; document.getElementById('lpCanvas').style.display='none'; lpButtons('live'); })
-      .catch(function(e){ alert('Camera access denied: '+e.message); closeLivePhoto(); });
+      .catch(function(e){ toastMsg('error', 'Camera access denied: ' + e.message); closeLivePhoto(); });
   };
   window.closeLivePhoto=function(){ var m=document.getElementById('livePhotoModal'); if(m) m.style.display='none'; if(lpStream){ lpStream.getTracks().forEach(function(t){t.stop();}); lpStream=null; } };
   on('lpCapture','click', function(){ var v=document.getElementById('lpVideo'), c=document.getElementById('lpCanvas'); c.width=v.videoWidth||640; c.height=v.videoHeight||480; c.getContext('2d').drawImage(v,0,0,c.width,c.height); v.style.display='none'; c.style.display=''; lpButtons('shot'); });
@@ -355,7 +397,7 @@ $(function () {
     window.addEventListener('pointerup', function(){ drawing=false; });
   })();
   on('sigClear','click', function(){ var c=document.getElementById('sigCanvas'); if(sigCtx){ sigCtx.fillStyle='#fff'; sigCtx.fillRect(0,0,c.width,c.height); hasInk=false; } });
-  on('sigSave','click', function(){ if(!hasInk){ alert('Please draw your signature first.'); return; } document.getElementById('sigCanvas').toBlob(function(b){ uploadCaptured(b,'Signature','signature.png'); closeSignature(); }, 'image/png'); });
+  on('sigSave','click', function(){ if(!hasInk){ toastMsg('warning', 'Please draw your signature first.'); return; } document.getElementById('sigCanvas').toBlob(function(b){ uploadCaptured(b,'Signature','signature.png'); closeSignature(); }, 'image/png'); });
 })();
 </script>
 @Html.AntiForgeryToken()

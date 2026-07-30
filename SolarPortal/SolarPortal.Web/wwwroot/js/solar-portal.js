@@ -1,16 +1,21 @@
-﻿/* solar-portal.js — Main JavaScript for Solar Connection Portal */
+/* solar-portal.js — Main JavaScript for Solar Connection Portal */
 
 // ===== UTILITY =====
-function showError(msg) {
-    if (typeof Swal !== 'undefined') {
-        Swal.fire({ icon: 'error', title: 'Error', text: msg, background: '#ffffff', color: '#1f2937', confirmButtonColor: '#16a34a' });
-    } else { alert(msg); }
+// Messages show as a corner TOAST, never a blocking modal/alert. SolarToast is
+// defined in _Toasts.cshtml; if SweetAlert didn't load we degrade to alert().
+function toastMsg(kind, msg) {
+    if (!msg) return;
+    var t = window.SolarToast;
+    if (t && typeof t[kind] === 'function') { t[kind](msg); return; }
+    if (t && typeof t.info === 'function') { t.info(msg); return; }
+    alert(msg);
 }
-function showSuccess(msg) {
-    if (typeof Swal !== 'undefined') {
-        Swal.fire({ icon: 'success', title: 'Success', text: msg, background: '#ffffff', color: '#1f2937', confirmButtonColor: '#16a34a', timer: 2500, showConfirmButton: false });
-    } else { alert(msg); }
-}
+function showError(msg)   { toastMsg('error', msg); }
+function showSuccess(msg) { toastMsg('success', msg); }
+function showWarning(msg) { toastMsg('warning', msg); }
+function showInfo(msg)    { toastMsg('info', msg); }
+
+// Confirm stays a modal on purpose — it needs an answer before anything happens.
 function showConfirm(msg, cb) {
     if (typeof Swal !== 'undefined') {
         Swal.fire({

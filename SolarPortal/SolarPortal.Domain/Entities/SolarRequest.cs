@@ -49,6 +49,12 @@ public class SolarRequest : BaseEntity
     public string? PMSuryaGharIdNo { get; set; }         // set by admin on approval
     public string? PmSuryaApplicationNo { get; set; }    // PM Surya Ghar ID written by the ADMIN panel app (shared DB column)
 
+    // When the user pressed "Submit for Admin Verification" on the PM Surya page.
+    // Documents uploaded at/before this moment are with the admin and can no
+    // longer be replaced by the user; anything uploaded AFTER it is still the
+    // user's own draft and stays replaceable until the next submit.
+    public DateTime? PMSuryaSubmittedAt { get; set; }
+
     // Status
     public ProjectStatus CurrentStage { get; set; } = ProjectStatus.Registration;
     public ApprovalStatus ApprovalStatus { get; set; } = ApprovalStatus.Pending;

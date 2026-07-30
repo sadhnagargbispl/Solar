@@ -21,7 +21,14 @@ public static class DependencyInjection
         services.AddDbContext<ApplicationDbContext>(options =>
             options.UseSqlServer(
                 configuration.GetConnectionString("DefaultConnection"),
-                b => b.MigrationsAssembly(typeof(ApplicationDbContext).Assembly.FullName)));
+                b => b
+                    .MigrationsAssembly(typeof(ApplicationDbContext).Assembly.FullName)
+                    // The live SolfitEnergy DB runs at compatibility level 100 (SQL 2008)
+                    // even though the server is SQL 2019. EF Core 8 otherwise translates
+                    // list.Contains(x) into OPENJSON(...) WITH ([value] int '$'), which
+                    // that compat level rejects with "Incorrect syntax near '$'".
+                    // Pinning EF to 120 makes it emit a plain IN (...) list instead.
+                    .UseCompatibilityLevel(120)));
 
         // Identity
         services.AddIdentity<ApplicationUser, IdentityRole>(options =>
@@ -96,10 +103,15 @@ public static class DependencyInjection
         services.AddScoped<IPayModeService, PayModeService>();
         // States from legacy M_StateDivMaster — shown in address State dropdowns.
         services.AddScoped<IStateService, StateService>();
+        // Banks from legacy M_BankMaster - shown in the INC withdrawal form.
+        services.AddScoped<IBankService, BankService>();
         // Bridges new "With Activation" submissions into the legacy
         // TrnProductorderDetail table — keeps the existing SolFit
         // VB workflow (reports, activation processing) working.
         services.AddScoped<ILegacyProductRequestService, LegacyProductRequestService>();
+
+        // INC commission + wallet: on Mark Complete the installer's commission is         // worked out from CommissionMasters and credited to IncCommissionLedger and         // the legacy TrnVoucher INC wallet (AcType 'I').
+        services.AddScoped<IIncWalletService, IncWalletService>();
 
         return services;
     }

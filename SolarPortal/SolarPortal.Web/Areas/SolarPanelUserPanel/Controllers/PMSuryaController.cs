@@ -184,7 +184,10 @@ public class PMSuryaController : Controller
             NotificationType = "PMSurya"
         });
 
-        return Json(new { success = true, message = "Document uploaded. Waiting for admin verification.", filePath = path });
+        // No success message here on purpose - the global AJAX toast in _Toasts.cshtml
+        // fires a popup for any { success = true, message = ... } response, and the page
+        // reloads right after the upload anyway (status + progress bar already show it).
+        return Json(new { success = true, filePath = path });
     }
 
     // POST: /User/PMSurya/SaveLoanOption  — user picks Loan / Without Loan (spec task 7)
@@ -196,6 +199,12 @@ public class PMSuryaController : Controller
         var req = await _uow.SolarRequests.GetByIdAsync(requestId);
         if (req == null || !string.Equals(req.UserId?.Trim(), userId?.Trim(), StringComparison.OrdinalIgnoreCase))
             return Json(new { success = false, message = "Request not found" });
+
+        // Locked once admin has verified the PM Surya stage: the loan choice is part of
+        // that approved submission, so the user can no longer flip it. The page hides the
+        // buttons in this state, but a stale tab could still POST here.
+        if (req.CurrentStage > ProjectStatus.PMSurvey)
+            return Json(new { success = false, message = "PM Surya Ghar is verified and locked. Loan preference can no longer be changed." });
 
         if (loanOption != "Loan" && loanOption != "WithoutLoan")
             return Json(new { success = false, message = "Invalid option" });
@@ -233,6 +242,16 @@ public class PMSuryaController : Controller
                 : "All documents are already reviewed. Nothing pending to submit.";
             return Json(new { success = false, message = msg });
         }
+
+        // Stamp the submit time. Everything uploaded at/before this instant is now
+        // with the admin, so the upload page stops offering "Replace" for those
+        // documents. A later re-upload (only possible for rejected ones) carries a
+        // newer UpdatedAt, which unlocks that single document again.
+        req.PMSuryaSubmittedAt = DateTime.UtcNow;
+        req.UpdatedAt = DateTime.UtcNow;
+        req.UpdatedBy = userId;
+        _uow.SolarRequests.Update(req);
+        await _uow.SaveChangesAsync();
 
         // Just record an "awaiting admin" notification — the stage advances when admin approves.
         await _notifications.CreateAsync(new CreateNotificationDto
