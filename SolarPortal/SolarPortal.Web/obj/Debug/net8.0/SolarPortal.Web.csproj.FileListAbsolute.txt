@@ -2487,7 +2487,6 @@ E:\Sadhna Garg\SadhnaGithubC#\GithubC#\Solar\SolarPortal\SolarPortal.Web\obj\Deb
 \\localhost\Sadhna\SolerGithub\Solar\SolarPortal\SolarPortal.Web\obj\Debug\net8.0\SolarPortal.Web.pdb
 \\localhost\Sadhna\SolerGithub\Solar\SolarPortal\SolarPortal.Web\obj\Debug\net8.0\SolarPortal.Web.genruntimeconfig.cache
 \\localhost\Sadhna\SolerGithub\Solar\SolarPortal\SolarPortal.Web\obj\Debug\net8.0\ref\SolarPortal.Web.dll
-\\localhost\Sadhna\SolerGithub\Solar\SolarPortal\SolarPortal.Web\obj\Debug\net8.0\staticwebassets.upToDateCheck.txt
 =======
 E:\Sadhna Garg\SolarGithub\Solar\SolarPortal\SolarPortal.Web\bin\Debug\net8.0\appsettings.Development.json
 E:\Sadhna Garg\SolarGithub\Solar\SolarPortal\SolarPortal.Web\bin\Debug\net8.0\appsettings.json
