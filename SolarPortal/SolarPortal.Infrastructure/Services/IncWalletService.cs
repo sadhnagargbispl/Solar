@@ -57,6 +57,28 @@ public class IncWalletService : IIncWalletService
         await using var conn = new SqlConnection(connStr);
         await conn.OpenAsync();
 
+        // Only INC workers earn installation commission - JOB workers do the same
+        // work on salary. The caller's WorkerType claim is stamped into the auth
+        // cookie at login and goes stale the moment admin switches a worker's type,
+        // so the type is re-read from Workers here. This method is the only place
+        // installation commission is written, so this is where the rule has to hold.
+        await using (var wt = conn.CreateCommand())
+        {
+            wt.CommandText = "SELECT Type FROM dbo.Workers WHERE Id = @w AND IsDeleted = 0";
+            wt.Parameters.Add(new SqlParameter("@w", workerId));
+            var t = await wt.ExecuteScalarAsync();
+            if (t == null || t == DBNull.Value)
+            {
+                result.Message = "Commission skipped: worker not found.";
+                return result;
+            }
+            if (Convert.ToInt32(t) != (int)SolarPortal.Domain.Enums.WorkerType.INC)
+            {
+                result.Message = "Commission skipped: only INC workers earn installation commission.";
+                return result;
+            }
+        }
+
         // Already credited? Mark Complete can be retried, so never double-pay.
         // Keyed on the request alone - one project earns its commission once.
         await using (var dup = conn.CreateCommand())

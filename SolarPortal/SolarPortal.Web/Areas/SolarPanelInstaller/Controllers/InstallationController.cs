@@ -41,7 +41,6 @@ public class InstallationController : Controller
     }
 
     private int WorkerId => int.TryParse(User.FindFirst("WorkerId")?.Value, out var id) ? id : 0;
-    private bool IsInc => User.FindFirst("WorkerType")?.Value == "INC";
 
     // GET: /SolarPanelInstaller/Installation
     // ?filter=pending | done | all   (default all, same as the admin reports)
@@ -203,12 +202,22 @@ public class InstallationController : Controller
                 Notes = $"Installation completed by installer on {installation.InstallationDate:dd/MM/yyyy}"
             }, "worker-" + wid);
 
-            // Commission: an INC worker earns the percentage the admin set for this
-            // plan (CommissionMasters) the moment he marks the installation complete.
+            // Commission: only an INC worker earns it, the moment he marks the
+            // installation complete. JOB workers do the same work on salary and
+            // are never credited.
+            //
+            // The worker type is read from the Workers table, NOT from the
+            // WorkerType claim: that claim is stamped into the auth cookie at
+            // login, so a worker whose type admin changed afterwards would keep
+            // the old answer for the whole session - crediting a JOB worker, or
+            // silently denying a real INC worker. IncWalletService re-checks the
+            // same thing before it writes, so neither path can pay a JOB worker.
+            //
             // A wallet problem must never undo a finished installation - report it
-            // and carry on. JOB workers are not on commission.
+            // and carry on.
             var commissionMsg = string.Empty;
-            if (IsInc)
+            var worker = await _uow.Workers.GetByIdAsync(wid);
+            if (worker != null && worker.Type == WorkerType.INC)
             {
                 try
                 {
