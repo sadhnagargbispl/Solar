@@ -289,6 +289,52 @@ public class SolarRequestController : Controller
     // POST: Step 1 - Personal Info
     [HttpPost]
     [ValidateAntiForgeryToken]
+    /// <summary>
+    /// Re-reads the Customer Information fields from the signed-in user's profile
+    /// (ApplicationUser, falling back to the bridged m_membermaster row) and
+    /// overwrites whatever the form posted.
+    ///
+    /// The user is not allowed to change any of these details. The view renders
+    /// them readonly, but that only stops the browser - this is what actually
+    /// enforces it against a tampered POST.
+    ///
+    /// A profile field that is BLANK leaves the posted value alone: that value is
+    /// the auto-stub fallback the GET rendered, and per spec a blank profile
+    /// detail must still let the request through instead of blocking it.
+    /// Synthetic bridge emails ("member-{id}@livedb.local") count as blank -
+    /// they are never shown to the user, so they must not be written back either.
+    /// </summary>
+    private async Task OverwriteProfileFieldsAsync(string userId, CreateSolarRequestViewModel model)
+    {
+        var meUser = await _userManager.GetUserAsync(User);
+        var meMember = await _db.Members
+            .AsNoTracking()
+            .FirstOrDefaultAsync(m => m.IdNo != null && m.IdNo.Trim() == userId);
+
+        // Same precedence as the GET handler, so a readonly box the user was shown
+        // is exactly the value that gets stored.
+        static string Keep(string? fromProfile, string posted) =>
+            string.IsNullOrWhiteSpace(fromProfile) ? posted : fromProfile!.Trim();
+
+        var profileName = !string.IsNullOrWhiteSpace(meUser?.FullName)
+            ? meUser!.FullName
+            : meMember?.FullName;
+
+        var rawEmail = meUser?.Email ?? meMember?.EMail ?? "";
+        if (rawEmail.EndsWith("@livedb.local", StringComparison.OrdinalIgnoreCase))
+            rawEmail = "";
+
+        model.ApplicantName = Keep(profileName, model.ApplicantName ?? string.Empty);
+        model.MobileNumber  = Keep(meUser?.MobileNumber ?? meMember?.Mobl?.ToString(), model.MobileNumber ?? string.Empty);
+        model.Email         = Keep(rawEmail, model.Email ?? string.Empty);
+        model.Address       = Keep(meUser?.Address ?? meMember?.Address1, model.Address ?? string.Empty);
+        model.City          = Keep(meUser?.City ?? meMember?.City, model.City ?? string.Empty);
+        // States are stored as a code on m_membermaster, so only the Identity
+        // profile is authoritative here - same as the GET handler.
+        model.State         = Keep(meUser?.State, model.State ?? string.Empty);
+        model.PinCode       = Keep(meUser?.PinCode ?? meMember?.PinCode, model.PinCode ?? string.Empty);
+    }
+
     public async Task<IActionResult> Create(CreateSolarRequestViewModel model)
     {
         // === Strip validation errors on fields the user CAN'T fix ===
@@ -334,6 +380,17 @@ public class SolarRequestController : Controller
         // Server-side enforcement.
         // Q1: Approved request — BLOCK forever.
         var userIdEarly = _userManager.GetUserId(User)!;
+
+        // === Customer Information is NOT user-editable ===
+        // The form renders these readonly, but readonly is a browser courtesy -
+        // a hand-crafted POST can still carry edited values. So every profile-fed
+        // field is re-read from the profile here and the posted value is thrown
+        // away whenever the profile actually has something.
+        //
+        // Where the profile is blank we keep what was posted: that is the value
+        // the GET rendered from the auto-stub fallback, and per spec a blank
+        // profile detail must still submit rather than block the request.
+        await OverwriteProfileFieldsAsync(userIdEarly, model);
 
         // === Active-member POST guard ===
         // Defense-in-depth: even if the user manipulates the form via DevTools to
@@ -406,14 +463,17 @@ public class SolarRequestController : Controller
             ViewBag.ReactivationBasedOn = reactivationBasedOn;
         }
 
-        // ── Payment expectation per mode (spec tasks 2 & 5) ──────────────
-        //  • Mode 1 (With Activation)          → payment is MANDATORY.
-        //  • Mode 2 (Only Solar Without Activ.) → payment is MANDATORY (admin verifies) — per spec 2026-07-22.
-        //  • Mode 3 (Already Active)            → payment is OPTIONAL; the request
-        //                                          submits with or without it.
-        //  • Reactivation                       → payment carried over, none collected.
+        // ── Payment expectation per mode ─────────────────────────────────
+        //  • Modes 1, 2 AND 3 → payment is MANDATORY, minimum ₹20,000.
+        //  • Reactivation     → payment carried over, none collected.
+        //
+        // Mode 3 (Already Active) used to be payment-OPTIONAL. Because the
+        // minimum-payment check further down is gated on paymentRequired, that
+        // exemption also skipped the ₹20,000 floor - an already-active member
+        // could submit a request paying ₹15,000. The floor applies to every mode
+        // now, so this flag no longer distinguishes them.
         bool collectPayment   = !canReactivate;
-        bool paymentRequired  = collectPayment && model.RequestType != RequestType.AlreadyActiveOnlyRequest;
+        bool paymentRequired  = collectPayment;
 
         if (!canReactivate && existingEarly.IsSuccess && existingEarly.Data != null && existingEarly.Data.Any())
         {
@@ -705,20 +765,24 @@ public class SolarRequestController : Controller
         }
 
         // ─── Minimum first-payment enforcement (server-side) ─────────────
-        // Modes 1 & 2: first payment must be at least ₹20,000 — or the full
-        // project amount when the matched plan total is below ₹20,000. This
-        // mirrors confirmSubmit() on the client; enforced here too so a JS
+        // FLAT ₹20,000 floor in every mode - With Activation, Without
+        // Activation and Already Active alike. There is deliberately no
+        // "pay the full amount instead when the plan is cheaper" discount:
+        // PlanAmount always comes from the kW master plan (SolarProjects),
+        // whose cheapest active plan is well above ₹20,000, so the floor can
+        // never collide with the "cannot exceed project amount" cap below.
+        //
+        // Mirrors confirmSubmit() on the client; enforced here too so a JS
         // failure or DevTools tampering can never slip a smaller payment
         // through (a ₹1,000 payment once got saved exactly this way).
         if (paymentRequired)
         {
-            const decimal hardMin = 20000m;
-            var effMin = (model.PlanAmount > 0 && model.PlanAmount < hardMin) ? model.PlanAmount : hardMin;
-            if (model.PaymentAmount < effMin)
+            var hardMin = PaymentService.MinimumPaymentThreshold;
+            if (model.PaymentAmount < hardMin)
             {
                 ModelState.AddModelError(nameof(model.PaymentAmount),
-                    $"Minimum first payment is ₹{effMin:N0}. Aapne ₹{model.PaymentAmount:N0} dala hai — " +
-                    $"kam se kam ₹{effMin:N0} bharna zaroori hai.");
+                    $"Minimum first payment is ₹{hardMin:N0}. Aapne ₹{model.PaymentAmount:N0} dala hai — " +
+                    $"kam se kam ₹{hardMin:N0} bharna zaroori hai.");
             }
             else if (model.PlanAmount > 0 && model.PaymentAmount > model.PlanAmount)
             {
@@ -902,19 +966,13 @@ public class SolarRequestController : Controller
         {
             try
             {
-                // Effective min = min(₹20,000, project total). For a ₹15,900 project,
-                // the user can pay ₹15,900 (full) as the first payment — the ₹20K floor
-                // does not block this since it's logically a complete payment.
+                // Flat ₹20,000 floor, same as the validation block above - no
+                // "cheaper plan pays in full" discount in any mode.
                 var hardMin = PaymentService.MinimumPaymentThreshold;
-                var effectiveMin = model.PlanAmount > 0 && model.PlanAmount < hardMin
-                                    ? model.PlanAmount
-                                    : hardMin;
 
-                if (model.PaymentAmount < effectiveMin)
+                if (model.PaymentAmount < hardMin)
                 {
-                    TempData["Warning"] = model.PlanAmount > 0 && model.PlanAmount < hardMin
-                        ? $"Request saved, but first payment of ₹{model.PaymentAmount:N0} is below the ₹{effectiveMin:N0} (full project amount). Please pay from the Payment page."
-                        : $"Request saved, but first payment of ₹{model.PaymentAmount:N0} is below the ₹{hardMin:N0} minimum. Please add the remaining amount from the Payment page.";
+                    TempData["Warning"] = $"Request saved, but first payment of ₹{model.PaymentAmount:N0} is below the ₹{hardMin:N0} minimum. Please add the remaining amount from the Payment page.";
                 }
                 else if (model.PlanAmount > 0 && model.PaymentAmount > model.PlanAmount)
                 {
@@ -1557,22 +1615,14 @@ public class SolarRequestController : Controller
                 message = $"This project is already fully paid (₹{projectTotal:N0}). No further payment is needed."
             });
 
-        // Effective minimum for the FIRST payment:
-        //   - Normally ₹20,000.
-        //   - But if the project itself is smaller than ₹20,000 (e.g. a ₹15,900 BV
-        //     product), then the effective minimum is the project total itself —
-        //     paying the full amount in one shot is acceptable, and the ₹20K floor
-        //     should not block it.
-        var effectiveMin = projectTotal > 0 && projectTotal < min ? projectTotal : min;
-
-        // Rule: first payment must clear the effective minimum in one go
-        if (alreadyPaid <= 0 && dto.Amount < effectiveMin)
+        // Rule: the FIRST payment must clear the flat ₹20,000 minimum in one go,
+        // in every mode. There is no reduced floor for cheaper plans - see the
+        // matching comment in Create(POST).
+        if (alreadyPaid <= 0 && dto.Amount < min)
             return Json(new
             {
                 success = false,
-                message = projectTotal > 0 && projectTotal < min
-                    ? $"For this ₹{projectTotal:N0} project, the first payment must be the full ₹{projectTotal:N0}. You entered ₹{dto.Amount:N0}."
-                    : $"First payment must be at least ₹{min:N0}. You entered ₹{dto.Amount:N0}."
+                message = $"First payment must be at least ₹{min:N0}. You entered ₹{dto.Amount:N0}."
             });
 
         // Rule: total cannot exceed the project amount

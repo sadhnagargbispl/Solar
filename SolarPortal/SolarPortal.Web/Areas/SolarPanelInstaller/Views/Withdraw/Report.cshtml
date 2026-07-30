@@ -1,0 +1,124 @@
+﻿@model List<SolarPortal.Domain.Entities.IncWithdrawal>
+@{
+    ViewData["Title"] = "Withdrawal Report";
+    var page       = (int)(ViewBag.Page ?? 1);
+    var totalPages = (int)(ViewBag.TotalPages ?? 1);
+    var totalRows  = (int)(ViewBag.TotalRows ?? 0);
+    var pageSize   = (int)(ViewBag.PageSize ?? 10);
+    var available  = (decimal)(ViewBag.Available ?? 0m);
+
+    var firstRow = totalRows == 0 ? 0 : ((page - 1) * pageSize) + 1;
+    var lastRow  = System.Math.Min(page * pageSize, totalRows);
+
+    string Cls(string s) => s == "Approved" ? "sts-act" : s == "Rejected" ? "sts-rej" : "sts-pend";
+    string Or(string? v) => string.IsNullOrWhiteSpace(v) ? "-" : v;
+
+    // Window the page numbers so a long history does not print 40 links.
+    var from = System.Math.Max(1, page - 2);
+    var to   = System.Math.Min(totalPages, from + 4);
+    from     = System.Math.Max(1, to - 4);
+}
+<div class="page active">
+    <div class="ph">
+        <div class="ph-bc">Installer / <span>Withdrawal Report</span></div>
+        <div class="ph-title">Withdrawal Report</div>
+        <div class="ph-sub">Every withdrawal request you have raised, newest first.</div>
+    </div>
+
+    <div class="g3" style="margin-bottom:14px">
+        <div class="sc">
+            <div class="sc-label">Available Balance</div>
+            <div class="sc-val gold">&#8377;@available.ToString("N2")</div>
+            <div class="sc-sub">Ready to withdraw</div>
+        </div>
+        <div class="sc">
+            <div class="sc-label">Total Requests</div>
+            <div class="sc-val blue">@totalRows</div>
+            <div class="sc-sub">All time</div>
+        </div>
+        <div class="sc">
+            <div class="sc-label">New Request</div>
+            <div class="sc-sub" style="margin-top:8px">
+                <a class="btn btn-p" asp-area="SolarPanelInstaller" asp-controller="Withdraw" asp-action="Index">Request Withdrawal</a>
+            </div>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="ct"><span class="ct-dot"></span>My Requests (@totalRows)</div>
+        @if (!Model.Any())
+        {
+            <div class="text-muted" style="text-align:center;padding:22px">No withdrawal requests yet.</div>
+        }
+        else
+        {
+            <div class="tbl-wrap">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Request No</th>
+                            <th style="text-align:right">Amount</th>
+                            <th>Bank</th>
+                            <th>Branch</th>
+                            <th>A/c No</th>
+                            <th>IFSC Code</th>
+                            <th>Status</th>
+                            <th>Remark</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var w in Model)
+                        {
+                            var remark = !string.IsNullOrWhiteSpace(w.RejectionReason) ? w.RejectionReason : w.AdminNotes;
+                            <tr>
+                                <td>@w.RequestedAt.ToLocalTime().ToString("dd MMM yyyy")</td>
+                                <td style="font-size:12px">@Or(w.RequestNumber)</td>
+                                <td style="text-align:right">&#8377;@w.Amount.ToString("N2")</td>
+                                <td style="font-size:12px">@Or(w.BankName)</td>
+                                <td style="font-size:12px">@Or(w.BranchName)</td>
+                                <td style="font-size:12px">@Or(w.AccountNo)</td>
+                                <td style="font-size:12px">@Or(w.IFSCode)</td>
+                                <td><span class="sts @Cls(w.Status)">@w.Status</span></td>
+                                <td style="font-size:12px">@Or(remark)</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+
+            <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-top:12px">
+                <div class="hint">Showing @firstRow&#8211;@lastRow of @totalRows</div>
+
+                @if (totalPages > 1)
+                {
+                    <div style="display:flex;gap:6px;flex-wrap:wrap">
+                        @if (page > 1)
+                        {
+                            <a class="btn btn-s btn-sm" asp-action="Report" asp-route-page="1">&laquo; First</a>
+                            <a class="btn btn-s btn-sm" asp-action="Report" asp-route-page="@(page - 1)">&lsaquo; Prev</a>
+                        }
+
+                        @for (var i = from; i <= to; i++)
+                        {
+                            @if (i == page)
+                            {
+                                <span class="btn btn-p btn-sm" aria-current="page">@i</span>
+                            }
+                            else
+                            {
+                                <a class="btn btn-s btn-sm" asp-action="Report" asp-route-page="@i">@i</a>
+                            }
+                        }
+
+                        @if (page < totalPages)
+                        {
+                            <a class="btn btn-s btn-sm" asp-action="Report" asp-route-page="@(page + 1)">Next &rsaquo;</a>
+                            <a class="btn btn-s btn-sm" asp-action="Report" asp-route-page="@totalPages">Last &raquo;</a>
+                        }
+                    </div>
+                }
+            </div>
+        }
+    </div>
+</div>

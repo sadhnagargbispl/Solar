@@ -27,17 +27,15 @@
         <div class="ph-sub">Welcome back! Track your solar connection status here.</div>
     </div>
 
-    <div class="g4" style="margin-bottom:18px">
+    @* g3 not g4 - the "Pending Approvals" tile was removed, so three remain. *@
+    <div class="g3" style="margin-bottom:18px">
         <div class="sc">
             <div class="sc-label">My Projects</div>
             <div class="sc-val gold">@Model.TotalProjects</div>
             <div class="sc-sub">Active applications</div>
         </div>
-        <div class="sc">
-            <div class="sc-label">Pending Approvals</div>
-            <div class="sc-val blue">@Model.PendingApprovals</div>
-            <div class="sc-sub">Awaiting admin</div>
-        </div>
+        @* "Pending Approvals" tile removed on request. Model.PendingApprovals is
+           still computed by the controller for any other consumer. *@
         <div class="sc">
             <div class="sc-label">Total Paid</div>
             <div class="sc-val green">₹@Model.TotalPaid.ToString("N0")</div>
@@ -182,16 +180,9 @@
                         <div class="sr"><span class="srk">Total Amount</span><span class="srv">@(Model.LatestProject.RequestedAmount > 0 ? "₹" + Model.LatestProject.RequestedAmount.ToString("N0") : "—")</span></div>
                     }
 
-                    @{
-                        // Per spec: jab project Completed stage pe pahunch jaaye, Approval bhi
-                        // automatically Approved dikhna chahiye — Pending nahi (kyunki project
-                        // ho hi gaya hai). This is a display-layer fix; we don't mutate DB.
-                        var lpEffectiveApproval = Model.LatestProject.CurrentStage == Domain.Enums.ProjectStatus.Completed
-                            ? Domain.Enums.ApprovalStatus.Approved
-                            : Model.LatestProject.ApprovalStatus;
-                    }
+                    @* Approval row removed on request - Stage already tells the user
+                       where the project is. *@
                     <div class="sr"><span class="srk">Stage</span><span class="srv"><span class="sts @StageStsClass(Model.LatestProject.CurrentStage)">@Model.LatestProject.CurrentStage</span></span></div>
-                    <div class="sr"><span class="srk">Approval</span><span class="srv"><span class="sts @ApprovalStsClass(lpEffectiveApproval)">@lpEffectiveApproval</span></span></div>
                 </div>
             </div>
         </div>

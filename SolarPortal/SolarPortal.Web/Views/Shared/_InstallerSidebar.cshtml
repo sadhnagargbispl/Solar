@@ -8,8 +8,9 @@
 <div class="sb-section">
     <div class="sb-label">Installer Menu</div>
     <a class="sb-item @A("Dashboard")" asp-area="SolarPanelInstaller" asp-controller="Dashboard" asp-action="Index"><span class="sbi">&#128202;</span>Dashboard</a>
-    <a class="sb-item @AA("Connections","Create")" asp-area="SolarPanelInstaller" asp-controller="Connections" asp-action="Create"><span class="sbi">&#10133;</span>New Installer</a>
-    <a class="sb-item @AA("Connections","Index")" asp-area="SolarPanelInstaller" asp-controller="Connections" asp-action="Index"><span class="sbi">&#128203;</span>Reports</a>
+    @* "New Installer" (Connections/Create) and "Reports" (Connections/Index) were
+       removed from the menu on request. The controller actions still exist - only
+       the sidebar entries are gone. *@
     <a class="sb-item @A("Installation")" asp-area="SolarPanelInstaller" asp-controller="Installation" asp-action="Index"><span class="sbi">&#128295;</span>Installations</a>
 </div>
 @if (isInc)
@@ -17,6 +18,7 @@
     <div class="sb-section">
         <div class="sb-label">Income (INC only)</div>
         <a class="sb-item @A("Payout")" asp-area="SolarPanelInstaller" asp-controller="Payout" asp-action="Index"><span class="sbi">&#128176;</span>Wallet</a>
-        <a class="sb-item @A("Withdraw")" asp-area="SolarPanelInstaller" asp-controller="Withdraw" asp-action="Index"><span class="sbi">&#127974;</span>Withdraw</a>
+        <a class="sb-item @AA("Withdraw","Index")" asp-area="SolarPanelInstaller" asp-controller="Withdraw" asp-action="Index"><span class="sbi">&#127974;</span>Withdraw</a>
+        <a class="sb-item @AA("Withdraw","Report")" asp-area="SolarPanelInstaller" asp-controller="Withdraw" asp-action="Report"><span class="sbi">&#128203;</span>Withdrawal Report</a>
     </div>
 }

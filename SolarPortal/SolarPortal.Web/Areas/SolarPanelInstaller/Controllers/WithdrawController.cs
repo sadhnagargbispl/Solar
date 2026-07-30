@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using SolarPortal.Application.Services;
@@ -48,6 +48,11 @@ public class WithdrawController : Controller
         return System.Math.Max(0m, net - used);
     }
 
+    /// <summary>Rows per page on the Withdrawal Report.</summary>
+    private const int ReportPageSize = 10;
+
+    // The request form only. Past requests moved to their own paged page
+    // (Report) so the menu can link straight to it.
     public async Task<IActionResult> Index()
     {
         if (!IsInc)
@@ -58,10 +63,40 @@ public class WithdrawController : Controller
         var wid = WorkerId;
         ViewBag.Available = await ComputeAvailableAsync(wid);
         ViewBag.Banks = await _banks.GetActiveAsync();
-        var list = await _db.IncWithdrawals
-            .Where(w => w.WorkerId == wid)
+        return View();
+    }
+
+    // GET: /SolarPanelInstaller/Withdraw/Report?page=2
+    // Paged history of this worker's withdrawal requests.
+    public async Task<IActionResult> Report(int page = 1)
+    {
+        if (!IsInc)
+        {
+            TempData["Warning"] = "Withdrawal is available to INC workers only.";
+            return RedirectToAction("Index", "Dashboard");
+        }
+        var wid = WorkerId;
+
+        var query = _db.IncWithdrawals.Where(w => w.WorkerId == wid);
+        var total = await query.CountAsync();
+
+        // Clamp the page so a hand-typed ?page=99 - or a stale link after rows were
+        // removed - lands on the last real page instead of an empty table.
+        var totalPages = total == 0 ? 1 : (int)System.Math.Ceiling(total / (double)ReportPageSize);
+        if (page < 1) page = 1;
+        if (page > totalPages) page = totalPages;
+
+        var list = await query
             .OrderByDescending(w => w.RequestedAt)
+            .Skip((page - 1) * ReportPageSize)
+            .Take(ReportPageSize)
             .ToListAsync();
+
+        ViewBag.Page = page;
+        ViewBag.TotalPages = totalPages;
+        ViewBag.TotalRows = total;
+        ViewBag.PageSize = ReportPageSize;
+        ViewBag.Available = await ComputeAvailableAsync(wid);
         return View(list);
     }
 

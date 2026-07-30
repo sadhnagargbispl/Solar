@@ -12,13 +12,6 @@
         SolarPortal.Domain.Enums.ProjectStatus.Installation => "sts-disp",
         _ => "sts-pend"
     };
-    string ApprovalStsClass(SolarPortal.Domain.Enums.ApprovalStatus s) => s switch
-    {
-        SolarPortal.Domain.Enums.ApprovalStatus.Approved => "sts-act",
-        SolarPortal.Domain.Enums.ApprovalStatus.Rejected => "sts-rej",
-        _ => "sts-pend"
-    };
-
     // "Unfilled stub" = user registered (account exists) but hasn't picked a
     // plan/product or entered any amount yet. The timeline still shows
     // (Registration done, rest pending) but plan/capacity/amount rows are hidden
@@ -229,13 +222,11 @@ else
                     }
                     <div class="sr"><span class="srk">Remaining Balance</span><span class="srv" style="color:#d97706;font-weight:600">₹@remaining.ToString("N0")</span></div>
                 }
+                @* Approval row removed on request (same as the Dashboard's Project Info
+                   card) - Stage already tells the user where the project is. The
+                   rejected-request CTA in "Next Action" above still uses
+                   Model.ApprovalStatus, so nothing else is affected. *@
                 <div class="sr"><span class="srk">Stage</span><span class="srv"><span class="sts @StageStsClass(Model.CurrentStage)">@Model.CurrentStage</span></span></div>
-                @{
-                    var effectiveApproval = Model.CurrentStage == SolarPortal.Domain.Enums.ProjectStatus.Completed
-                        ? SolarPortal.Domain.Enums.ApprovalStatus.Approved
-                        : Model.ApprovalStatus;
-                }
-                <div class="sr"><span class="srk">Approval</span><span class="srv"><span class="sts @ApprovalStsClass(effectiveApproval)">@effectiveApproval</span></span></div>
             </div>
             @{
                 var actProduct = ViewBag.ActProduct as SolarPortal.Application.Services.BasicProductDto;

@@ -42,6 +42,22 @@
             pointer-events: auto;   /* keep auto so onclick handler fires the warning toast */
         }
         .rc.disabled-card:hover { transform: none !important; box-shadow: none !important; }
+
+        /* Customer Information — profile-fed, never editable.
+           !important because the site stylesheet's own input/textarea rules were
+           beating the inline style this used to rely on, which left the Address
+           box looking (and behaving) like a normal editable field.
+           pointer-events:none blocks click/drag/paste; tabindex="-1" on the
+           elements keeps them out of the keyboard tab order. */
+        .ro-fld {
+            background: #f3f4f6 !important;
+            color: #374151 !important;
+            cursor: not-allowed !important;
+            pointer-events: none !important;
+            border-color: #e5e7eb !important;
+        }
+        .ro-fld::placeholder { color: #9ca3af !important; }
+        .ro-fld:focus { outline: none !important; box-shadow: none !important; }
     </style>
 
     <form asp-area="SolarPanelUserPanel" asp-controller="SolarRequest" asp-action="Create" method="post"
@@ -218,22 +234,28 @@
                 <div class="card">
                     <div class="ct"><span class="ct-dot"></span>Customer Information</div>
                     @{
-                        // Per spec: "Name & Address profile se auto-fill and readonly rakho."
-                        // The controller sets ViewBag.ProfileReadonly = true after pulling values
-                        // from the bridged MMemberMaster + ApplicationUser.
+                        // Customer Information is NEVER editable — not when the box has a
+                        // value, not when it is blank. Every field here is profile-fed and
+                        // the user has no business changing any of it, so readonly is
+                        // unconditional rather than gated on ViewBag.ProfileReadonly.
                         //
-                        // Razor cannot inject a standalone HTML attribute via @variable inside
-                        // a tag helper's attribute area (causes RZ1031). The supported pattern
-                        // is to render the attribute conditionally with a value that's either
-                        // present or null — null attributes are dropped by Razor at render time.
-                        bool roProfile = (bool)(ViewBag.ProfileReadonly ?? false);
-                        string? roReadonly = roProfile ? "readonly" : null;
-                        string  roStyle    = roProfile ? "background:#f3f4f6;color:#374151;cursor:not-allowed" : "";
+                        // The look comes from the .ro-fld class (defined in this view's
+                        // <style> block) instead of an inline style, because the site
+                        // stylesheet's own textarea/input rules were winning over the inline
+                        // background and one box (Address) still rendered white/editable.
+                        //
+                        // readonly (not disabled) on purpose: disabled fields are not POSTed,
+                        // and these values have to round-trip to the server.
+                        // Kept only for the "Auto-filled from your profile" hints below.
+                        // The readonly attribute and the grey look are now hard-coded on
+                        // each field (readonly="readonly" + class="ro-fld"), so the old
+                        // roReadonly / roStyle variables are gone.
+                        bool roProfile = true;
                     }
                     <div class="fg">
                         <label asp-for="ApplicantName">Full Name <span class="req">*</span></label>
                         <input asp-for="ApplicantName" placeholder="Customer full name"
-                               readonly="@roReadonly" style="@roStyle" />
+                               readonly="readonly" class="ro-fld" tabindex="-1" />
                         <span asp-validation-for="ApplicantName" class="hint" style="color:var(--danger)"></span>
                         @if (roProfile) { <div class="hint" style="font-size:11px">🔒 Auto-filled from your profile</div> }
                     </div>
@@ -241,14 +263,14 @@
                         <div class="fg">
                             <label asp-for="MobileNumber">Mobile No. <span class="req">*</span></label>
                             <input asp-for="MobileNumber" type="tel" placeholder="10-digit mobile" maxlength="10"
-                                   readonly="@roReadonly" style="@roStyle" />
+                                   readonly="readonly" class="ro-fld" tabindex="-1" />
                             <div class="hint">⚠ Not editable after submit</div>
                             <span asp-validation-for="MobileNumber" class="hint" style="color:var(--danger)"></span>
                         </div>
                         <div class="fg">
                             <label asp-for="Email">Email <span class="req">*</span></label>
                             <input asp-for="Email" type="email" placeholder="Email address" id="emailInput"
-                                   readonly="@roReadonly" style="@roStyle" />
+                                   readonly="readonly" class="ro-fld" tabindex="-1" />
                             <div class="hint">⚠ Not editable after submit</div>
                             <span asp-validation-for="Email" class="hint" style="color:var(--danger)"></span>
                             <div id="emailCheckMsg" class="hint" style="font-size:11px;margin-top:2px"></div>
@@ -257,13 +279,13 @@
                     <div class="fg">
                         <label asp-for="Address">Address <span class="req">*</span></label>
                         <textarea asp-for="Address" placeholder="House No, Street, Area..."
-                                  readonly="@roReadonly" style="@roStyle"></textarea>
+                                  readonly="readonly" class="ro-fld" tabindex="-1"></textarea>
                         @if (roProfile) { <div class="hint" style="font-size:11px">🔒 Auto-filled from your profile</div> }
                     </div>
                     <div class="fr3">
                         <div class="fg">
                             <label asp-for="City">City <span class="req">*</span></label>
-                            <input asp-for="City" placeholder="Jaipur" readonly="@roReadonly" style="@roStyle" />
+                            <input asp-for="City" placeholder="Jaipur" readonly="readonly" class="ro-fld" tabindex="-1" />
                         </div>
                         <div class="fg">
                             <label asp-for="State">State <span class="req">*</span></label>
@@ -274,25 +296,17 @@
                                     as List<SolarPortal.Application.Services.StateDto>
                                     ?? new List<SolarPortal.Application.Services.StateDto>();
                             }
-                            @if (roProfile && !string.IsNullOrWhiteSpace(Model.State))
-                            {
-                                <input asp-for="State" readonly="readonly" style="@roStyle" />
-                            }
-                            else
-                            {
-                                <select asp-for="State">
-                                    <option value="">Select</option>
-                                    @foreach (var st in stateList)
-                                    {
-                                        <option value="@st.StateName" data-code="@st.StateCode">@st.StateName</option>
-                                    }
-                                </select>
-                            }
+                            @* Always a readonly box - never the editable dropdown. It used to
+                               fall through to a <select> whenever the profile had no State,
+                               which was an editable Customer Information field. stateList is
+                               still loaded by the controller for other screens. *@
+                            <input asp-for="State" readonly="readonly" class="ro-fld"
+                                   placeholder="Not set in your profile" tabindex="-1" />
                         </div>
                         <div class="fg">
                             <label asp-for="PinCode">Pin Code <span class="req">*</span></label>
                             <input asp-for="PinCode" placeholder="302001" maxlength="6"
-                                   readonly="@roReadonly" style="@roStyle" />
+                                   readonly="readonly" class="ro-fld" tabindex="-1" />
                             <span asp-validation-for="PinCode" class="hint" style="color:var(--danger)"></span>
                         </div>
                     </div>
@@ -805,7 +819,10 @@
             t._hideTimer = setTimeout(() => { t.style.display = 'none'; }, 6000);
         }
 
-        // Show/hide + relabel the payment block based on the selected mode.
+        // Show the payment block. Every mode requires a first payment of at least
+        // ₹20,000, so there is no longer a per-mode "optional" variant - the
+        // function stays so the existing call sites keep working.
+        // Old behaviour, for reference:
         //   Mode 1 (With Activation): visible + mandatory
         //   Mode 2 (Only Solar):      visible + mandatory (per spec 2026-07-22)
         //   Mode 3 (Already Active):  visible + optional
@@ -817,7 +834,10 @@
             if (!block) return; // hidden in reactivation flow (block not rendered)
 
             block.style.display = '';
-            const optional = (v === 3);
+            // Payment is mandatory in EVERY mode now (flat ₹20,000 minimum), so
+            // nothing is ever optional here. Mode 3 (Already Active) used to be
+            // optional, which is how a ₹15,000 payment slipped through.
+            const optional = false;
             if (optTag)  optTag.style.display  = optional ? '' : 'none';
             if (reqHint) reqHint.style.display = optional ? 'none' : '';
             if (optHint) optHint.style.display = optional ? '' : 'none';
@@ -1141,12 +1161,9 @@
                 return true;
             }
 
-            // Payment is mandatory in Mode 1 & Mode 2 (per spec 2026-07-22). Mode 3
-            // (Already Active) payment is optional — allow submit
-            // without it (spec tasks 2 & 5).
-            if (reqType === 3) {
-                return true;
-            }
+            // Payment is mandatory in EVERY mode now, Already Active (mode 3)
+            // included, with the same flat ₹20,000 minimum. Mode 3 used to return
+            // early here, which is how a ₹15,000 payment got through.
 
             const payAmt    = parseFloat(document.getElementById('paymentAmountInput').value || '0');
             const payUtr    = (document.querySelector('[name="PaymentUTR"]')?.value || '').trim();
@@ -1155,15 +1172,12 @@
             const payFile   = document.getElementById('paymentReceiptInput')?.files?.length || 0;
             const planAmt   = parseFloat(document.getElementById('planAmountInput').value || '0');
 
-            // Effective minimum = min(₹20,000, project amount).
+            // Flat ₹20,000 minimum in every mode - mirrors the server check in
+            // SolarRequestController.Create(POST).
             const hardMin = 20000;
-            const effMin  = (planAmt > 0 && planAmt < hardMin) ? planAmt : hardMin;
 
-            if (!payAmt || payAmt < effMin) {
-                const label = (planAmt > 0 && planAmt < hardMin)
-                    ? `Payment must be the full project amount of ₹${effMin.toLocaleString('en-IN')}.`
-                    : `Minimum payment is ₹${hardMin.toLocaleString('en-IN')}. Please enter a valid amount.`;
-                showWarning(label);
+            if (!payAmt || payAmt < hardMin) {
+                showWarning(`Minimum payment is ₹${hardMin.toLocaleString('en-IN')}. Please enter ₹${hardMin.toLocaleString('en-IN')} or more.`);
                 return false;
             }
             if (planAmt > 0 && payAmt > planAmt) {
@@ -1177,6 +1191,11 @@
 
             return true;
         }
+
+        // Double-submit protection for this form is handled site-wide by
+        // wwwroot/js/submit-once.js (loaded in _Layout). It locks on the form's
+        // submit event, which only fires once confirmSubmit() below has returned
+        // true, so a validation failure never leaves the button dead.
 
         // Receipt file preview helper for the combined payment block
         function previewReceiptPreview(input) {

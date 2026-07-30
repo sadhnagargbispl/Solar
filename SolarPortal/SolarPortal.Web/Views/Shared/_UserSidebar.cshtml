@@ -20,9 +20,8 @@
 </div>
 <div class="sb-section">
     <div class="sb-label">My Applications</div>
-    <a class="sb-item @IsActive("SolarRequest","Index")" asp-area="SolarPanelUserPanel" asp-controller="SolarRequest" asp-action="Index">
-        <span class="sbi">🏗️</span>My Projects
-    </a>
+    @* "My Projects" (SolarRequest/Index) removed from the menu on request. The
+       action still exists - Details pages and breadcrumbs keep working. *@
     <a class="sb-item" asp-area="SolarPanelUserPanel" asp-controller="Account" asp-action="SolarAccount">
         <span class="sbi">💰</span>Solar A/c
     </a>

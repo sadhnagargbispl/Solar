@@ -127,15 +127,22 @@
                         }
                         <div class="pm-doc-act">
                             @{
-                                // Upload when nothing is there yet. Replace stays available for a
-                                // rejected document, and for one that is uploaded but NOT yet
-                                // submitted - until "Submit for Admin Verification" is pressed the
-                                // file is only the user's draft. Once submitted (or approved) it is
-                                // with the admin, so Replace / re-capture disappears.
-                                var canUpload = !isLocked && (uploaded == null
-                                    || uploaded.Status == SolarPortal.Domain.Enums.ApprovalStatus.Rejected
-                                    || (uploaded.Status == SolarPortal.Domain.Enums.ApprovalStatus.Pending
-                                        && !IsSubmitted(uploaded)));
+                                // A REJECTED document is ALWAYS replaceable - the stage lock does
+                                // not apply to it. Admin explicitly asked for a different file, so
+                                // hiding Replace behind isLocked (stage moved past PM Survey) left
+                                // the user with no way to comply. Re-uploading only resets THAT
+                                // document to Pending and clears the reject remark
+                                // (PMDocumentService.UploadDocumentAsync); the request's stage is
+                                // never touched.
+                                //
+                                // Everything else keeps the old rule: upload when nothing is there,
+                                // and replace an uploaded-but-not-yet-submitted draft. Once
+                                // submitted or approved the file is with the admin.
+                                var canUpload =
+                                    uploaded?.Status == SolarPortal.Domain.Enums.ApprovalStatus.Rejected
+                                    || (!isLocked && (uploaded == null
+                                        || (uploaded.Status == SolarPortal.Domain.Enums.ApprovalStatus.Pending
+                                            && !IsSubmitted(uploaded))));
                             }
                             @if (canUpload)
                             {
@@ -160,7 +167,20 @@
                     </div>
                 }
 
-                @if (isLocked)
+                @if (isLocked && hasRejected)
+                {
+                    @* Stage has moved on but admin rejected a document - say so plainly
+                       instead of claiming everything is verified. *@
+                    <div class="alert alert-w" style="margin:14px 0 0">
+                        <span class="ai">!</span>
+                        <div>
+                            <strong>A document was rejected.</strong> Upload it again using the
+                            <em>Replace</em> button above - it goes straight back to admin for review.
+                            Your project stage stays exactly where it is.
+                        </div>
+                    </div>
+                }
+                else if (isLocked)
                 {
                     <div class="alert alert-s" style="margin:14px 0 0">
                         <span class="ai">OK</span>
@@ -314,6 +334,9 @@ $(function () {
     });
 
     $('.loan-opt').on('click', function () {
+        const btn = this;
+        if (!window.solarSubmitGuard(btn)) return;
+
         const opt = $(this).data('opt');
         const $btns = $('.loan-opt');
         const fd = new FormData();
@@ -323,6 +346,7 @@ $(function () {
         $.ajax({
             url: '@Url.Action("SaveLoanOption", "PMSurya")',
             type: 'POST', data: fd, processData: false, contentType: false,
+            complete: function () { window.solarSubmitGuard.release(btn); },
             success: function (r) {
                 if (r.success) {
                     $btns.removeClass('btn-success').addClass('btn-outline-success');
@@ -334,14 +358,24 @@ $(function () {
         });
     });
 
+    // Posts with $.ajax, so the site-wide form guard never sees it - borrow its
+    // lock so a double-click cannot submit the same request twice. On success we
+    // stay locked because the page is navigating away.
     $('#btnSubmit').on('click', function () {
+        const btn = this;
+        if (!window.solarSubmitGuard(btn)) return;
+
         const fd = new FormData();
         fd.append('requestId', @req.Id);
         fd.append('__RequestVerificationToken', token);
         $.ajax({
             url: '@Url.Action("Submit", "PMSurya")',
             type: 'POST', data: fd, processData: false, contentType: false,
-            success: function (r) { if (r.success) { setTimeout(() => { window.location.href = '@Url.Action("Status", "SolarRequest", new { id = req.Id })'; }, 900); } else { toastMsg('error', r.message || 'Submit failed.'); } }
+            success: function (r) {
+                if (r.success) { setTimeout(() => { window.location.href = '@Url.Action("Status", "SolarRequest", new { id = req.Id })'; }, 900); }
+                else { toastMsg('error', r.message || 'Submit failed.'); window.solarSubmitGuard.release(btn); }
+            },
+            error: function () { toastMsg('error', 'Server error. Please try again.'); window.solarSubmitGuard.release(btn); }
         });
     });
 });

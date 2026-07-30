@@ -9,13 +9,6 @@
         Domain.Enums.ProjectStatus.Installation => "sts-inst",
         _ => "sts-pend"
     };
-
-    string ApprovalStsClass(Domain.Enums.ApprovalStatus s) => s switch
-    {
-        Domain.Enums.ApprovalStatus.Approved => "sts-act",
-        Domain.Enums.ApprovalStatus.Rejected => "sts-rej",
-        _ => "sts-pend"
-    };
 }
 
 <div class="page active">
@@ -33,7 +26,7 @@
             <div class="card">
                 <div class="ct"><span class="ct-dot"></span>Application Details</div>
                 <div class="sr"><span class="srk">Request Number</span><span class="srv">@Model.RequestNumber</span></div>
-                <div class="sr"><span class="srk">Approval Status</span><span class="srv"><span class="sts @ApprovalStsClass(Model.ApprovalStatus)">@Model.ApprovalStatus</span></span></div>
+                @* "Approval Status" row removed on request - Current Stage below already shows progress. *@
                 <div class="sr"><span class="srk">Current Stage</span><span class="srv"><span class="sts @StageStsClass(Model.CurrentStage)">@Model.CurrentStage.ToString().Replace("_", " ")</span></span></div>
                 <div class="sr"><span class="srk">Connection Type</span><span class="srv">@Model.ConnectionType</span></div>
                 <div class="sr"><span class="srk">Applied On</span><span class="srv">@Model.CreatedAt.ToString("dd MMM yyyy")</span></div>

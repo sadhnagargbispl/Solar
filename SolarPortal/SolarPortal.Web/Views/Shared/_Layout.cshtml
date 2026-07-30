@@ -92,6 +92,12 @@
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"
             onerror="this.onerror=null;var s=document.createElement('script');s.src='https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.2/js/bootstrap.bundle.min.js';document.head.appendChild(s);"></script>
     <script src="~/js/solar-portal.js" asp-append-version="true"></script>
+    @*
+       Site-wide double-submit / multi-click guard. Loaded BEFORE the page's own
+       Scripts section so window.solarSubmitGuard exists for AJAX submit
+       handlers defined there.
+    *@
+    <script src="~/js/submit-once.js" asp-append-version="true"></script>
     @await RenderSectionAsync("Scripts", required: false)
 
     <script>

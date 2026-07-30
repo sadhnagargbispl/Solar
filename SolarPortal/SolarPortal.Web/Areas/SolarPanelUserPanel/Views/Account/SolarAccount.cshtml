@@ -106,6 +106,12 @@
                 var verifiedPayments = payments.Where(p => p.IsVerified).OrderByDescending(p => p.PaymentDate).ToList();
             }
 
+            @*
+                The document the user uploaded at payment time (Payment.ReceiptImagePath).
+                openFileModal() normalises the stored path itself (see _FileModal), so the
+                raw value is passed straight through - no URL building needed here.
+            *@
+
             @* --- Pending block (shown at top so user sees what's still awaiting admin) --- *@
             @if (pendingPayments.Any())
             {
@@ -119,6 +125,7 @@
                                 <th>Date</th>
                                 <th>Receipt</th>
                                 <th>UTR</th>
+                                <th>Document</th>
                                 <th style="text-align:right">Amount</th>
                                 <th>Status</th>
                             </tr>
@@ -130,7 +137,14 @@
                                     <td>@pay.PaymentDate.ToString("dd/MM/yyyy")</td>
                                     <td class="td-b">@(pay.ReceiptNumber ?? "—")</td>
                                     <td><code style="font-size:11.5px">@pay.UTRNumber</code></td>
-                                    <td style="text-align:right;color:#f59e0b;font-weight:600">₹@pay.Amount.ToString("N0")</td>
+                                    <td>
+                                        @if (!string.IsNullOrWhiteSpace(pay.ReceiptImagePath))
+                                        {
+                                            <a href="javascript:void(0)" onclick="openFileModal('@pay.ReceiptImagePath')" style="color:var(--sun)">&#128196; View</a>
+                                        }
+                                        else { <span class="text-muted">&#8212;</span> }
+                                    </td>
+                                    <td style="text-align:right;color:#f59e0b;font-weight:600">&#8377;@pay.Amount.ToString("N0")</td>
                                     <td><span class="sts sts-pend">⏳ Pending</span></td>
                                 </tr>
                             }
@@ -152,6 +166,7 @@
                                 <th>Date</th>
                                 <th>Receipt</th>
                                 <th>UTR</th>
+                                <th>Document</th>
                                 <th style="text-align:right">Amount</th>
                                 <th>Status</th>
                                 <th>Reason</th>
@@ -164,7 +179,14 @@
                                     <td>@pay.PaymentDate.ToString("dd/MM/yyyy")</td>
                                     <td class="td-b">@(pay.ReceiptNumber ?? "—")</td>
                                     <td><code style="font-size:11.5px">@pay.UTRNumber</code></td>
-                                    <td style="text-align:right;color:#dc2626;font-weight:600">₹@pay.Amount.ToString("N0")</td>
+                                    <td>
+                                        @if (!string.IsNullOrWhiteSpace(pay.ReceiptImagePath))
+                                        {
+                                            <a href="javascript:void(0)" onclick="openFileModal('@pay.ReceiptImagePath')" style="color:var(--sun)">&#128196; View</a>
+                                        }
+                                        else { <span class="text-muted">&#8212;</span> }
+                                    </td>
+                                    <td style="text-align:right;color:#dc2626;font-weight:600">&#8377;@pay.Amount.ToString("N0")</td>
                                     <td><span class="sts sts-rej">❌ Rejected</span></td>
                                     <td style="font-size:12px;color:#991b1b">@(string.IsNullOrWhiteSpace(pay.Notes) ? "—" : pay.Notes)</td>
                                 </tr>
@@ -186,6 +208,7 @@
                                 <th>Date</th>
                                 <th>Receipt</th>
                                 <th>UTR</th>
+                                <th>Document</th>
                                 <th style="text-align:right">Amount</th>
                                 <th>Status</th>
                             </tr>
@@ -197,7 +220,14 @@
                                     <td>@pay.PaymentDate.ToString("dd/MM/yyyy")</td>
                                     <td class="td-b">@(pay.ReceiptNumber ?? "—")</td>
                                     <td><code style="font-size:11.5px">@pay.UTRNumber</code></td>
-                                    <td style="text-align:right;color:var(--green);font-weight:600">₹@pay.Amount.ToString("N0")</td>
+                                    <td>
+                                        @if (!string.IsNullOrWhiteSpace(pay.ReceiptImagePath))
+                                        {
+                                            <a href="javascript:void(0)" onclick="openFileModal('@pay.ReceiptImagePath')" style="color:var(--sun)">&#128196; View</a>
+                                        }
+                                        else { <span class="text-muted">&#8212;</span> }
+                                    </td>
+                                    <td style="text-align:right;color:var(--green);font-weight:600">&#8377;@pay.Amount.ToString("N0")</td>
                                     <td><span class="sts sts-act">✓ Verified</span></td>
                                 </tr>
                             }
@@ -213,3 +243,6 @@
         </div>
     </div>
 </div>
+
+@* In-page preview for the document uploaded at payment time (defines openFileModal). *@
+@await Html.PartialAsync("_FileModal")

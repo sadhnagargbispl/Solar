@@ -120,9 +120,22 @@
                         <label>Payment Amount <span class="req">*</span></label>
                         <div class="ig">
                             <span class="ig-pre">₹</span>
-                            <input type="number" name="Amount" id="payAmt" placeholder="20000" required min="1" max="@dueAmt" />
+                        @{
+                            // The FIRST payment has to clear the ₹20,000 minimum in one
+                            // go (server enforces the same in AddPayment). Once something
+                            // is already paid, a smaller top-up is fine.
+                            var minThisPay = totalPaid <= 0 ? minimum : 1m;
+                        }
+                            <input type="number" name="Amount" id="payAmt" placeholder="@minThisPay.ToString("0")"
+                                   required min="@minThisPay.ToString("0")" max="@dueAmt" data-min="@minThisPay.ToString("0")" />
                         </div>
-                        <small style="color:var(--text2);font-size:11px">Maximum payable: ₹@dueAmt.ToString("N0") (remaining due)</small>
+                        <small style="color:var(--text2);font-size:11px">
+                            @if (totalPaid <= 0)
+                            {
+                                <text>First payment must be at least ₹@minimum.ToString("N0"). </text>
+                            }
+                            Maximum payable: ₹@dueAmt.ToString("N0") (remaining due)
+                        </small>
                     </div>
 
                     <div class="fr">
@@ -158,6 +171,9 @@
                     <div class="fg">
                         <label>UTR / Transaction No.</label>
                         <input type="text" name="UTRNumber" id="payUTR" placeholder="UTR / Txn ID" />
+                        @* Same live duplicate-UTR check the New Request form has, so the
+                           user finds out while typing instead of only on submit. *@
+                        <div id="payUtrMsg" class="hint" style="font-size:11px;margin-top:2px"></div>
                     </div>
 
                     <div class="fg">
@@ -185,7 +201,7 @@
                     </div>
 
                     <div class="btn-row">
-                        <button type="button" class="btn btn-p" onclick="submitPaymentForm(@Model.Id)">✓ Submit Payment</button>
+                        <button type="button" id="payBtn" class="btn btn-p" onclick="submitPaymentForm(@Model.Id, this)">✓ Submit Payment</button>
                         <a asp-area="SolarPanelUserPanel" asp-controller="SolarRequest" asp-action="Details" asp-route-id="@Model.Id" class="btn btn-s">← Cancel</a>
                     </div>
                 </form>
@@ -206,6 +222,7 @@
                                 <th>Method</th>
                                 <th>Amount</th>
                                 <th>Reference</th>
+                                <th>Document</th>
                                 <th>Status</th>
                             </tr>
                         </thead>
@@ -218,6 +235,15 @@
                                     <td>@(pay.PaymentMethod ?? "—")</td>
                                     <td style="text-align:right;color:var(--sun)">₹@pay.Amount.ToString("N0")</td>
                                     <td>@(pay.ReferenceNumber ?? pay.UTRNumber ?? "—")</td>
+                                    @* The receipt image / PDF uploaded with this payment.
+                                       openFileModal() normalises the stored path itself. *@
+                                    <td>
+                                        @if (!string.IsNullOrWhiteSpace(pay.ReceiptImagePath))
+                                        {
+                                            <a href="javascript:void(0)" onclick="openFileModal('@pay.ReceiptImagePath')" style="color:var(--sun)">📄 View</a>
+                                        }
+                                        else { <span class="text-muted">—</span> }
+                                    </td>
                                     <td><span class="sts @PaymentStsClass(pay.Status)">@pay.Status</span></td>
                                 </tr>
                             }
@@ -251,13 +277,91 @@
             if (d && !d.value) d.value = new Date().toISOString().split('T')[0];
         });
 
-        async function submitPaymentForm(requestId) {
+        // ── UTR real-time availability check ─────────────────────────────
+        // Mirrors the New Request form: as the user types (or tabs away) the UTR
+        // is checked against walletreq.chqno and Payments.UTRNumber, so a
+        // duplicate is caught here instead of only when Submit is pressed.
+        // utrState is read by submitPaymentForm() below to refuse a known-bad UTR.
+        let utrState = { checked: '', available: true, message: '' };
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const utrInput = document.getElementById('payUTR');
+            const utrMsg   = document.getElementById('payUtrMsg');
+            if (!utrInput || !utrMsg) return;
+            let utrTimer = null;
+
+            function clearMsg() {
+                utrMsg.textContent = '';
+                utrInput.style.borderColor = '';
+                utrState = { checked: '', available: true, message: '' };
+            }
+
+            function runUtrCheck() {
+                const v = (utrInput.value || '').trim();
+                if (!v) { clearMsg(); return; }
+
+                utrMsg.style.color = '#64748b';
+                utrMsg.textContent = 'Checking UTR…';
+
+                fetch('@Url.Action("CheckUtr", "SolarRequest", new { area = "SolarPanelUserPanel" })?utr=' + encodeURIComponent(v))
+                    .then(r => r.json())
+                    .then(data => {
+                        utrState = { checked: v, available: !!data.available, message: data.message || '' };
+                        if (data.available) {
+                            utrMsg.style.color = '#16a34a';
+                            utrMsg.textContent = '✓ UTR is available.';
+                            utrInput.style.borderColor = '#16a34a';
+                        } else {
+                            utrMsg.style.color = '#dc2626';
+                            utrMsg.textContent = '✗ ' + (data.message || 'This UTR is already used. Please use a different one.');
+                            utrInput.style.borderColor = '#dc2626';
+                        }
+                    })
+                    .catch(() => clearMsg());
+            }
+
+            utrInput.addEventListener('blur', runUtrCheck);
+            utrInput.addEventListener('input', () => {
+                clearTimeout(utrTimer);
+                clearMsg();
+                utrTimer = setTimeout(runUtrCheck, 600);
+            });
+        });
+
+        // This posts with fetch(), so the site-wide form-submit guard in
+        // submit-once.js does not see it - we borrow its lock explicitly via
+        // window.solarSubmitGuard. Double-clicking used to create two payment
+        // rows for the same money.
+        async function submitPaymentForm(requestId, btn) {
+            btn = btn || document.getElementById('payBtn');
             const form = document.getElementById('paymentForm');
             const fd = new FormData(form);
             const amt = fd.get('Amount');
+            const amtInput = document.getElementById('payAmt');
+            const minPay = parseFloat(amtInput?.dataset.min || '1');
+
             if (!amt || parseFloat(amt) <= 0) { showError('Please enter a valid amount'); return; }
+            if (parseFloat(amt) < minPay) {
+                showError(`First payment must be at least ₹${minPay.toLocaleString('en-IN')}.`);
+                return;
+            }
             const recv = document.getElementById('payReceipt');
             if (!recv || !recv.files || !recv.files[0]) { showError('Please upload payment receipt'); return; }
+
+            // The live check above already told us this UTR is taken - stop here
+            // rather than making the user wait for the server to say the same.
+            // (AddPayment still re-checks server-side; this is only a shortcut.)
+            const utrNow = (fd.get('UTRNumber') || '').toString().trim();
+            if (utrNow && utrState.checked === utrNow && !utrState.available) {
+                showError(utrState.message || 'This UTR is already used. Please use a different one.');
+                return;
+            }
+
+            // Lock only AFTER validation passes, so a fixable mistake doesn't
+            // leave the button dead. A false return means a submit is already
+            // running, so this click is a duplicate.
+            if (!window.solarSubmitGuard(btn)) return;
+            const unlock = () => window.solarSubmitGuard.release(btn);
 
             try {
                 const r = await fetch('/SolarPanelUserPanel/SolarRequest/AddPayment', { method: 'POST', body: fd });
@@ -265,13 +369,20 @@
                 const d = await r.json();
                 if (d.success) {
                     showSuccess(d.message || 'Payment submitted!');
+                    // Stay locked - the page reloads in a moment and a second
+                    // submit here would duplicate the payment.
                     setTimeout(() => location.reload(), 1500);
                 } else {
                     showError(d.message || 'Failed to submit payment');
+                    unlock();
                 }
             } catch (e) {
                 showError('Network error');
+                unlock();
             }
         }
     </script>
 }
+
+@* In-page preview for the uploaded payment receipt (defines openFileModal). *@
+@await Html.PartialAsync("_FileModal")

@@ -1,11 +1,8 @@
-﻿@model List<SolarPortal.Domain.Entities.IncWithdrawal>
 @{
     ViewData["Title"] = "Withdraw";
     var available = (decimal)(ViewBag.Available ?? 0m);
     var banks = ViewBag.Banks as List<SolarPortal.Application.Services.BankDto>
                 ?? new List<SolarPortal.Application.Services.BankDto>();
-    string Cls(string s) => s == "Approved" ? "sts-act" : s == "Rejected" ? "sts-rej" : "sts-pend";
-    string Or(string? v) => string.IsNullOrWhiteSpace(v) ? "-" : v;
 }
 <div class="page active">
     <div class="ph">
@@ -64,48 +61,9 @@
         </form>
     </div>
 
-    <div class="card" style="margin-top:14px">
-        <div class="ct"><span class="ct-dot"></span>Withdrawal Report (@Model.Count)</div>
-        @if (!Model.Any())
-        {
-            <div class="text-muted" style="text-align:center;padding:22px">No withdrawal requests yet.</div>
-        }
-        else
-        {
-            <div class="tbl-wrap">
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Date</th>
-                            <th>Request No</th>
-                            <th style="text-align:right">Amount</th>
-                            <th>Bank</th>
-                            <th>Branch</th>
-                            <th>A/c No</th>
-                            <th>IFSC Code</th>
-                            <th>Status</th>
-                            <th>Remark</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @foreach (var w in Model)
-                        {
-                            var remark = !string.IsNullOrWhiteSpace(w.RejectionReason) ? w.RejectionReason : w.AdminNotes;
-                            <tr>
-                                <td>@w.RequestedAt.ToLocalTime().ToString("dd MMM yyyy")</td>
-                                <td style="font-size:12px">@Or(w.RequestNumber)</td>
-                                <td style="text-align:right">&#8377;@w.Amount.ToString("N2")</td>
-                                <td style="font-size:12px">@Or(w.BankName)</td>
-                                <td style="font-size:12px">@Or(w.BranchName)</td>
-                                <td style="font-size:12px">@Or(w.AccountNo)</td>
-                                <td style="font-size:12px">@Or(w.IFSCode)</td>
-                                <td><span class="sts @Cls(w.Status)">@w.Status</span></td>
-                                <td style="font-size:12px">@Or(remark)</td>
-                            </tr>
-                        }
-                    </tbody>
-                </table>
-            </div>
-        }
+    @* Past requests live on their own paged page now (Withdraw/Report), reachable
+       from the "Withdrawal Report" item in the sidebar. *@
+    <div style="margin-top:14px;text-align:center">
+        <a class="btn btn-s" asp-area="SolarPanelInstaller" asp-controller="Withdraw" asp-action="Report">View Withdrawal Report</a>
     </div>
 </div>
