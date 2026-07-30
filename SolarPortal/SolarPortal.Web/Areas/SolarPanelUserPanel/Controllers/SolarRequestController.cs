@@ -792,7 +792,8 @@ public class SolarRequestController : Controller
                 // AadharNumber / PANNumber are nullable on the entity — null OK.
                 entity.AadharNumber = dto.AadharNumber;
                 entity.PANNumber = dto.PANNumber;
-                entity.RequestType = dto.RequestType;
+                // Stamp the mode + its date, not just the mode - see SolarRequest.StampMode.
+                entity.StampMode(dto.RequestType, DateTime.UtcNow);
                 entity.ConnectionType = dto.ConnectionType;
                 entity.KVCapacity = dto.KVCapacity;
                 entity.SolarProjectId = dto.SolarProjectId;
@@ -1729,7 +1730,10 @@ public class SolarRequestController : Controller
 
         // Convert to With Activation and move into the activation pipeline
         // (PM Surya Ghar / document upload). Never move the stage backwards.
-        entity.RequestType       = RequestType.WithActivation;
+        // StampMode keeps WithoutActivationOn and OriginalRequestType intact while
+        // flipping the mode, so the admin report can still show that this member
+        // started without activation and only upgraded now.
+        entity.StampMode(RequestType.WithActivation, DateTime.UtcNow);
         entity.ExternalProductId = externalProductId.Value;
         if (entity.ApprovalStatus != ApprovalStatus.Approved)
             entity.ApprovalStatus = ApprovalStatus.Approved;

@@ -1,4 +1,4 @@
-﻿using AutoMapper;
+using AutoMapper;
 using SolarPortal.Application.DTOs;
 using SolarPortal.Application.Interfaces;
 using SolarPortal.Application.Interfaces.Services;
@@ -31,6 +31,10 @@ public class SolarRequestService : ISolarRequestService
                 ? ProjectStatus.Payment
                 : ProjectStatus.Registration;
             entity.ApprovalStatus = ApprovalStatus.Pending;
+            // Record which mode this was submitted in, and when. "Activate Now"
+            // later overwrites RequestType in place, so this is the only lasting
+            // record of what the member originally took.
+            entity.StampMode(dto.RequestType, DateTime.UtcNow);
 
             await _uow.SolarRequests.AddAsync(entity);
             await _uow.SaveChangesAsync();
