@@ -10,7 +10,7 @@
     <div class="ph">
         <div class="ph-bc">Installer / <span>Installations</span></div>
         <div class="ph-title">My Installations</div>
-        <div class="ph-sub">Material dispatch mein aapko assign ki gayi installations — yahan se Mark Complete kijiye.</div>
+        <div class="ph-sub">Installations assigned to you in material dispatch — Mark Complete them from here.</div>
     </div>
 
     @* Default tab "All" — admin reports ke jaisa hi. *@
@@ -25,8 +25,8 @@
         @if (!Model.Any())
         {
             <div class="text-muted" style="text-align:center;padding:26px">
-                Abhi koi installation assign nahi hui. Jab admin Material Dispatch mein aapko
-                despatch person banayega, wo yahan aa jayegi.
+                No installations assigned yet. Once the admin makes you the despatch person
+                in Material Dispatch, it will appear here.
             </div>
         }
         else
@@ -129,7 +129,7 @@
     <div style="max-width:520px;margin:6vh auto;background:#fff;border-radius:12px;padding:20px">
         <h3 style="margin:0 0 4px" id="markTitle">Mark Installation</h3>
         <p style="font-size:12px;color:#6b7280;margin:0 0 14px">
-            Ye installation complete mark karne par project agli stage par chala jayega.
+            Marking this installation complete will move the project to the next stage.
         </p>
         <form asp-area="SolarPanelInstaller" asp-controller="Installation" asp-action="MarkComplete"
               method="post" enctype="multipart/form-data">
@@ -146,7 +146,7 @@
             </div>
             <div class="fg">
                 <label>Remark</label>
-                <textarea name="remark" rows="2" placeholder="Apna remark (khaali chhodenge to admin ka remark bana rahega)"></textarea>
+                <textarea name="remark" rows="2" placeholder="Your remark (leave blank to keep the admin's remark)"></textarea>
             </div>
             <div class="fg">
                 <label>Completion Photo</label>

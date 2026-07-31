@@ -409,8 +409,8 @@ public class SolarRequestController : Controller
             // Hard-reject rather than silently coerce — the user explicitly picked a
             // mode they're not allowed to use, so they should know it's blocked.
             ModelState.AddModelError(nameof(model.RequestType),
-                "Aap already an active solar member hain (ActiveStatus = Y). " +
-                "Aap sirf \"Already Active — Only Request\" file kar sakte hain.");
+                "You are already an active solar member (ActiveStatus = Y). " +
+                "You can only file an \"Already Active — Only Request\".");
             ViewBag.IsActiveMember = true;
             ViewBag.Projects = await _solarProjectService.GetAllAsync(activeOnly: true);
             ViewBag.BasicProducts = await _basicProducts.GetActiveAsync();
@@ -429,8 +429,8 @@ public class SolarRequestController : Controller
         if (!isActiveMemberPost && model.RequestType == RequestType.AlreadyActiveOnlyRequest)
         {
             ModelState.AddModelError(nameof(model.RequestType),
-                "Aapki ID deactivated hai — \"Already Active — Only Request\" file nahi kar sakte. " +
-                "Aap \"With Activation\" ya \"Only Solar (Without Activation)\" choose kariye.");
+                "Your ID is deactivated — you cannot file an \"Already Active — Only Request\". " +
+                "Please choose \"With Activation\" or \"Only Solar (Without Activation)\".");
             ViewBag.IsActiveMember = false;
             ViewBag.Projects = await _solarProjectService.GetAllAsync(activeOnly: true);
             ViewBag.BasicProducts = await _basicProducts.GetActiveAsync();
@@ -781,8 +781,8 @@ public class SolarRequestController : Controller
             if (model.PaymentAmount < hardMin)
             {
                 ModelState.AddModelError(nameof(model.PaymentAmount),
-                    $"Minimum first payment is ₹{hardMin:N0}. Aapne ₹{model.PaymentAmount:N0} dala hai — " +
-                    $"kam se kam ₹{hardMin:N0} bharna zaroori hai.");
+                    $"Minimum first payment is ₹{hardMin:N0}. You entered ₹{model.PaymentAmount:N0} — " +
+                    $"you must pay at least ₹{hardMin:N0}.");
             }
             else if (model.PlanAmount > 0 && model.PaymentAmount > model.PlanAmount)
             {

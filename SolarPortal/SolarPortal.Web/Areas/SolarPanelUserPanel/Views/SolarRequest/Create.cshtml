@@ -91,13 +91,13 @@
             <div class="alert" style="background:#dcfce7;border-left:4px solid #16a34a;color:#065f46;padding:14px 18px;margin-bottom:16px;border-radius:6px">
                 <strong>🔁 Re-activation Request</strong>
                 <div style="margin-top:6px;font-size:14px">
-                    Aapki ID currently <strong>deactivated</strong> hai. Aap "With Activation" ya "Only Solar (Without Activation)" mode
-                    me follow-up request laga sakte hain — sirf "Already Active" locked hai — based on your earlier completed
-                    request <strong>@reactivationBasedOn</strong>.
+                    Your ID is currently <strong>deactivated</strong>. You can file a follow-up request in
+                    "With Activation" or "Only Solar (Without Activation)" mode — only "Already Active" is locked —
+                    based on your earlier completed request <strong>@reactivationBasedOn</strong>.
                 </div>
                 <div style="margin-top:6px;font-size:13px;opacity:0.9">
-                    <strong>Payment will NOT be asked</strong> — aap pehle se payment de chuke hain
-                    apni earlier request me. Bas project select karke submit kariye.
+                    <strong>Payment will NOT be asked</strong> — you have already paid in your
+                    earlier request. Just select a project and submit.
                 </div>
             </div>
         }
@@ -146,13 +146,13 @@
                         @if (isActiveMem && !isReactivation)
                         {
                             <div class="alert alert-i" style="font-size:13px;margin-bottom:8px">
-                                <span class="ai">ℹ</span>You are an existing active solar member. Aap sirf "Already Active — Only Request" mode choose kar sakte hain.
+                                <span class="ai">ℹ</span>You are an existing active solar member. You can only choose the "Already Active — Only Request" mode.
                             </div>
                         }
                         @if (isReactivation)
                         {
                             <div class="alert alert-i" style="font-size:13px;margin-bottom:8px;background:#d1fae5;border-left:3px solid #16a34a;color:#065f46">
-                                <span class="ai">🔁</span>Reactivation mode — aap "With Activation" ya "Only Solar (Without Activation)" dono choose kar sakte hain. Sirf "Already Active" locked hai (aapki ID deactivated hai).
+                                <span class="ai">🔁</span>Reactivation mode — you can choose either "With Activation" or "Only Solar (Without Activation)". Only "Already Active" is locked (your ID is deactivated).
                             </div>
                         }
                         @{
@@ -730,8 +730,8 @@
                 <div class="card" style="margin-top:14px;border-left:4px solid #16a34a;background:#f0fdf4">
                     <div class="ct"><span class="ct-dot"></span>Payment (Already Paid)</div>
                     <div style="padding:8px 0;font-size:13.5px;color:#065f46">
-                        ✅ Aap pehle se payment de chuke hain apni earlier request <strong>@reactivationBasedOn</strong> me.
-                        Iss reactivation request ke liye <strong>koi naya payment nahi liya jayega</strong>.
+                        ✅ You have already paid in your earlier request <strong>@reactivationBasedOn</strong>.
+                        <strong>No new payment will be charged</strong> for this reactivation request.
                     </div>
                 </div>
             }
@@ -875,9 +875,9 @@
         // do nothing else — the hidden RequestType input stays at 3 (Already Active).
         function blockedByActiveMember() {
             if (typeof showWarning === 'function') {
-                showWarning('Aap active solar member hain — sirf \"Already Active — Only Request\" mode available hai.');
+                showWarning('You are an active solar member — only the \"Already Active — Only Request\" mode is available.');
             } else {
-                alert('Aap active solar member hain — sirf \"Already Active — Only Request\" mode available hai.');
+                alert('You are an active solar member — only the \"Already Active — Only Request\" mode is available.');
             }
             return false;
         }
@@ -886,7 +886,7 @@
         // ("Already Active" card). A deactivated ID cannot file Already Active —
         // show a toast telling the user which modes are available instead.
         function blockedByReactivationOrActive() {
-            const msg = 'Aapki ID deactivated hai — \"Already Active\" mode available nahi hai. \"With Activation\" ya \"Only Solar (Without Activation)\" choose kariye.';
+            const msg = 'Your ID is deactivated — the \"Already Active\" mode is not available. Please choose \"With Activation\" or \"Only Solar (Without Activation)\".';
             if (typeof showWarning === 'function') { showWarning(msg); } else { alert(msg); }
             return false;
         }
