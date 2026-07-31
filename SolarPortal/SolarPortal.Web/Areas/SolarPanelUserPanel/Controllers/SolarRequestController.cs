@@ -287,8 +287,8 @@ public class SolarRequestController : Controller
     }
 
     // POST: Step 1 - Personal Info
-    [HttpPost]
-    [ValidateAntiForgeryToken]
+    //[HttpPost]
+    //[ValidateAntiForgeryToken]
     /// <summary>
     /// Re-reads the Customer Information fields from the signed-in user's profile
     /// (ApplicationUser, falling back to the bridged m_membermaster row) and
@@ -335,6 +335,8 @@ public class SolarRequestController : Controller
         model.PinCode       = Keep(meUser?.PinCode ?? meMember?.PinCode, model.PinCode ?? string.Empty);
     }
 
+    [HttpPost]
+    [ValidateAntiForgeryToken]
     public async Task<IActionResult> Create(CreateSolarRequestViewModel model)
     {
         // === Strip validation errors on fields the user CAN'T fix ===

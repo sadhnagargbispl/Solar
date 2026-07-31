@@ -22,3 +22,23 @@ C:\Users\Claude1\AppData\Local\Temp\claude\--localhost-Sadhna-SolerGithub-Solar-
 C:\Users\Claude1\AppData\Local\Temp\claude\--localhost-Sadhna-SolerGithub-Solar-SolarPortal\f13388c2-4fb4-490a-ba7f-ff5a46c97d54\scratchpad\wbin\SolarPortal.Infrastructure.runtimeconfig.json
 C:\Users\Claude1\AppData\Local\Temp\claude\--localhost-Sadhna-SolerGithub-Solar-SolarPortal\f13388c2-4fb4-490a-ba7f-ff5a46c97d54\scratchpad\wbin\SolarPortal.Infrastructure.dll
 C:\Users\Claude1\AppData\Local\Temp\claude\--localhost-Sadhna-SolerGithub-Solar-SolarPortal\f13388c2-4fb4-490a-ba7f-ff5a46c97d54\scratchpad\wbin\SolarPortal.Infrastructure.pdb
+E:\Sadhna Garg\SolarGithub\Solar\SolarPortal\SolarPortal.Infrastructure\bin\Debug\net8.0\SolarPortal.Infrastructure.deps.json
+E:\Sadhna Garg\SolarGithub\Solar\SolarPortal\SolarPortal.Infrastructure\bin\Debug\net8.0\SolarPortal.Infrastructure.runtimeconfig.json
+E:\Sadhna Garg\SolarGithub\Solar\SolarPortal\SolarPortal.Infrastructure\bin\Debug\net8.0\SolarPortal.Infrastructure.dll
+E:\Sadhna Garg\SolarGithub\Solar\SolarPortal\SolarPortal.Infrastructure\bin\Debug\net8.0\SolarPortal.Infrastructure.pdb
+E:\Sadhna Garg\SolarGithub\Solar\SolarPortal\SolarPortal.Infrastructure\bin\Debug\net8.0\SolarPortal.Application.dll
+E:\Sadhna Garg\SolarGithub\Solar\SolarPortal\SolarPortal.Infrastructure\bin\Debug\net8.0\SolarPortal.Domain.dll
+E:\Sadhna Garg\SolarGithub\Solar\SolarPortal\SolarPortal.Infrastructure\bin\Debug\net8.0\SolarPortal.Application.pdb
+E:\Sadhna Garg\SolarGithub\Solar\SolarPortal\SolarPortal.Infrastructure\bin\Debug\net8.0\SolarPortal.Domain.pdb
+E:\Sadhna Garg\SolarGithub\Solar\SolarPortal\SolarPortal.Infrastructure\obj\Debug\net8.0\SolarPortal.Infrastructure.csproj.AssemblyReference.cache
+E:\Sadhna Garg\SolarGithub\Solar\SolarPortal\SolarPortal.Infrastructure\obj\Debug\net8.0\SolarPortal.Infrastructure.GeneratedMSBuildEditorConfig.editorconfig
+E:\Sadhna Garg\SolarGithub\Solar\SolarPortal\SolarPortal.Infrastructure\obj\Debug\net8.0\SolarPortal.Infrastructure.AssemblyInfoInputs.cache
+E:\Sadhna Garg\SolarGithub\Solar\SolarPortal\SolarPortal.Infrastructure\obj\Debug\net8.0\SolarPortal.Infrastructure.AssemblyInfo.cs
+E:\Sadhna Garg\SolarGithub\Solar\SolarPortal\SolarPortal.Infrastructure\obj\Debug\net8.0\SolarPortal.Infrastructure.csproj.CoreCompileInputs.cache
+E:\Sadhna Garg\SolarGithub\Solar\SolarPortal\SolarPortal.Infrastructure\obj\Debug\net8.0\SolarPortal.Infrastructure.sourcelink.json
+E:\Sadhna Garg\SolarGithub\Solar\SolarPortal\SolarPortal.Infrastructure\obj\Debug\net8.0\SolarPor.49D41F00.Up2Date
+E:\Sadhna Garg\SolarGithub\Solar\SolarPortal\SolarPortal.Infrastructure\obj\Debug\net8.0\SolarPortal.Infrastructure.dll
+E:\Sadhna Garg\SolarGithub\Solar\SolarPortal\SolarPortal.Infrastructure\obj\Debug\net8.0\refint\SolarPortal.Infrastructure.dll
+E:\Sadhna Garg\SolarGithub\Solar\SolarPortal\SolarPortal.Infrastructure\obj\Debug\net8.0\SolarPortal.Infrastructure.pdb
+E:\Sadhna Garg\SolarGithub\Solar\SolarPortal\SolarPortal.Infrastructure\obj\Debug\net8.0\SolarPortal.Infrastructure.genruntimeconfig.cache
+E:\Sadhna Garg\SolarGithub\Solar\SolarPortal\SolarPortal.Infrastructure\obj\Debug\net8.0\ref\SolarPortal.Infrastructure.dll

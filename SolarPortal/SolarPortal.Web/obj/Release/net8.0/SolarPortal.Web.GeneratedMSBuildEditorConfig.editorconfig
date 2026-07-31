@@ -47,6 +47,10 @@ build_metadata.AdditionalFiles.CssScope =
 build_metadata.AdditionalFiles.TargetPath = QXJlYXNcU29sYXJQYW5lbEluc3RhbGxlclxWaWV3c1xXaXRoZHJhd1xJbmRleC5jc2h0bWw=
 build_metadata.AdditionalFiles.CssScope = 
 
+[E:/Sadhna Garg/SolarGithub/Solar/SolarPortal/SolarPortal.Web/Areas/SolarPanelInstaller/Views/Withdraw/Report.cshtml]
+build_metadata.AdditionalFiles.TargetPath = QXJlYXNcU29sYXJQYW5lbEluc3RhbGxlclxWaWV3c1xXaXRoZHJhd1xSZXBvcnQuY3NodG1s
+build_metadata.AdditionalFiles.CssScope = 
+
 [E:/Sadhna Garg/SolarGithub/Solar/SolarPortal/SolarPortal.Web/Areas/SolarPanelInstaller/Views/_ViewImports.cshtml]
 build_metadata.AdditionalFiles.TargetPath = QXJlYXNcU29sYXJQYW5lbEluc3RhbGxlclxWaWV3c1xfVmlld0ltcG9ydHMuY3NodG1s
 build_metadata.AdditionalFiles.CssScope = 
