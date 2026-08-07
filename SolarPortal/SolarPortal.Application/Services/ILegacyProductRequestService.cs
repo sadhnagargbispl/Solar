@@ -43,6 +43,20 @@ public interface ILegacyProductRequestService
     /// Approve/Reject status update on TrnProductorderDetail.
     /// </summary>
     Task<LegacyApprovalResult> ApproveOrRejectProductRequestAsync(LegacyApprovalInput input);
+
+    /// <summary>
+    /// Total money this member has ALREADY put in through the legacy cPanel
+    /// product/activation orders — i.e. SUM(NetAmount) over their approved
+    /// TrnProductorderDetail rows.
+    ///
+    /// Image point 1 (user panel): "Agar ID already active hai to jis order ka
+    /// amount jama kiya hai wo Solar Panel par jama dikhe, aur Solar ki request
+    /// lagate time utna amount kam lage."
+    ///
+    /// Returns 0 when the member can't be resolved or has no approved order, so
+    /// callers can treat it as "no deposit" without special-casing failures.
+    /// </summary>
+    Task<decimal> GetApprovedOrderAmountAsync(string memberIdNo);
 }
 
 public class LegacyProductRequestInput

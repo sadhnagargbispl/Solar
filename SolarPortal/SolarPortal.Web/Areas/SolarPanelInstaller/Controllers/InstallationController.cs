@@ -52,6 +52,19 @@ public class InstallationController : Controller
 
         if (wid <= 0) return View(new List<InstallationRow>());
 
+        // Image point 11: admin approves in their own app (shared DB); this is where
+        // the approved installations actually get paid out. Idempotent, so running it
+        // on every page load is safe. Never let a wallet issue break the queue.
+        try
+        {
+            var creditMsg = await CreditApprovedInstallationsAsync(wid);
+            if (!string.IsNullOrWhiteSpace(creditMsg)) TempData["Success"] = creditMsg;
+        }
+        catch (Exception ex)
+        {
+            TempData["Warning"] = $"Commission sweep failed: {ex.InnerException?.Message ?? ex.Message}";
+        }
+
         // Every request this worker is attached to, from either source.
         var myInstalls = (await _uow.Installations.FindAsync(i => i.AssignedWorkerId == wid))
                          .GroupBy(i => i.SolarRequestId)
@@ -67,7 +80,15 @@ public class InstallationController : Controller
         var requests = (await _uow.SolarRequests.FindAsync(r => requestIds.Contains(r.Id)))
                        .ToDictionary(r => r.Id);
 
-        var rows = requestIds
+        // Photo set per installation (image point 11) — one query for the whole page.
+        var installIds = myInstalls.Values.Select(i => i.Id).ToHashSet();
+        var photosByInstall = installIds.Count == 0
+            ? new Dictionary<int, List<InstallationPhoto>>()
+            : (await _uow.InstallationPhotos.FindAsync(p => installIds.Contains(p.InstallationId)))
+              .GroupBy(p => p.InstallationId)
+              .ToDictionary(g => g.Key, g => g.OrderBy(p => p.Id).ToList());
+
+        var allRows = requestIds
             .Where(requests.ContainsKey)
             .Select(id =>
             {
@@ -77,20 +98,33 @@ public class InstallationController : Controller
                 {
                     Request = requests[id],
                     Installation = inst,
-                    Dispatch = disp
+                    Dispatch = disp,
+                    Photos = inst != null && photosByInstall.TryGetValue(inst.Id, out var ph)
+                                ? ph
+                                : new List<InstallationPhoto>()
                 };
-            })
-            // Actionable = project abhi Installation stage par hai aur complete nahi hua.
-            .Where(row => f switch
-            {
-                "pending" => !row.IsCompleted && row.Request.CurrentStage == ProjectStatus.Installation,
-                "done" => row.IsCompleted,
-                _ => true
             })
             .OrderByDescending(row => row.Request.CreatedAt)
             .ToList();
 
-        ViewBag.PendingCount = rows.Count(r => !r.IsCompleted && r.Request.CurrentStage == ProjectStatus.Installation);
+        // Counts come from the UNFILTERED set so the tab badges stay honest no
+        // matter which tab is open.
+        ViewBag.PendingCount = allRows.Count(r => !r.IsCompleted && r.Request.CurrentStage == ProjectStatus.Installation);
+        ViewBag.RejectedCount = allRows.Count(r => r.IsRejected);
+        ViewBag.MaxPhotos = InstallationPhoto.MaxPerInstallation;
+
+        // Actionable = project abhi Installation stage par hai aur complete nahi hua.
+        // "rejected" is a separate bucket: admin sent the photos back and the
+        // installer has to re-upload (image point 11).
+        var rows = allRows
+            .Where(row => f switch
+            {
+                "pending" => !row.IsCompleted && row.Request.CurrentStage == ProjectStatus.Installation,
+                "rejected" => row.IsRejected,
+                "done" => row.IsCompleted,
+                _ => true
+            })
+            .ToList();
         return View(rows);
     }
 
@@ -98,10 +132,14 @@ public class InstallationController : Controller
     // Mirrors the admin flow that used to live in OperationsController.SubmitInstallation:
     // completes the Installation row, logs the WorkerAssignment and advances the stage
     // (Domestic -> DCR Update, Commercial -> Completed).
+    //
+    // Image point 11: the installer now attaches MULTIPLE photos (up to 30) and the
+    // installation goes to admin as Pending. Commission is credited only after admin
+    // approves; a rejected installation is re-uploaded through Resubmit below.
     [HttpPost]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> MarkComplete(int requestId, DateTime? installationDate,
-        string? notes, string? remark, IFormFile? completionPhoto)
+        string? notes, string? remark, IFormFile? completionPhoto, List<IFormFile>? completionPhotos)
     {
         var wid = WorkerId;
         if (wid <= 0)
@@ -138,20 +176,24 @@ public class InstallationController : Controller
             return RedirectToAction(nameof(Index));
         }
 
+        // Image point 11: "Multiple photo upload — upto 30 photo."
+        // Both field names are accepted so an older cached page posting the single
+        // `completionPhoto` still works; everything lands in one list.
+        var incoming = BuildPhotoList(completionPhoto, completionPhotos);
+        if (incoming.Count > InstallationPhoto.MaxPerInstallation)
+        {
+            TempData["Warning"] = $"You selected {incoming.Count} photos — a maximum of " +
+                                  $"{InstallationPhoto.MaxPerInstallation} is allowed.";
+            return RedirectToAction(nameof(Index));
+        }
+        if (incoming.Count == 0)
+        {
+            TempData["Warning"] = "Please attach at least one installation photo before marking it complete.";
+            return RedirectToAction(nameof(Index));
+        }
+
         try
         {
-            string? photoPath = null;
-            if (completionPhoto != null && completionPhoto.Length > 0)
-            {
-                var (ok, path, err) = await _fileUpload.UploadAsync(completionPhoto, "installation");
-                if (!ok)
-                {
-                    TempData["Warning"] = $"Photo upload failed: {err}";
-                    return RedirectToAction(nameof(Index));
-                }
-                photoPath = path;
-            }
-
             var isNew = installation == null;
             installation ??= new Installation { SolarRequestId = requestId };
 
@@ -160,14 +202,31 @@ public class InstallationController : Controller
             installation.Notes = notes;
             // Admin ka remark tabhi overwrite karo jab installer ne apna likha ho.
             if (!string.IsNullOrWhiteSpace(remark)) installation.Remark = remark;
-            if (photoPath != null) installation.CompletionPhotoPath = photoPath;
             installation.IsCompleted = true;
             installation.CompletedAt = DateTime.UtcNow;
+
+            // Goes to admin for verification — commission waits for that approval.
+            installation.ApprovalStatus = ApprovalStatus.Pending;
+            installation.RejectionReason = null;
+            installation.SubmittedAt = DateTime.UtcNow;
 
             if (isNew) await _uow.Installations.AddAsync(installation);
             else _uow.Installations.Update(installation);
 
             // Save first so a new row has its Id before the FK reference below.
+            await _uow.SaveChangesAsync();
+
+            // Photos need the Installation.Id, so they are stored right after.
+            var savedPaths = await SavePhotosAsync(installation, requestId, wid, incoming);
+            if (savedPaths.Count == 0)
+            {
+                TempData["Warning"] = "Installation photos could not be uploaded. Please try again.";
+                return RedirectToAction(nameof(Index));
+            }
+            // Keep the legacy single-photo column pointing at the first photo so
+            // every existing screen that reads it keeps rendering something.
+            installation.CompletionPhotoPath = savedPaths[0];
+            _uow.Installations.Update(installation);
             await _uow.SaveChangesAsync();
 
             var assignment = (await _uow.WorkerAssignments.FindAsync(a => a.InstallationId == installation.Id))
@@ -202,34 +261,13 @@ public class InstallationController : Controller
                 Notes = $"Installation completed by installer on {installation.InstallationDate:dd/MM/yyyy}"
             }, "worker-" + wid);
 
-            // Commission: only an INC worker earns it, the moment he marks the
-            // installation complete. JOB workers do the same work on salary and
-            // are never credited.
+            // Commission is NO LONGER credited here.
             //
-            // The worker type is read from the Workers table, NOT from the
-            // WorkerType claim: that claim is stamped into the auth cookie at
-            // login, so a worker whose type admin changed afterwards would keep
-            // the old answer for the whole session - crediting a JOB worker, or
-            // silently denying a real INC worker. IncWalletService re-checks the
-            // same thing before it writes, so neither path can pay a JOB worker.
-            //
-            // A wallet problem must never undo a finished installation - report it
-            // and carry on.
-            var commissionMsg = string.Empty;
-            var worker = await _uow.Workers.GetByIdAsync(wid);
-            if (worker != null && worker.Type == WorkerType.INC)
-            {
-                try
-                {
-                    var commission = await _incWallet.CreditInstallationCommissionAsync(
-                        requestId, wid, "worker-" + wid);
-                    commissionMsg = " " + commission.Message;
-                }
-                catch (Exception cex)
-                {
-                    commissionMsg = $" Commission could not be credited: {cex.InnerException?.Message ?? cex.Message}";
-                }
-            }
+            // Image point 11: "Admin ko approve hone par credit hona chahiye.
+            // Reject hone par INC wala wapas update karega." So marking complete
+            // only submits the photos for review; the money moves in
+            // CreditApprovedInstallationsAsync once admin approves.
+            var commissionMsg = " Photos submitted to admin — your commission is credited once admin approves.";
 
             TempData["Success"] = (stageResult.IsSuccess
                 ? (nextStage == ProjectStatus.DCRUpdate
@@ -245,6 +283,183 @@ public class InstallationController : Controller
         return RedirectToAction(nameof(Index));
     }
 
+    // POST: /SolarPanelInstaller/Installation/Resubmit
+    // Image point 11: "Reject hone par INC wala wapas update karega."
+    // Admin rejected the photos — the installer attaches a fresh set, which clears
+    // the reject reason and puts the installation back in front of admin.
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> Resubmit(int installationId, string? notes,
+        List<IFormFile>? completionPhotos)
+    {
+        var wid = WorkerId;
+        if (wid <= 0)
+        {
+            TempData["Warning"] = "Worker session not found. Please log in again.";
+            return RedirectToAction(nameof(Index));
+        }
+
+        var installation = await _uow.Installations.GetByIdAsync(installationId);
+        if (installation == null || installation.AssignedWorkerId != wid)
+        {
+            TempData["Warning"] = "This installation is not assigned to you.";
+            return RedirectToAction(nameof(Index));
+        }
+        if (installation.ApprovalStatus != ApprovalStatus.Rejected)
+        {
+            TempData["Warning"] = "Only a rejected installation can be updated and re-submitted.";
+            return RedirectToAction(nameof(Index));
+        }
+
+        var incoming = BuildPhotoList(null, completionPhotos);
+        if (incoming.Count == 0)
+        {
+            TempData["Warning"] = "Please attach the corrected photos before re-submitting.";
+            return RedirectToAction(nameof(Index));
+        }
+
+        // Cap counts the photos already on the record — the new set is added to
+        // them, not swapped in, so admin can see what changed.
+        var existingCount = (await _uow.InstallationPhotos
+                                 .FindAsync(p => p.InstallationId == installation.Id)).Count();
+        if (existingCount + incoming.Count > InstallationPhoto.MaxPerInstallation)
+        {
+            TempData["Warning"] = $"This installation already has {existingCount} photo(s). " +
+                                  $"You can add at most {InstallationPhoto.MaxPerInstallation - existingCount} more.";
+            return RedirectToAction(nameof(Index));
+        }
+
+        try
+        {
+            var saved = await SavePhotosAsync(installation, installation.SolarRequestId, wid, incoming);
+            if (saved.Count == 0)
+            {
+                TempData["Warning"] = "Photos could not be uploaded. Please try again.";
+                return RedirectToAction(nameof(Index));
+            }
+
+            if (!string.IsNullOrWhiteSpace(notes)) installation.Notes = notes;
+            installation.ApprovalStatus = ApprovalStatus.Pending;
+            installation.RejectionReason = null;
+            installation.ReviewedAt = null;
+            installation.ReviewedBy = null;
+            installation.SubmittedAt = DateTime.UtcNow;
+            _uow.Installations.Update(installation);
+            await _uow.SaveChangesAsync();
+
+            TempData["Success"] = $"{saved.Count} photo(s) added. Sent back to admin for approval.";
+        }
+        catch (Exception ex)
+        {
+            TempData["Warning"] = $"Re-submit failed: {ex.InnerException?.Message ?? ex.Message}";
+        }
+
+        return RedirectToAction(nameof(Index));
+    }
+
+    // ─── helpers ────────────────────────────────────────────────────────────
+
+    /// <summary>
+    /// Merges the legacy single-file field and the new multi-file field into one
+    /// list of real (non-empty) uploads, so both post shapes are handled the same.
+    /// </summary>
+    private static List<IFormFile> BuildPhotoList(IFormFile? single, List<IFormFile>? many)
+    {
+        var list = new List<IFormFile>();
+        if (many != null) list.AddRange(many.Where(f => f != null && f.Length > 0));
+        if (single != null && single.Length > 0 &&
+            !list.Any(f => f.FileName == single.FileName && f.Length == single.Length))
+        {
+            list.Add(single);
+        }
+        return list;
+    }
+
+    /// <summary>
+    /// Stores each photo under uploads/installation/&lt;requestId&gt;/ and writes one
+    /// InstallationPhoto row per file. Returns the saved paths in upload order.
+    /// A file that fails to upload is skipped rather than failing the whole batch —
+    /// the installer would otherwise lose 29 good photos over one bad one.
+    /// </summary>
+    private async Task<List<string>> SavePhotosAsync(
+        Installation installation, int requestId, int workerId, List<IFormFile> files)
+    {
+        var saved = new List<string>();
+        foreach (var f in files)
+        {
+            var (ok, path, _) = await _fileUpload.UploadAsync(f, $"installation/{requestId}");
+            if (!ok || string.IsNullOrWhiteSpace(path)) continue;
+
+            await _uow.InstallationPhotos.AddAsync(new InstallationPhoto
+            {
+                InstallationId     = installation.Id,
+                SolarRequestId     = requestId,
+                FilePath           = path!,
+                FileName           = Path.GetFileNameWithoutExtension(f.FileName),
+                ContentType        = f.ContentType,
+                FileSizeBytes      = f.Length,
+                UploadedByWorkerId = workerId
+            });
+            saved.Add(path!);
+        }
+        if (saved.Count > 0) await _uow.SaveChangesAsync();
+        return saved;
+    }
+
+    /// <summary>
+    /// Image point 11: "Admin ko approve hone par credit hona chahiye."
+    ///
+    /// The approve/reject buttons live in the ADMIN app (separate app, shared DB),
+    /// which flips Installations.ApprovalStatus. This sweep runs whenever the
+    /// installer opens their queue and pays out any installation admin has since
+    /// approved. Two guards make it safe to run on every page load:
+    ///   • CommissionCredited on the row, and
+    ///   • IncWalletService's own per-request ledger check.
+    /// JOB workers are never paid — IncWalletService re-reads Workers.Type itself.
+    ///
+    /// Returns a message for the installer, or null when nothing was credited.
+    /// </summary>
+    private async Task<string?> CreditApprovedInstallationsAsync(int workerId)
+    {
+        var pending = (await _uow.Installations.FindAsync(i =>
+                           i.AssignedWorkerId == workerId &&
+                           i.IsCompleted &&
+                           i.ApprovalStatus == ApprovalStatus.Approved &&
+                           !i.CommissionCredited)).ToList();
+        if (pending.Count == 0) return null;
+
+        var worker = await _uow.Workers.GetByIdAsync(workerId);
+        var messages = new List<string>();
+
+        foreach (var inst in pending)
+        {
+            // Mark first, credit second? No — credit first so a failure leaves the
+            // row untouched and the next sweep retries. CreditInstallationCommissionAsync
+            // is idempotent per request, so a retry can't double-pay.
+            if (worker != null && worker.Type == WorkerType.INC)
+            {
+                try
+                {
+                    var res = await _incWallet.CreditInstallationCommissionAsync(
+                        inst.SolarRequestId, workerId, "worker-" + workerId);
+                    if (!string.IsNullOrWhiteSpace(res.Message)) messages.Add(res.Message);
+                }
+                catch (Exception ex)
+                {
+                    // Money problems must never break the queue page.
+                    messages.Add($"Commission could not be credited: {ex.InnerException?.Message ?? ex.Message}");
+                    continue;   // leave CommissionCredited false so we retry next time
+                }
+            }
+
+            inst.CommissionCredited = true;
+            _uow.Installations.Update(inst);
+        }
+
+        await _uow.SaveChangesAsync();
+        return messages.Count > 0 ? string.Join(" ", messages) : null;
+    }
+
     /// <summary>One row of the installer's queue - request plus whatever records exist for it.</summary>
     public class InstallationRow
     {
@@ -252,10 +467,19 @@ public class InstallationController : Controller
         public Installation? Installation { get; set; }
         public MaterialDispatch? Dispatch { get; set; }
 
+        /// <summary>Every photo the installer attached for this installation (image point 11).</summary>
+        public List<InstallationPhoto> Photos { get; set; } = new();
+
         public bool IsCompleted => Installation?.IsCompleted == true;
         public string? AdminRemark => Installation?.Remark;
         public DateTime? DispatchDate => Dispatch?.DispatchDate;
         public string? MaterialDetails => Dispatch?.MaterialDetails;
         public string? VehicleDetails => Dispatch?.VehicleDetails;
+
+        /// <summary>Admin's verdict on the marked installation. Pending until reviewed.</summary>
+        public ApprovalStatus Verdict => Installation?.ApprovalStatus ?? ApprovalStatus.Pending;
+        public bool IsRejected => IsCompleted && Verdict == ApprovalStatus.Rejected;
+        public bool IsApproved => IsCompleted && Verdict == ApprovalStatus.Approved;
+        public string? RejectionReason => Installation?.RejectionReason;
     }
 }

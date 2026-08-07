@@ -15,6 +15,13 @@
 </div>
 @if (isInc)
 {
+    @* Image point 8 — KYC is collected from COMMISSION (INC) installers only.
+       JOB workers never see this entry, and KycController re-checks the worker
+       type from the DB so a stale claim can't let one in. *@
+    <div class="sb-section">
+        <div class="sb-label">KYC (INC only)</div>
+        <a class="sb-item @A("Kyc")" asp-area="SolarPanelInstaller" asp-controller="Kyc" asp-action="Index"><span class="sbi">&#128196;</span>My KYC</a>
+    </div>
     <div class="sb-section">
         <div class="sb-label">Income (INC only)</div>
         <a class="sb-item @A("Payout")" asp-area="SolarPanelInstaller" asp-controller="Payout" asp-action="Index"><span class="sbi">&#128176;</span>Wallet</a>

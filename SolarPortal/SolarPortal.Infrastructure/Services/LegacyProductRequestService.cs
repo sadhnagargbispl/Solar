@@ -38,6 +38,49 @@ public class LegacyProductRequestService : ILegacyProductRequestService
         _log = log;
     }
 
+    /// <summary>
+    /// SUM(NetAmount) of this member's APPROVED legacy orders — the money already
+    /// deposited through the old cPanel (image point 1).
+    ///
+    /// Never throws: a missing member, an unreachable legacy table or a bad
+    /// connection string all resolve to 0 so the solar-request form still opens.
+    /// The caller treats 0 as "no deposit to adjust".
+    /// </summary>
+    public async Task<decimal> GetApprovedOrderAmountAsync(string memberIdNo)
+    {
+        if (string.IsNullOrWhiteSpace(memberIdNo)) return 0m;
+
+        var connStr = _config.GetConnectionString("DefaultConnection")
+                   ?? _db.Database.GetConnectionString();
+        if (string.IsNullOrWhiteSpace(connStr)) return 0m;
+
+        try
+        {
+            await using var conn = new SqlConnection(connStr);
+            await conn.OpenAsync();
+
+            // The order rows key on Formno, not Idno — same resolution the insert
+            // path above does.
+            await using var cmd = new SqlCommand(@"
+SELECT ISNULL(SUM(d.NetAmount), 0)
+FROM TrnProductorderDetail d
+WHERE d.FormNo = (SELECT TOP 1 Formno FROM M_MemberMaster WHERE Idno = @id)
+  AND d.IsApprove = 'Y';", conn);
+            cmd.Parameters.AddWithValue("@id", memberIdNo.Trim());
+
+            var v = await cmd.ExecuteScalarAsync();
+            if (v == null || v == DBNull.Value) return 0m;
+
+            var amt = Convert.ToDecimal(v);
+            return amt > 0m ? amt : 0m;
+        }
+        catch (Exception ex)
+        {
+            _log.LogWarning(ex, "Legacy deposit lookup failed for IdNo '{IdNo}'.", memberIdNo);
+            return 0m;
+        }
+    }
+
     public async Task<LegacyInsertResult> InsertWithActivationAsync(LegacyProductRequestInput input)
     {
         var result = new LegacyInsertResult();

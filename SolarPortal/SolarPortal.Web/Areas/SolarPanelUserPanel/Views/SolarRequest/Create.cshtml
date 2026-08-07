@@ -14,6 +14,14 @@
     //   • Server auto-approves the request on save + advances stage to PMSurvey.
     bool isReactivation = (bool)(ViewBag.IsReactivation ?? false);
     string? reactivationBasedOn = ViewBag.ReactivationBasedOn as string;
+
+    // ===== Already-Active deposit (image point 1) =====
+    // "Agar ID already Active hai to jis order ka amount jama kiya wo Solar Panel
+    // par jama dikhe, aur Solar ki request lagate time utna amount kam lage."
+    // The controller reads it from the legacy cPanel orders; it is 0 for every
+    // mode except Already Active, so the payment block below is untouched for
+    // everyone else.
+    decimal activeIdDeposit = (decimal)(ViewBag.ActiveIdDeposit ?? 0m);
 }
 
 <div class="page active">
@@ -661,6 +669,21 @@
             <!-- === Combined first-payment block (per spec: request + payment in one form) === -->
             <div class="card" id="paymentBlock" style="margin-top:14px">
                 <div class="ct"><span class="ct-dot"></span>First Payment <span id="paymentOptionalTag" class="pill" style="display:none;background:#ecfdf5;color:#047857;font-size:11px;padding:2px 10px;border-radius:20px;margin-left:8px">Optional</span></div>
+
+                @* Already-Active deposit banner (image point 1). Rendered only when
+                   the member actually has money on deposit from their cPanel order. *@
+                @if (activeIdDeposit > 0m)
+                {
+                    <div class="alert alert-s" style="font-size:13px">
+                        <span class="ai">💰</span>
+                        <div>
+                            <strong>₹@activeIdDeposit.ToString("N0") already deposited</strong> on your active ID.
+                            It is adjusted against your project amount — you only pay the
+                            <strong id="depositRemainingLabel">balance</strong> now.
+                        </div>
+                    </div>
+                }
+
                 <div class="alert alert-i" style="font-size:13px" id="paymentHint">
                     <span class="ai">ℹ</span>Minimum first payment is <strong>₹20,000</strong>. Cannot exceed project amount.
                     Payment is saved as <strong>Pending</strong> — admin will verify it.
@@ -799,6 +822,27 @@
         });
     </script>
     <script>
+        // ─── Already-Active deposit (image point 1) ──────────────────────
+        // Money the member already deposited through their cPanel activation
+        // order. It is a credit against the project amount, so the payment
+        // floor and ceiling below are computed on (plan − deposit). 0 for every
+        // other mode, which keeps the original rules exactly as they were.
+        const ACTIVE_DEPOSIT = @activeIdDeposit.ToString(System.Globalization.CultureInfo.InvariantCulture);
+
+        // Keeps the "you only pay the balance" banner showing a real figure once
+        // a plan is picked (the plan amount is chosen after the page loads).
+        function refreshDepositLabel() {
+            const lbl = document.getElementById('depositRemainingLabel');
+            if (!lbl || ACTIVE_DEPOSIT <= 0) return;
+            const planAmt = parseFloat(document.getElementById('planAmountInput')?.value || '0');
+            if (!planAmt) { lbl.textContent = 'balance'; return; }
+            const payable = Math.max(0, planAmt - ACTIVE_DEPOSIT);
+            lbl.textContent = payable > 0
+                ? '₹' + payable.toLocaleString('en-IN')
+                : 'nothing — your deposit covers the full project amount';
+        }
+        document.addEventListener('DOMContentLoaded', refreshDepositLabel);
+
         // ─── Global warning toast ────────────────────────────────────────
         // showWarning() is called by every client-side validation handler on
         // this page but was never actually defined anywhere — the resulting
@@ -989,6 +1033,7 @@
             if (kvDisp) kvDisp.textContent = m.kv + ' kV';
             const payAmt = document.getElementById('paymentAmountInput');
             if (payAmt) payAmt.setAttribute('max', m.amount);
+            refreshDepositLabel();
         }
 
         function selectPlanFromMaster(el) {
@@ -1012,6 +1057,7 @@
             document.getElementById('planAmountDisplay').textContent = '₹' + amount.toLocaleString('en-IN');
             document.getElementById('selectedPlanDisplay').textContent = name;
             document.getElementById('kvDisplay').textContent = kv + ' kV';
+            refreshDepositLabel();
             // Reflect the user's chosen ConnectionType (not the plan's) since we no
             // longer overwrite the dropdown when a plan card is clicked.
             const curConn = document.querySelector('[name="ConnectionType"]')?.value || conn;
@@ -1059,6 +1105,7 @@
                 if (noPlanBox) noPlanBox.style.display = 'block';
                 // Also clear the amount so a stale value isn't submitted.
                 document.getElementById('planAmountInput').value = '';
+                refreshDepositLabel();
                 return;
             }
             if (noPlanBox) noPlanBox.style.display = 'none';
@@ -1100,6 +1147,9 @@
                 if (m3name) m3name.textContent = m.name + (m.conn === 1 ? ' (Domestic)' : ' (Commercial)');
                 if (m3amt)  m3amt.textContent  = '₹' + Number(m.amount).toLocaleString('en-IN');
             }
+
+            // Keep the already-active deposit banner in step with the new plan.
+            refreshDepositLabel();
         }
 
         function onKvChange(kv) {
@@ -1172,16 +1222,28 @@
             const payFile   = document.getElementById('paymentReceiptInput')?.files?.length || 0;
             const planAmt   = parseFloat(document.getElementById('planAmountInput').value || '0');
 
-            // Flat ₹20,000 minimum in every mode - mirrors the server check in
-            // SolarRequestController.Create(POST).
-            const hardMin = 20000;
+            // Image point 1: an already-active ID's cPanel deposit is a credit
+            // against the plan, so the payable amount — and therefore the floor and
+            // the ceiling — shrink by exactly that much. ACTIVE_DEPOSIT is 0 for
+            // every other mode, which leaves the original ₹20,000 / plan-amount
+            // rules untouched. Mirrors ApplyDeposit() on the server.
+            const payable = Math.max(0, planAmt - ACTIVE_DEPOSIT);
+
+            // Deposit already covers the whole project — nothing left to pay.
+            if (ACTIVE_DEPOSIT > 0 && planAmt > 0 && payable <= 0) {
+                return true;
+            }
+
+            const hardMin = Math.min(20000, payable > 0 ? payable : 20000);
 
             if (!payAmt || payAmt < hardMin) {
                 showWarning(`Minimum payment is ₹${hardMin.toLocaleString('en-IN')}. Please enter ₹${hardMin.toLocaleString('en-IN')} or more.`);
                 return false;
             }
-            if (planAmt > 0 && payAmt > planAmt) {
-                showWarning(`Payment ₹${payAmt.toLocaleString('en-IN')} cannot exceed project amount ₹${planAmt.toLocaleString('en-IN')}.`);
+            if (payable > 0 && payAmt > payable) {
+                showWarning(ACTIVE_DEPOSIT > 0
+                    ? `Payment ₹${payAmt.toLocaleString('en-IN')} cannot exceed the remaining ₹${payable.toLocaleString('en-IN')} (project ₹${planAmt.toLocaleString('en-IN')} − ₹${ACTIVE_DEPOSIT.toLocaleString('en-IN')} already deposited).`
+                    : `Payment ₹${payAmt.toLocaleString('en-IN')} cannot exceed project amount ₹${planAmt.toLocaleString('en-IN')}.`);
                 return false;
             }
             if (!payUtr)    { showWarning('UTR / Transaction Number is required.'); return false; }

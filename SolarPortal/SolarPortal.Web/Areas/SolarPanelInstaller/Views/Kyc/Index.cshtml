@@ -1,0 +1,406 @@
+@model SolarPortal.Domain.Entities.IncKycDocument
+@{
+    ViewData["Title"] = "My KYC";
+    var worker = (SolarPortal.Domain.Entities.Worker)ViewBag.Worker;
+    var states = (List<SolarPortal.Application.Services.StateDto>)(ViewBag.States ?? new List<SolarPortal.Application.Services.StateDto>());
+    var banks = (List<SolarPortal.Application.Services.BankDto>)(ViewBag.Banks ?? new List<SolarPortal.Application.Services.BankDto>());
+    var idTypes = (List<SolarPortal.Application.Services.IdProofTypeDto>)(ViewBag.IdProofTypes ?? new List<SolarPortal.Application.Services.IdProofTypeDto>());
+
+    string StsClass(ApprovalStatus s) => s switch
+    {
+        ApprovalStatus.Approved => "sts sts-act",
+        ApprovalStatus.Rejected => "sts sts-rej",
+        _ => "sts sts-pend"
+    };
+
+    // "Verification Due" until something is actually uploaded — same wording the
+    // member-panel KYC page uses.
+    string StsText(ApprovalStatus s, bool hasFile) =>
+        !hasFile ? "Not uploaded" : s switch
+        {
+            ApprovalStatus.Approved => "Verified",
+            ApprovalStatus.Rejected => "Rejected",
+            _ => "Verification Due"
+        };
+
+    // Stored paths may be "uploads/x.jpg" or "/uploads/x.jpg" — normalise.
+    string F(string? p) => string.IsNullOrWhiteSpace(p) ? "" : "/" + p.Replace("\\", "/").TrimStart('/');
+
+    var hasFront = !string.IsNullOrWhiteSpace(Model.AddressProofFrontPath);
+    var hasBank  = !string.IsNullOrWhiteSpace(Model.BankProofPath);
+    var hasPan   = !string.IsNullOrWhiteSpace(Model.PanProofPath);
+}
+
+<style>
+    .kyc-sec-head { display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin-bottom:4px }
+    .kyc-thumb { width:100%; max-width:150px; height:120px; object-fit:cover; border:1px solid #e5e7eb; border-radius:8px; cursor:pointer; background:#f9fafb }
+    .kyc-thumb-wrap { display:flex; gap:12px; flex-wrap:wrap; margin-bottom:12px }
+    .kyc-thumb-cap { font-size:11.5px; color:#6b7280; text-align:center; margin-top:3px }
+</style>
+
+<div class="page active">
+    <div class="ph">
+        <div class="ph-bc">Installer / <span>KYC</span></div>
+        <div class="ph-title">&#128196; KYC Detail</div>
+        <div class="ph-sub">
+            Dear @worker.Name — update your KYC. It is collected from INC (commission)
+            installers only; admin verifies each section separately.
+        </div>
+    </div>
+
+    @if (Model.IsFullyApproved)
+    {
+        <div class="alert alert-s" style="margin-bottom:14px">
+            <span class="ai">OK</span>
+            <div><strong>KYC complete.</strong> Admin has verified all three sections.</div>
+        </div>
+    }
+
+    <div class="g2">
+        <div>
+            @* ─── Section 1: Address Proof ─────────────────────────────── *@
+            <div class="card" style="margin-bottom:14px">
+                <div class="ct kyc-sec-head">
+                    <span class="ct-dot"></span>Address Proof
+                    <span class="@StsClass(Model.AddressStatus)">@StsText(Model.AddressStatus, hasFront)</span>
+                </div>
+
+                @if (Model.AddressStatus == ApprovalStatus.Rejected)
+                {
+                    <div class="alert alert-w" style="font-size:13px">
+                        <span class="ai">!</span>
+                        <div>
+                            <strong>Rejected by admin.</strong>
+                            @(string.IsNullOrWhiteSpace(Model.AddressRemark) ? "Please upload a corrected copy." : Model.AddressRemark)
+                            @if (Model.AddressReviewedAt.HasValue)
+                            {
+                                <text> <span style="color:#6b7280">(@Model.AddressReviewedAt.Value.ToLocalTime().ToString("dd MMM yyyy"))</span></text>
+                            }
+                        </div>
+                    </div>
+                }
+
+                <form asp-area="SolarPanelInstaller" asp-controller="Kyc" asp-action="SaveAddress"
+                      method="post" enctype="multipart/form-data">
+                    @Html.AntiForgeryToken()
+                    @{ var addrLock = !Model.AddressEditable; }
+
+                    <div class="fg">
+                        <label>Address <span style="color:#dc2626">*</span></label>
+                        <input type="text" name="address" value="@Model.Address" maxlength="250"
+                               required readonly="@(addrLock ? "readonly" : null)" />
+                    </div>
+                    <div class="fr">
+                        <div class="fg">
+                            <label>Pincode <span style="color:#dc2626">*</span></label>
+                            <input type="text" name="pinCode" value="@Model.PinCode" maxlength="6"
+                                   pattern="[0-9]{6}" required readonly="@(addrLock ? "readonly" : null)" />
+                        </div>
+                        <div class="fg">
+                            <label>State</label>
+                            <select name="stateCode" disabled="@(addrLock ? "disabled" : null)">
+                                <option value="">-- Choose State --</option>
+                                @foreach (var s in states)
+                                {
+                                    <option value="@s.StateCode" selected="@(s.StateCode == Model.StateCode)">@s.StateName</option>
+                                }
+                            </select>
+                        </div>
+                    </div>
+                    <div class="fr">
+                        <div class="fg">
+                            <label>District</label>
+                            <input type="text" name="district" value="@Model.District" maxlength="100"
+                                   readonly="@(addrLock ? "readonly" : null)" />
+                        </div>
+                        <div class="fg">
+                            <label>City</label>
+                            <input type="text" name="city" value="@Model.City" maxlength="100"
+                                   readonly="@(addrLock ? "readonly" : null)" />
+                        </div>
+                    </div>
+                    <div class="fr">
+                        <div class="fg">
+                            <label>Address Proof <span style="color:#dc2626">*</span></label>
+                            <select name="idProofTypeId" required disabled="@(addrLock ? "disabled" : null)">
+                                <option value="">-- Choose Id Proof --</option>
+                                @foreach (var t in idTypes)
+                                {
+                                    <option value="@t.Id" selected="@(t.Id == Model.IdProofTypeId)">@t.IdType</option>
+                                }
+                            </select>
+                        </div>
+                        <div class="fg">
+                            <label>ID Proof Number <span style="color:#dc2626">*</span></label>
+                            <input type="text" name="idProofNo" value="@Model.IdProofNo" maxlength="16"
+                                   required readonly="@(addrLock ? "readonly" : null)" style="text-transform:uppercase" />
+                        </div>
+                    </div>
+
+                    @if (!addrLock)
+                    {
+                        @* Camera / Gallery chooser is attached automatically on mobile by
+                           wwwroot/js/photo-source.js — no extra markup needed. *@
+                        <div class="fr">
+                            <div class="fg">
+                                <label>Front Address Proof @(hasFront ? "" : "*")</label>
+                                <input type="file" name="frontProof" accept="image/*,.pdf"
+                                       data-photo-label="Front address proof" />
+                            </div>
+                            <div class="fg">
+                                <label>Back Address Proof</label>
+                                <input type="file" name="backProof" accept="image/*,.pdf"
+                                       data-photo-label="Back address proof" />
+                            </div>
+                        </div>
+                        <button type="submit" class="btn btn-p btn-sm">
+                            @(hasFront ? "Re-submit Address Proof" : "Submit Address Proof")
+                        </button>
+                    }
+                    else
+                    {
+                        <div style="font-size:12.5px;color:#6b7280">
+                            Submitted — locked until admin reviews it.
+                        </div>
+                    }
+                </form>
+            </div>
+
+            @* ─── Section 2: Bank Detail ───────────────────────────────── *@
+            <div class="card" style="margin-bottom:14px">
+                <div class="ct kyc-sec-head">
+                    <span class="ct-dot"></span>Bank Detail
+                    <span class="@StsClass(Model.BankStatus)">@StsText(Model.BankStatus, hasBank)</span>
+                </div>
+
+                @if (Model.BankStatus == ApprovalStatus.Rejected)
+                {
+                    <div class="alert alert-w" style="font-size:13px">
+                        <span class="ai">!</span>
+                        <div>
+                            <strong>Rejected by admin.</strong>
+                            @(string.IsNullOrWhiteSpace(Model.BankRemark) ? "Please upload a corrected copy." : Model.BankRemark)
+                        </div>
+                    </div>
+                }
+
+                <form asp-area="SolarPanelInstaller" asp-controller="Kyc" asp-action="SaveBank"
+                      method="post" enctype="multipart/form-data">
+                    @Html.AntiForgeryToken()
+                    @{ var bankLock = !Model.BankEditable; }
+
+                    <div class="fr">
+                        <div class="fg">
+                            <label>Account Type</label>
+                            <select name="accountType" disabled="@(bankLock ? "disabled" : null)">
+                                <option value="">-- Choose Account Type --</option>
+                                <option value="SAVING ACCOUNT" selected="@(Model.AccountType == "SAVING ACCOUNT")">SAVING ACCOUNT</option>
+                                <option value="CURRENT ACCOUNT" selected="@(Model.AccountType == "CURRENT ACCOUNT")">CURRENT ACCOUNT</option>
+                            </select>
+                        </div>
+                        <div class="fg">
+                            <label>Account No. <span style="color:#dc2626">*</span></label>
+                            <input type="text" name="accountNo" value="@Model.AccountNo" maxlength="17"
+                                   pattern="[0-9]+" required readonly="@(bankLock ? "readonly" : null)" />
+                        </div>
+                    </div>
+                    <div class="fr">
+                        <div class="fg">
+                            <label>Bank <span style="color:#dc2626">*</span></label>
+                            <select name="bankId" required disabled="@(bankLock ? "disabled" : null)">
+                                <option value="">-- Choose Bank Name --</option>
+                                @foreach (var b in banks)
+                                {
+                                    <option value="@b.BId" selected="@(b.BId == Model.BankId)">@b.BankName</option>
+                                }
+                            </select>
+                        </div>
+                        <div class="fg">
+                            <label>Branch Name <span style="color:#dc2626">*</span></label>
+                            <input type="text" name="branchName" value="@Model.BranchName" maxlength="100"
+                                   required readonly="@(bankLock ? "readonly" : null)" />
+                        </div>
+                    </div>
+                    <div class="fg">
+                        <label>IFSC Code <span style="color:#dc2626">*</span></label>
+                        <input type="text" name="ifscCode" value="@Model.IfscCode" maxlength="11"
+                               pattern="[A-Za-z]{4}0[A-Za-z0-9]{6}" required
+                               readonly="@(bankLock ? "readonly" : null)" style="text-transform:uppercase" />
+                    </div>
+
+                    @if (!bankLock)
+                    {
+                        <div class="fg">
+                            <label>Bank KYC Upload (passbook / cancelled cheque) @(hasBank ? "" : "*")</label>
+                            <input type="file" name="bankProof" accept="image/*,.pdf"
+                                   data-photo-label="Bank passbook" />
+                        </div>
+                        <button type="submit" class="btn btn-p btn-sm">
+                            @(hasBank ? "Re-submit Bank Detail" : "Submit Bank Detail")
+                        </button>
+                    }
+                    else
+                    {
+                        <div style="font-size:12.5px;color:#6b7280">
+                            Submitted — locked until admin reviews it.
+                        </div>
+                    }
+                </form>
+            </div>
+
+            @* ─── Section 3: PAN Card ──────────────────────────────────── *@
+            <div class="card" style="margin-bottom:14px">
+                <div class="ct kyc-sec-head">
+                    <span class="ct-dot"></span>PAN Card Detail
+                    <span class="@StsClass(Model.PanStatus)">@StsText(Model.PanStatus, hasPan)</span>
+                </div>
+
+                @if (Model.PanStatus == ApprovalStatus.Rejected)
+                {
+                    <div class="alert alert-w" style="font-size:13px">
+                        <span class="ai">!</span>
+                        <div>
+                            <strong>Rejected by admin.</strong>
+                            @(string.IsNullOrWhiteSpace(Model.PanRemark) ? "Please upload a corrected copy." : Model.PanRemark)
+                        </div>
+                    </div>
+                }
+
+                <form asp-area="SolarPanelInstaller" asp-controller="Kyc" asp-action="SavePan"
+                      method="post" enctype="multipart/form-data">
+                    @Html.AntiForgeryToken()
+                    @{ var panLock = !Model.PanEditable; }
+
+                    <div class="fg">
+                        <label>PAN Card No. <span style="color:#dc2626">*</span></label>
+                        <input type="text" name="panNo" value="@Model.PanNo" maxlength="10"
+                               pattern="[A-Za-z]{5}[0-9]{4}[A-Za-z]" placeholder="ABCDE1234F"
+                               required readonly="@(panLock ? "readonly" : null)" style="text-transform:uppercase" />
+                    </div>
+
+                    @if (!panLock)
+                    {
+                        <div class="fg">
+                            <label>PAN Card Upload @(hasPan ? "" : "*")</label>
+                            <input type="file" name="panProof" accept="image/*,.pdf"
+                                   data-photo-label="PAN card" />
+                        </div>
+                        <button type="submit" class="btn btn-p btn-sm">
+                            @(hasPan ? "Re-submit PAN Card" : "Submit PAN Card")
+                        </button>
+                    }
+                    else
+                    {
+                        <div style="font-size:12.5px;color:#6b7280">
+                            Submitted — locked until admin reviews it.
+                        </div>
+                    }
+                </form>
+            </div>
+        </div>
+
+        @* ─── Right column: uploaded images + verification summary ───────── *@
+        <div>
+            <div class="card" style="margin-bottom:14px">
+                <div class="ct"><span class="ct-dot"></span>Uploaded Images</div>
+                <div class="kyc-thumb-wrap">
+                    <div>
+                        @if (hasFront)
+                        {
+                            <img class="kyc-thumb" src="@F(Model.AddressProofFrontPath)" alt="front address proof"
+                                 onclick="openKycImg('@F(Model.AddressProofFrontPath)')" />
+                        }
+                        else
+                        {
+                            <div class="kyc-thumb" style="display:flex;align-items:center;justify-content:center;color:#9ca3af;font-size:12px">No photo</div>
+                        }
+                        <div class="kyc-thumb-cap">Front Address Proof</div>
+                    </div>
+                    <div>
+                        @if (!string.IsNullOrWhiteSpace(Model.AddressProofBackPath))
+                        {
+                            <img class="kyc-thumb" src="@F(Model.AddressProofBackPath)" alt="back address proof"
+                                 onclick="openKycImg('@F(Model.AddressProofBackPath)')" />
+                        }
+                        else
+                        {
+                            <div class="kyc-thumb" style="display:flex;align-items:center;justify-content:center;color:#9ca3af;font-size:12px">No photo</div>
+                        }
+                        <div class="kyc-thumb-cap">Back Address Proof</div>
+                    </div>
+                    <div>
+                        @if (hasBank)
+                        {
+                            <img class="kyc-thumb" src="@F(Model.BankProofPath)" alt="bank proof"
+                                 onclick="openKycImg('@F(Model.BankProofPath)')" />
+                        }
+                        else
+                        {
+                            <div class="kyc-thumb" style="display:flex;align-items:center;justify-content:center;color:#9ca3af;font-size:12px">No photo</div>
+                        }
+                        <div class="kyc-thumb-cap">Bank Proof</div>
+                    </div>
+                    <div>
+                        @if (hasPan)
+                        {
+                            <img class="kyc-thumb" src="@F(Model.PanProofPath)" alt="pan card"
+                                 onclick="openKycImg('@F(Model.PanProofPath)')" />
+                        }
+                        else
+                        {
+                            <div class="kyc-thumb" style="display:flex;align-items:center;justify-content:center;color:#9ca3af;font-size:12px">No photo</div>
+                        }
+                        <div class="kyc-thumb-cap">PAN Card</div>
+                    </div>
+                </div>
+                <div style="font-size:11.5px;color:#6b7280">
+                    A PDF opens in a new tab instead of the preview.
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="ct"><span class="ct-dot"></span>Verification Status</div>
+                <div class="tbl-wrap">
+                    <table>
+                        <thead>
+                            <tr><th>Section</th><th>Status</th><th>Date</th></tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>Address Proof</td>
+                                <td><span class="@StsClass(Model.AddressStatus)">@StsText(Model.AddressStatus, hasFront)</span></td>
+                                <td style="font-size:12px;color:#6b7280">@(Model.AddressReviewedAt?.ToLocalTime().ToString("dd MMM yyyy") ?? "—")</td>
+                            </tr>
+                            <tr>
+                                <td>Bank Detail</td>
+                                <td><span class="@StsClass(Model.BankStatus)">@StsText(Model.BankStatus, hasBank)</span></td>
+                                <td style="font-size:12px;color:#6b7280">@(Model.BankReviewedAt?.ToLocalTime().ToString("dd MMM yyyy") ?? "—")</td>
+                            </tr>
+                            <tr>
+                                <td>PAN Card</td>
+                                <td><span class="@StsClass(Model.PanStatus)">@StsText(Model.PanStatus, hasPan)</span></td>
+                                <td style="font-size:12px;color:#6b7280">@(Model.PanReviewedAt?.ToLocalTime().ToString("dd MMM yyyy") ?? "—")</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="kycLightbox" onclick="this.style.display='none'"
+     style="display:none;position:fixed;inset:0;background:rgba(15,23,42,.85);z-index:2100;align-items:center;justify-content:center;padding:20px">
+    <img id="kycLightboxImg" src="" alt="kyc document" style="max-width:95%;max-height:90vh;border-radius:10px" />
+</div>
+
+@section Scripts {
+    <script>
+        function openKycImg(url) {
+            // PDFs can't render in an <img>, so send those straight to a new tab.
+            if (/\.pdf(\?|$)/i.test(url)) { window.open(url, '_blank', 'noopener'); return; }
+            document.getElementById('kycLightboxImg').src = url;
+            document.getElementById('kycLightbox').style.display = 'flex';
+        }
+    </script>
+}

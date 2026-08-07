@@ -98,6 +98,12 @@
        handlers defined there.
     *@
     <script src="~/js/submit-once.js" asp-append-version="true"></script>
+    @*
+       Camera / Gallery chooser for every photo upload (image point 5).
+       Purely additive — it intercepts image file inputs on mobile devices and
+       asks the source before opening the picker. No existing markup changes.
+    *@
+    <script src="~/js/photo-source.js" asp-append-version="true"></script>
     @await RenderSectionAsync("Scripts", required: false)
 
     <script>

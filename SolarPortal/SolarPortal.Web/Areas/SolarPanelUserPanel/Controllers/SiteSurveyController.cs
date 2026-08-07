@@ -6,6 +6,7 @@ using SolarPortal.Application.Interfaces;
 using SolarPortal.Application.Interfaces.Services;
 using SolarPortal.Domain.Entities;
 using SolarPortal.Domain.Enums;
+using SolarPortal.Web.Areas.SolarPanelUserPanel.Helpers;
 
 namespace SolarPortal.Web.Areas.SolarPanelUserPanel.Controllers;
 
@@ -23,6 +24,7 @@ public class SiteSurveyController : Controller
     private readonly IFileUploadService _fileUpload;
     private readonly INotificationService _notifications;
     private readonly ISolarRequestService _requestService;
+    private readonly IPMDocumentService _pmDocs;
     private readonly UserManager<ApplicationUser> _userManager;
 
     public SiteSurveyController(
@@ -30,13 +32,26 @@ public class SiteSurveyController : Controller
         IFileUploadService fileUpload,
         INotificationService notifications,
         ISolarRequestService requestService,
+        IPMDocumentService pmDocs,
         UserManager<ApplicationUser> userManager)
     {
         _uow = uow;
         _fileUpload = fileUpload;
         _notifications = notifications;
         _requestService = requestService;
+        _pmDocs = pmDocs;
         _userManager = userManager;
+    }
+
+    /// <summary>
+    /// Image point 3: Site Survey opens as soon as admin approves PM Surya Ghar.
+    /// See <see cref="WorkflowGates.IsPMSuryaApproved"/> for why two signals count.
+    /// </summary>
+    private async Task<bool> IsPMSuryaApprovedAsync(SolarRequest req)
+    {
+        if (req.CurrentStage >= ProjectStatus.MeterDispatch) return true;
+        var docs = await _pmDocs.GetByRequestIdAsync(req.Id);
+        return WorkflowGates.IsPMSuryaApproved(req, docs);
     }
 
     // GET: /User/SiteSurvey            → picks user's latest project
@@ -60,12 +75,16 @@ public class SiteSurveyController : Controller
         var req = await _uow.SolarRequests.GetByIdAsync(id.Value);
         if (req == null || !string.Equals(req.UserId?.Trim(), userId?.Trim(), StringComparison.OrdinalIgnoreCase)) return NotFound();
 
-        // Strict stage-wise flow: Site Survey opens only once the admin completes
-        // Meter Dispatch and advances the request to the SiteSurvey stage.
-        // (Supersedes spec task 12, which opened it together with Meter Dispatch.)
-        if (req.CurrentStage < ProjectStatus.SiteSurvey)
+        // Image point 3 (user + admin): "Admin PM Surya ko approve hote hi Meter
+        // Dispatch & Site Survey ka menu open ho jaye."
+        //
+        // So the gate is PM Surya APPROVAL, not the SiteSurvey stage. The user no
+        // longer has to wait for admin to finish Meter Dispatch first — both menus
+        // open together the moment PM Surya Ghar is approved. A request already at
+        // or past the SiteSurvey stage stays open exactly as before.
+        if (!await IsPMSuryaApprovedAsync(req))
         {
-            TempData["Info"] = "Site Survey unlocks after Meter Dispatch is completed by admin.";
+            TempData["Info"] = "Site Survey unlocks once admin approves your PM Surya Ghar documents.";
             return RedirectToAction("Status", "SolarRequest", new { id });
         }
 

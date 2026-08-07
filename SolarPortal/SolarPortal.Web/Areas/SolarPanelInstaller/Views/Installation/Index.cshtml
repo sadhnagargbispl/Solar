@@ -5,6 +5,16 @@
     var filter = (string)(ViewBag.Filter ?? "all");
     var today = DateTime.Today.ToString("yyyy-MM-dd");
     string TabCls(string f) => filter == f ? "btn btn-p btn-sm" : "btn btn-s btn-sm";
+
+    // Image point 11 — how many photos the installer may attach in one go.
+    var maxPhotos = (int)(ViewBag.MaxPhotos ?? 30);
+
+    // Stored paths may be "uploads/x.jpg" or "/uploads/x.jpg" — normalise.
+    string PhotoUrl(string? p)
+    {
+        if (string.IsNullOrWhiteSpace(p)) return "";
+        return "/" + p.Replace("\\", "/").TrimStart('/');
+    }
 }
 <div class="page active">
     <div class="ph">
@@ -17,6 +27,8 @@
     <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px">
         <a class="@TabCls("all")" asp-action="Index" asp-route-filter="all">&#128203; All</a>
         <a class="@TabCls("pending")" asp-action="Index" asp-route-filter="pending">&#8987; Pending (@(ViewBag.PendingCount ?? 0))</a>
+        @* Image point 11 — admin sent these photos back; they need a fresh upload. *@
+        <a class="@TabCls("rejected")" asp-action="Index" asp-route-filter="rejected">&#10060; Rejected (@(ViewBag.RejectedCount ?? 0))</a>
         <a class="@TabCls("done")" asp-action="Index" asp-route-filter="done">&#9989; Completed</a>
     </div>
 
@@ -41,6 +53,7 @@
                             <th>Plan</th>
                             <th>Material Dispatch</th>
                             <th>Admin Remark</th>
+                            <th>Photos</th>
                             <th>Status</th>
                             <th>Action</th>
                         </tr>
@@ -81,10 +94,44 @@
                                 <td style="font-size:12px;color:#6b7280">
                                     @(string.IsNullOrWhiteSpace(row.AdminRemark) ? "—" : row.AdminRemark)
                                 </td>
-                                <td>
-                                    @if (row.IsCompleted)
+                                @* Image point 11 — thumbnail strip of everything sent to admin. *@
+                                <td style="min-width:120px">
+                                    @if (row.Photos.Any())
                                     {
-                                        <span class="sts sts-act">&#9989; Completed</span>
+                                        <div style="display:flex;flex-wrap:wrap;gap:4px;max-width:150px">
+                                            @foreach (var ph in row.Photos.Take(6))
+                                            {
+                                                <img src="@PhotoUrl(ph.FilePath)" alt="installation photo"
+                                                     style="width:34px;height:34px;object-fit:cover;border-radius:5px;border:1px solid #e5e7eb;cursor:pointer"
+                                                     onclick="openPhoto('@PhotoUrl(ph.FilePath)')" />
+                                            }
+                                        </div>
+                                        <div style="font-size:11px;color:#6b7280;margin-top:3px">@row.Photos.Count photo(s)</div>
+                                    }
+                                    else
+                                    {
+                                        <span class="text-muted">—</span>
+                                    }
+                                </td>
+                                <td>
+                                    @if (row.IsRejected)
+                                    {
+                                        @* Admin sent it back — show why, plainly. *@
+                                        <span class="sts sts-rej">&#10060; Rejected</span>
+                                        <div style="font-size:11px;color:#b91c1c;max-width:180px">
+                                            @(string.IsNullOrWhiteSpace(row.RejectionReason)
+                                                ? "Admin asked for corrected photos."
+                                                : row.RejectionReason)
+                                        </div>
+                                    }
+                                    else if (row.IsApproved)
+                                    {
+                                        <span class="sts sts-act">&#9989; Approved</span>
+                                        <div style="font-size:11px;color:#6b7280">Commission credited</div>
+                                    }
+                                    else if (row.IsCompleted)
+                                    {
+                                        <span class="sts sts-pend">&#8987; Awaiting admin approval</span>
                                         @if (row.Installation?.CompletedAt != null)
                                         {
                                             <div style="font-size:11px;color:#6b7280">
@@ -102,7 +149,14 @@
                                     }
                                 </td>
                                 <td>
-                                    @if (canAct)
+                                    @if (row.IsRejected && row.Installation != null)
+                                    {
+                                        <button type="button" class="btn btn-p btn-sm"
+                                                onclick="openResubmit(@row.Installation.Id, '@r.RequestNumber')">
+                                            &#128260; Update Photos
+                                        </button>
+                                    }
+                                    else if (canAct)
                                     {
                                         <button type="button" class="btn btn-p btn-sm"
                                                 onclick="openMark(@r.Id, '@r.RequestNumber')">
@@ -148,9 +202,16 @@
                 <label>Remark</label>
                 <textarea name="remark" rows="2" placeholder="Your remark (leave blank to keep the admin's remark)"></textarea>
             </div>
+            @* Image point 11 — multiple photos, up to @maxPhotos. The Camera /
+               Gallery chooser is added automatically by wwwroot/js/photo-source.js. *@
             <div class="fg">
-                <label>Completion Photo</label>
-                <input type="file" name="completionPhoto" accept="image/*" />
+                <label>Installation Photos <span style="color:#dc2626">*</span></label>
+                <input type="file" name="completionPhotos" id="markPhotos" accept="image/*" multiple
+                       data-photo-label="Installation photo" onchange="onPhotosPicked(this, 'markPhotoInfo')" />
+                <div style="font-size:12px;color:#6b7280;margin-top:4px" id="markPhotoInfo">
+                    Attach up to @maxPhotos photos. Admin reviews them and your commission
+                    is credited once they are approved.
+                </div>
             </div>
 
             <div style="display:flex;gap:8px;margin-top:14px">
@@ -161,8 +222,52 @@
     </div>
 </div>
 
+@* Re-upload form for a REJECTED installation (image point 11:
+   "Reject hone par INC wala wapas update karega"). *@
+<div id="resubWrap" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:1050">
+    <div style="max-width:520px;margin:6vh auto;background:#fff;border-radius:12px;padding:20px">
+        <h3 style="margin:0 0 4px" id="resubTitle">Update Installation Photos</h3>
+        <p style="font-size:12px;color:#6b7280;margin:0 0 14px">
+            Admin rejected the earlier photos. Attach the corrected ones — the
+            installation goes straight back for approval.
+        </p>
+        <form asp-area="SolarPanelInstaller" asp-controller="Installation" asp-action="Resubmit"
+              method="post" enctype="multipart/form-data">
+            @Html.AntiForgeryToken()
+            <input type="hidden" name="installationId" id="resubInstallationId" />
+
+            <div class="fg">
+                <label>Notes</label>
+                <textarea name="notes" rows="2" placeholder="What you corrected"></textarea>
+            </div>
+            <div class="fg">
+                <label>Photos <span style="color:#dc2626">*</span></label>
+                <input type="file" name="completionPhotos" id="resubPhotos" accept="image/*" multiple
+                       data-photo-label="Installation photo" onchange="onPhotosPicked(this, 'resubPhotoInfo')" />
+                <div style="font-size:12px;color:#6b7280;margin-top:4px" id="resubPhotoInfo">
+                    Up to @maxPhotos photos in total for this installation.
+                </div>
+            </div>
+
+            <div style="display:flex;gap:8px;margin-top:14px">
+                <button type="submit" class="btn btn-p">&#128260; Re-submit for Approval</button>
+                <button type="button" class="btn btn-s" onclick="closeResubmit()">Cancel</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+@* Lightbox for the photo thumbnails. *@
+<div id="photoLightbox" onclick="this.style.display='none'"
+     style="display:none;position:fixed;inset:0;background:rgba(15,23,42,.85);z-index:2100;align-items:center;justify-content:center;padding:20px">
+    <img id="photoLightboxImg" src="" alt="installation photo"
+         style="max-width:95%;max-height:90vh;border-radius:10px" />
+</div>
+
 @section Scripts {
     <script>
+        const MAX_PHOTOS = @maxPhotos;
+
         function openMark(requestId, requestNumber) {
             document.getElementById('markRequestId').value = requestId;
             document.getElementById('markTitle').textContent = 'Mark Installation — ' + requestNumber;
@@ -170,6 +275,39 @@
         }
         function closeMark() {
             document.getElementById('markWrap').style.display = 'none';
+        }
+
+        function openResubmit(installationId, requestNumber) {
+            document.getElementById('resubInstallationId').value = installationId;
+            document.getElementById('resubTitle').textContent = 'Update Photos — ' + requestNumber;
+            document.getElementById('resubWrap').style.display = 'block';
+        }
+        function closeResubmit() {
+            document.getElementById('resubWrap').style.display = 'none';
+        }
+
+        // Image point 11 — tell the installer how many they picked and stop them
+        // going over the cap before the upload starts. The server enforces it too.
+        function onPhotosPicked(input, infoId) {
+            const info = document.getElementById(infoId);
+            const n = input.files ? input.files.length : 0;
+            if (!info) return;
+            if (n > MAX_PHOTOS) {
+                info.style.color = '#b91c1c';
+                info.textContent = `You selected ${n} photos — only ${MAX_PHOTOS} are allowed. Please choose fewer.`;
+                input.value = '';
+                return;
+            }
+            info.style.color = '#6b7280';
+            info.textContent = n === 0
+                ? `Attach up to ${MAX_PHOTOS} photos.`
+                : `${n} photo(s) selected (max ${MAX_PHOTOS}).`;
+        }
+
+        function openPhoto(url) {
+            const box = document.getElementById('photoLightbox');
+            document.getElementById('photoLightboxImg').src = url;
+            box.style.display = 'flex';
         }
     </script>
 }

@@ -7,6 +7,12 @@
     var totalDue = (decimal)ViewBag.TotalDue;
     // Pending payment = submitted but not yet verified by admin
     var totalPending = payments.Where(p => !p.IsVerified && p.Status != SolarPortal.Domain.Enums.PaymentStatus.Rejected).Sum(p => p.Amount);
+
+    // Image point 1 — money already deposited through the cPanel activation order
+    // of an ALREADY ACTIVE id. It is a real credit against the project, so it is
+    // shown here and is already netted out of Due Amount by the controller.
+    // 0 (and hidden) for every other request mode.
+    var activeIdDeposit = (decimal)(ViewBag.ActiveIdDeposit ?? 0m);
 }
 
 <div class="page active">
@@ -38,6 +44,23 @@
             <div class="sc-sub">Balance remaining</div>
         </div>
     </div>
+
+    @* Already-Active deposit (image point 1). Only shown when there is one. *@
+    @if (activeIdDeposit > 0m)
+    {
+        <div class="card" style="margin-bottom:18px;border-left:4px solid #16a34a;background:#f0fdf4">
+            <div class="ct"><span class="ct-dot"></span>Deposited on your Active ID</div>
+            <div style="display:flex;flex-wrap:wrap;align-items:center;gap:14px;padding:6px 0">
+                <div style="font-size:26px;font-weight:700;color:#15803d">₹@activeIdDeposit.ToString("N0")</div>
+                <div style="font-size:13.5px;color:#166534;flex:1;min-width:240px">
+                    Your ID is already active, so the amount you paid on that order is held
+                    as a <strong>deposit</strong> against your solar project. It is already
+                    adjusted in <strong>Due Amount</strong> above — you only pay the balance
+                    when you file your solar request.
+                </div>
+            </div>
+        </div>
+    }
 
     <div class="g2">
         <div class="card">

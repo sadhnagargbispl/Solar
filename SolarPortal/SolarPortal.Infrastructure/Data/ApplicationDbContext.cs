@@ -21,6 +21,10 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
     public DbSet<MeterDispatch> MeterDispatches => Set<MeterDispatch>();
     public DbSet<MaterialDispatch> MaterialDispatches => Set<MaterialDispatch>();
     public DbSet<Installation> Installations => Set<Installation>();
+    // Image point 11 — the full "Mark Installed" photo set (up to 30 per install).
+    public DbSet<InstallationPhoto> InstallationPhotos => Set<InstallationPhoto>();
+    // Image point 8 — KYC papers of commission-earning (INC) installers.
+    public DbSet<IncKycDocument> IncKycDocuments => Set<IncKycDocument>();
     public DbSet<DCRDocument> DCRDocuments => Set<DCRDocument>();
     public DbSet<Worker> Workers => Set<Worker>();
     public DbSet<IncConnection> IncConnections => Set<IncConnection>();
@@ -138,6 +142,41 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
              .WithOne(r => r.Commission)
              .HasForeignKey<Commission>(x => x.SolarRequestId)
              .OnDelete(DeleteBehavior.Cascade);
+            e.HasQueryFilter(x => !x.IsDeleted);
+        });
+
+        // InstallationPhoto (image point 11)
+        builder.Entity<InstallationPhoto>(e =>
+        {
+            e.HasKey(x => x.Id);
+            e.Property(x => x.FilePath).HasMaxLength(500).IsRequired();
+            e.HasOne(x => x.Installation)
+             .WithMany(i => i.Photos)
+             .HasForeignKey(x => x.InstallationId)
+             .OnDelete(DeleteBehavior.Cascade);
+            e.HasIndex(x => x.SolarRequestId);
+            e.HasQueryFilter(x => !x.IsDeleted);
+        });
+
+        // IncKycDocument (image point 8) — one row per INC worker, three
+        // independently-verified sections (address / bank / PAN).
+        builder.Entity<IncKycDocument>(e =>
+        {
+            e.HasKey(x => x.Id);
+            e.Property(x => x.AddressProofFrontPath).HasMaxLength(500);
+            e.Property(x => x.AddressProofBackPath).HasMaxLength(500);
+            e.Property(x => x.BankProofPath).HasMaxLength(500);
+            e.Property(x => x.PanProofPath).HasMaxLength(500);
+            // Derived helpers on the entity are computed, not stored.
+            e.Ignore(x => x.AddressEditable);
+            e.Ignore(x => x.BankEditable);
+            e.Ignore(x => x.PanEditable);
+            e.Ignore(x => x.IsFullyApproved);
+            e.HasOne(x => x.Worker)
+             .WithMany()
+             .HasForeignKey(x => x.WorkerId)
+             .OnDelete(DeleteBehavior.Cascade);
+            e.HasIndex(x => x.WorkerId);
             e.HasQueryFilter(x => !x.IsDeleted);
         });
 

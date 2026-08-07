@@ -12,6 +12,10 @@ public interface IUnitOfWork : IDisposable
     IGenericRepository<Domain.Entities.MeterDispatch> MeterDispatches { get; }
     IGenericRepository<Domain.Entities.MaterialDispatch> MaterialDispatches { get; }
     IGenericRepository<Domain.Entities.Installation> Installations { get; }
+    /// <summary>"Mark Installed" photo set — up to 30 per installation (image point 11).</summary>
+    IGenericRepository<Domain.Entities.InstallationPhoto> InstallationPhotos { get; }
+    /// <summary>KYC papers of commission-earning INC installers (image point 8).</summary>
+    IGenericRepository<Domain.Entities.IncKycDocument> IncKycDocuments { get; }
     IGenericRepository<Domain.Entities.WorkerAssignment> WorkerAssignments { get; }
     IGenericRepository<Domain.Entities.DCRDocument> DCRDocuments { get; }
     IGenericRepository<Domain.Entities.Commission> Commissions { get; }

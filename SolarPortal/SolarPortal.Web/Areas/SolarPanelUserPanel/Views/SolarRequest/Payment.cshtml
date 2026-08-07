@@ -34,9 +34,24 @@
                     var totalPaid = (decimal)(ViewBag.TotalPaid ?? 0m);
                     var verified  = (decimal)(ViewBag.VerifiedPaid ?? 0m);
                     var minimum   = (decimal)(ViewBag.MinimumThreshold ?? 20000m);
-                    var dueAmt    = Math.Max(0, Model.RequestedAmount - totalPaid);
+
+                    // Image point 1 — money already deposited through the cPanel order
+                    // of an already-active ID. It is a genuine credit against this
+                    // project, so Due is measured against (project − deposit).
+                    // 0 for every other request mode.
+                    var idDeposit = (decimal)(ViewBag.ActiveIdDeposit ?? 0m);
+                    var payableAmt = (decimal)(ViewBag.PayableAmount ?? Model.RequestedAmount);
+
+                    var dueAmt    = Math.Max(0, payableAmt - totalPaid);
                     var pendingAmt = Math.Max(0, totalPaid - verified);
                     var remaining = Math.Max(0, minimum - verified);
+                }
+                @if (idDeposit > 0m)
+                {
+                    <div class="sr">
+                        <span class="srk">Deposited on Active ID</span>
+                        <span class="srv" style="color:var(--green)">₹@idDeposit.ToString("N0")</span>
+                    </div>
                 }
                 <div class="sr"><span class="srk">Total Paid (Verified)</span><span class="srv" style="color:var(--green)">₹@verified.ToString("N0")</span></div>
                 @if (pendingAmt > 0)
@@ -83,7 +98,11 @@
                         <span class="ai">✅</span>
                         <div>
                             <strong>Payment complete!</strong><br />
-                            Your full project amount (₹@Model.RequestedAmount.ToString("N0")) has been verified.
+                            Your full project amount (₹@Model.RequestedAmount.ToString("N0")) has been covered.
+                            @if (idDeposit > 0m)
+                            {
+                                <text>₹@idDeposit.ToString("N0") of it is the amount already deposited on your active ID.</text>
+                            }
                             No balance is due — no further payment is needed.
                         </div>
                     </div>

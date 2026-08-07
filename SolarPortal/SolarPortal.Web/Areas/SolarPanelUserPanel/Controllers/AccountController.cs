@@ -3,8 +3,10 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using SolarPortal.Application.DTOs;
 using SolarPortal.Application.Interfaces.Services;
+using SolarPortal.Application.Services;
 using SolarPortal.Domain.Entities;
 using SolarPortal.Domain.Enums;
+using static SolarPortal.Web.Areas.SolarPanelUserPanel.Helpers.MemberIdNo;
 
 namespace SolarPortal.Web.Areas.SolarPanelUserPanel.Controllers;
 
@@ -14,17 +16,20 @@ public class AccountController : Controller
 {
     private readonly ISolarRequestService _solarRequestService;
     private readonly IPaymentService _paymentService;
+    private readonly ILegacyProductRequestService _legacyBridge;
     private readonly UserManager<ApplicationUser> _userManager;
     private readonly IConfiguration _config;
 
     public AccountController(
         ISolarRequestService solarRequestService,
         IPaymentService paymentService,
+        ILegacyProductRequestService legacyBridge,
         UserManager<ApplicationUser> userManager,
         IConfiguration config)
     {
         _solarRequestService = solarRequestService;
         _paymentService = paymentService;
+        _legacyBridge = legacyBridge;
         _userManager = userManager;
         _config = config;
     }
@@ -76,11 +81,29 @@ public class AccountController : Controller
         var totalProject = projects.Sum(p => p.RequestedAmount);
         var totalPaid = allPayments.Where(p => p.IsVerified).Sum(p => p.Amount);
 
+        // === Already-Active deposit (image point 1) ===
+        // "Agar ID already Active hai to jis order ka amount jama kiya wo Solar
+        // Panel par jama dikhe." That money lives in the legacy cPanel as approved
+        // TrnProductorderDetail rows — it is a real credit against the project, so
+        // it counts towards Total Paid and shrinks the Due here, exactly as it does
+        // on the request / payment forms.
+        //
+        // Only "Already Active" requests draw on it; every other mode gets 0 and
+        // the totals below stay exactly what they always were.
+        decimal activeDeposit = 0m;
+        if (projects.Any(p => p.RequestType == RequestType.AlreadyActiveOnlyRequest))
+            activeDeposit = await _legacyBridge.GetApprovedOrderAmountAsync(Normalize(userId));
+
+        // Never let the deposit push Due below zero — a member whose old order was
+        // bigger than the solar plan simply owes nothing.
+        var creditedTotal = totalPaid + activeDeposit;
+
         ViewBag.Projects = projects;
         ViewBag.Payments = allPayments;
         ViewBag.TotalProjectAmount = totalProject;
         ViewBag.TotalPaid = totalPaid;
-        ViewBag.TotalDue = totalProject - totalPaid;
+        ViewBag.ActiveIdDeposit = activeDeposit;
+        ViewBag.TotalDue = Math.Max(0m, totalProject - creditedTotal);
 
         return View();
     }

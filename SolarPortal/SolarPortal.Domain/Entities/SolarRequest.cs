@@ -72,6 +72,20 @@ public class SolarRequest : BaseEntity
     public DateTime? AlreadyActiveOn { get; set; }
 
     /// <summary>
+    /// Image point 2: "Jo user solar le raha Without Activation / Only Solar — ya
+    /// baad me ID active karta hai — wo user ID cPanel se PRODUCT ka request nahi
+    /// kar paye, sirf ACTIVATION ka."
+    ///
+    /// Set the first time the request enters Only-Solar-Without-Activation mode and
+    /// deliberately NEVER cleared afterwards: activating later must not re-open
+    /// product ordering for that ID. The legacy cPanel product-request page reads
+    /// this column to decide whether to offer product orders at all.
+    ///
+    /// Column added by ADD-UserPanelIncPoints.sql.
+    /// </summary>
+    public bool ProductRequestBlocked { get; set; }
+
+    /// <summary>
     /// Moves the request into <paramref name="type"/> and records when that
     /// happened, keeping every earlier mode's date intact. Call this instead of
     /// assigning RequestType directly.
@@ -84,6 +98,11 @@ public class SolarRequest : BaseEntity
         {
             case RequestType.OnlySolarWithoutActivation:
                 WithoutActivationOn ??= whenUtc;
+                // Image point 2 — from here on this ID may only ever request an
+                // ACTIVATION, never a product. Sticky on purpose: the later
+                // "Activate Now" upgrade calls StampMode(WithActivation) and must
+                // not undo the block.
+                ProductRequestBlocked = true;
                 break;
             case RequestType.WithActivation:
                 WithActivationOn ??= whenUtc;

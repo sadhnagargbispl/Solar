@@ -1,37 +1,12 @@
 {
   "Version": 1,
-  "WorkspaceRootPath": "E:\\Sadhna Garg\\SolarGithub\\Solar\\SolarPortal\\",
-  "Documents": [
-    {
-      "AbsoluteMoniker": "D:0:0:{44444444-4444-4444-4444-444444444444}|SolarPortal.Web\\SolarPortal.Web.csproj|e:\\sadhna garg\\solargithub\\solar\\solarportal\\solarportal.web\\areas\\solarpaneluserpanel\\controllers\\solarrequestcontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{44444444-4444-4444-4444-444444444444}|SolarPortal.Web\\SolarPortal.Web.csproj|solutionrelative:solarportal.web\\areas\\solarpaneluserpanel\\controllers\\solarrequestcontroller.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    }
-  ],
+  "WorkspaceRootPath": "\\\\localhost\\Sadhna\\SolerGithub\\Solar\\SolarPortal\\",
+  "Documents": [],
   "DocumentGroupContainers": [
     {
       "Orientation": 0,
       "VerticalTabListWidth": 256,
-      "DocumentGroups": [
-        {
-          "DockedWidth": 200,
-          "SelectedChildIndex": 0,
-          "Children": [
-            {
-              "$type": "Document",
-              "DocumentIndex": 0,
-              "Title": "SolarRequestController.cs",
-              "DocumentMoniker": "E:\\Sadhna Garg\\SolarGithub\\Solar\\SolarPortal\\SolarPortal.Web\\Areas\\SolarPanelUserPanel\\Controllers\\SolarRequestController.cs",
-              "RelativeDocumentMoniker": "SolarPortal.Web\\Areas\\SolarPanelUserPanel\\Controllers\\SolarRequestController.cs",
-              "ToolTip": "E:\\Sadhna Garg\\SolarGithub\\Solar\\SolarPortal\\SolarPortal.Web\\Areas\\SolarPanelUserPanel\\Controllers\\SolarRequestController.cs",
-              "RelativeToolTip": "SolarPortal.Web\\Areas\\SolarPanelUserPanel\\Controllers\\SolarRequestController.cs",
-              "ViewState": "AgIAAB0BAAAAAAAAAAAvwDMBAAAEAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-07-31T10:42:41.33Z",
-              "EditorCaption": ""
-            }
-          ]
-        }
-      ]
+      "DocumentGroups": []
     }
   ]
 }

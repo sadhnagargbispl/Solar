@@ -46,6 +46,19 @@ public class PMSuryaController : Controller
         _config = config;
     }
 
+    /// <summary>
+    /// PM Surya Ghar unlock rule (image point 4).
+    ///
+    /// Unlocked as soon as the solar request itself is APPROVED by admin — the
+    /// user does not have to finish paying, and does not have to wait for admin
+    /// to separately advance the stage. Requests whose stage is already at or
+    /// past PMSurvey stay unlocked exactly as before, so nothing that used to
+    /// work stops working.
+    /// </summary>
+    private static bool IsPMSuryaUnlocked(SolarRequest req) =>
+        req.ApprovalStatus == ApprovalStatus.Approved ||
+        req.CurrentStage >= ProjectStatus.PMSurvey;
+
     // GET: /User/PMSurya/Upload         → picks user's latest project
     // GET: /User/PMSurya/Upload/5       → uses request id 5
     public async Task<IActionResult> Upload(int? id)
@@ -70,10 +83,14 @@ public class PMSuryaController : Controller
 
         // ===== PM Surya Ghar gate =====
         // Per spec (task 6): "Payment pura nahi aaye to bhi sabhi task complete ho sakte he."
-        // Incomplete / partial payment must NOT block the workflow anymore. The only gate we
-        // keep is the stage gate — admin advances the request to the PM Surya stage once the
-        // request itself is approved. The earlier full-payment requirement has been removed.
-        if (req.CurrentStage < ProjectStatus.PMSurvey)
+        // Incomplete / partial payment must NOT block the workflow anymore.
+        //
+        // Image point 4 (user + admin): "kisi bhi ID ka Solar Request us time me agar
+        // approve ho jati hai, PM Surya then open ho jayega — pura payment ki zarurat
+        // nahi hai." So APPROVAL is the gate now, not the stage. Admin normally also
+        // advances the stage to PMSurvey, but the user must not have to wait for that
+        // second click: an Approved request opens PM Surya Ghar immediately.
+        if (!IsPMSuryaUnlocked(req))
         {
             TempData["Info"] = "PM Surya Ghar upload unlocks after your request is approved by admin.";
             return RedirectToAction("Status", "SolarRequest", new { id });
@@ -152,9 +169,10 @@ public class PMSuryaController : Controller
         if (req == null || !string.Equals(req.UserId?.Trim(), userId?.Trim(), StringComparison.OrdinalIgnoreCase))
             return Json(new { success = false, message = "Request not found" });
 
-        // ===== Gate: only the stage gate remains (mirrors GET Upload) =====
-        // Per spec (task 6) incomplete payment no longer blocks uploads.
-        if (req.CurrentStage < ProjectStatus.PMSurvey)
+        // ===== Gate: approval OR stage (mirrors GET Upload) =====
+        // Per spec (task 6) incomplete payment no longer blocks uploads, and per
+        // image point 4 an Approved request unlocks PM Surya Ghar right away.
+        if (!IsPMSuryaUnlocked(req))
             return Json(new { success = false, message = "PM Surya Ghar is locked until admin approves your request." });
 
         // Save the file

@@ -20,6 +20,8 @@ public class UnitOfWork : IUnitOfWork
     private IGenericRepository<MeterDispatch>? _meterDispatches;
     private IGenericRepository<MaterialDispatch>? _materialDispatches;
     private IGenericRepository<Installation>? _installations;
+    private IGenericRepository<InstallationPhoto>? _installationPhotos;
+    private IGenericRepository<IncKycDocument>? _incKycDocuments;
     private IGenericRepository<WorkerAssignment>? _workerAssignments;
     private IGenericRepository<DCRDocument>? _dcrDocuments;
     private IGenericRepository<Commission>? _commissions;
@@ -50,6 +52,10 @@ public class UnitOfWork : IUnitOfWork
         _materialDispatches ??= new GenericRepository<MaterialDispatch>(_context);
     public IGenericRepository<Installation> Installations =>
         _installations ??= new GenericRepository<Installation>(_context);
+    public IGenericRepository<InstallationPhoto> InstallationPhotos =>
+        _installationPhotos ??= new GenericRepository<InstallationPhoto>(_context);
+    public IGenericRepository<IncKycDocument> IncKycDocuments =>
+        _incKycDocuments ??= new GenericRepository<IncKycDocument>(_context);
     public IGenericRepository<WorkerAssignment> WorkerAssignments =>
         _workerAssignments ??= new GenericRepository<WorkerAssignment>(_context);
     public IGenericRepository<DCRDocument> DCRDocuments =>

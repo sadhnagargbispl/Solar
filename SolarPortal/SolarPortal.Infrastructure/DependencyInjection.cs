@@ -105,6 +105,9 @@ public static class DependencyInjection
         services.AddScoped<IStateService, StateService>();
         // Banks from legacy M_BankMaster - shown in the INC withdrawal form.
         services.AddScoped<IBankService, BankService>();
+        // Address-proof types from legacy M_IdTypeMaster — the same list the old
+        // member-panel KYC page used; shown on the INC KYC page (image point 8).
+        services.AddScoped<IIdProofTypeService, IdProofTypeService>();
         // Bridges new "With Activation" submissions into the legacy
         // TrnProductorderDetail table — keeps the existing SolFit
         // VB workflow (reports, activation processing) working.

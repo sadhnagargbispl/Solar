@@ -60,6 +60,50 @@ public class SolarRequestController : Controller
         _config = config;
     }
 
+    // ─── Already-Active deposit (image point 1) ──────────────────────────
+    // An "Already Active" member has already paid into the legacy cPanel for the
+    // order that activated their ID. Per spec that money must show as a DEPOSIT on
+    // the solar panel and reduce what they pay when they file the solar request.
+    //
+    // Only active IDs get it: a deactivated / never-activated ID has no approved
+    // legacy order to draw on, and With-Activation members pay for their product
+    // as part of this very submission.
+    //
+    // Never throws — GetApprovedOrderAmountAsync already swallows legacy-DB
+    // problems and returns 0, so a legacy outage can't block the form.
+    private async Task<decimal> GetActiveIdDepositAsync(string userId, bool isActiveMember)
+    {
+        if (!isActiveMember) return 0m;
+        return await _legacyBridge.GetApprovedOrderAmountAsync(NormalizeIdNo(userId));
+    }
+
+    /// <summary>
+    /// What the user actually has to pay for a plan after the already-active
+    /// deposit is applied, and the minimum first payment that goes with it.
+    ///
+    /// • payable  = plan amount − deposit (never below 0)
+    /// • minimum  = the usual ₹20,000 floor, but capped at `payable` so we can
+    ///              never demand more than what is still owed. A deposit that
+    ///              covers the whole plan leaves both at 0 — no payment required.
+    /// </summary>
+    private static (decimal Payable, decimal Minimum) ApplyDeposit(decimal planAmount, decimal deposit)
+    {
+        var payable = Math.Max(0m, planAmount - Math.Max(0m, deposit));
+        var minimum = Math.Min(PaymentService.MinimumPaymentThreshold, payable);
+        return (payable, minimum);
+    }
+
+    /// <summary>
+    /// Deposit that applies to an EXISTING request (Payment page, Solar A/c).
+    /// Same rule as the Create form: only an "Already Active" request draws on the
+    /// legacy cPanel order money, and only for the signed-in user's own request.
+    /// </summary>
+    private async Task<decimal> GetDepositForRequestAsync(SolarRequestDto req)
+    {
+        if (req.RequestType != RequestType.AlreadyActiveOnlyRequest) return 0m;
+        return await _legacyBridge.GetApprovedOrderAmountAsync(NormalizeIdNo(req.UserId));
+    }
+
     // GET: New Request Form (multi-step)
     public async Task<IActionResult> Create()
     {
@@ -113,6 +157,14 @@ public class SolarRequestController : Controller
                                   "Y",
                                   StringComparison.OrdinalIgnoreCase);
         ViewBag.IsActiveMember = isActiveMember;
+
+        // === Already-Active deposit (image point 1) ===
+        // "Agar ID already Active hai to jis order ka amount jama kiya, wo Solar
+        // Panel par jama dikhe — aur Solar ki request lagate time utna amount kam
+        // lage." The money is sitting in the legacy cPanel as approved
+        // TrnProductorderDetail rows, so we read it from there and hand it to the
+        // form as a credit against the plan amount.
+        ViewBag.ActiveIdDeposit = await GetActiveIdDepositAsync(userId, isActiveMember);
 
         if (existing.IsSuccess && existing.Data != null && existing.Data.Any())
         {
@@ -406,6 +458,16 @@ public class SolarRequestController : Controller
                                       (memberRow.ActiveStatus ?? "").Trim(),
                                       "Y",
                                       StringComparison.OrdinalIgnoreCase);
+
+        // ── Already-Active deposit (image point 1) ───────────────────────
+        // Money this member already deposited through the legacy cPanel order that
+        // activated their ID. It is a credit against the plan amount, so it lowers
+        // both the minimum first payment and the maximum they may pay now.
+        // Computed here — ahead of the mode guards — so every re-render of the form
+        // below can show the same deposit banner the GET showed.
+        decimal activeDeposit = await GetActiveIdDepositAsync(userIdEarly, isActiveMemberPost);
+        ViewBag.ActiveIdDeposit = activeDeposit;
+
         if (isActiveMemberPost && model.RequestType != RequestType.AlreadyActiveOnlyRequest)
         {
             // Hard-reject rather than silently coerce — the user explicitly picked a
@@ -474,8 +536,15 @@ public class SolarRequestController : Controller
         // exemption also skipped the ₹20,000 floor - an already-active member
         // could submit a request paying ₹15,000. The floor applies to every mode
         // now, so this flag no longer distinguishes them.
+        //
+        // Deposit caveat: a deposit can wipe out the payable amount completely,
+        // but PlanAmount is only resolved further down (each mode picks its plan
+        // there). So when a deposit exists we DEFER the "payment is mandatory"
+        // checks to the deposit-aware block after plan resolution, which knows the
+        // real payable figure. Members without a deposit keep the original path
+        // byte-for-byte.
         bool collectPayment   = !canReactivate;
-        bool paymentRequired  = collectPayment;
+        bool paymentRequired  = collectPayment && activeDeposit <= 0m;
 
         if (!canReactivate && existingEarly.IsSuccess && existingEarly.Data != null && existingEarly.Data.Any())
         {
@@ -777,19 +846,43 @@ public class SolarRequestController : Controller
         // Mirrors confirmSubmit() on the client; enforced here too so a JS
         // failure or DevTools tampering can never slip a smaller payment
         // through (a ₹1,000 payment once got saved exactly this way).
+        // Deposit-aware payable figures. Without a deposit these are exactly the
+        // old numbers (payable = PlanAmount, minimum = ₹20,000), so the original
+        // behaviour is unchanged for everyone who has nothing on deposit.
+        var (payableNow, effectiveMin) = ApplyDeposit(model.PlanAmount, activeDeposit);
+
+        // With a deposit on file the mandatory-payment checks were deferred above —
+        // run them here, now that PlanAmount (and therefore the payable amount) is
+        // known. A deposit that covers the whole plan means nothing is due at all.
+        if (collectPayment && activeDeposit > 0m && payableNow > 0m)
+        {
+            // The amount itself is checked by the min/cap block right below —
+            // adding it here too would show the user two errors for one field.
+            if (model.PaymentReceipt == null || model.PaymentReceipt.Length == 0)
+            {
+                ModelState.AddModelError(nameof(model.PaymentReceipt),
+                    "Payment receipt (image / PDF) is required. Please upload it to submit.");
+            }
+            paymentRequired = true;
+        }
+
         if (paymentRequired)
         {
-            var hardMin = PaymentService.MinimumPaymentThreshold;
+            var hardMin = effectiveMin;
             if (model.PaymentAmount < hardMin)
             {
                 ModelState.AddModelError(nameof(model.PaymentAmount),
                     $"Minimum first payment is ₹{hardMin:N0}. You entered ₹{model.PaymentAmount:N0} — " +
-                    $"you must pay at least ₹{hardMin:N0}.");
+                    $"you must pay at least ₹{hardMin:N0}." +
+                    (activeDeposit > 0m ? $" (₹{activeDeposit:N0} already deposited has been adjusted.)" : ""));
             }
-            else if (model.PlanAmount > 0 && model.PaymentAmount > model.PlanAmount)
+            else if (payableNow > 0 && model.PaymentAmount > payableNow)
             {
                 ModelState.AddModelError(nameof(model.PaymentAmount),
-                    $"Payment ₹{model.PaymentAmount:N0} cannot exceed the project amount ₹{model.PlanAmount:N0}.");
+                    activeDeposit > 0m
+                        ? $"Payment ₹{model.PaymentAmount:N0} cannot exceed the remaining amount ₹{payableNow:N0} " +
+                          $"(project ₹{model.PlanAmount:N0} − ₹{activeDeposit:N0} already deposited)."
+                        : $"Payment ₹{model.PaymentAmount:N0} cannot exceed the project amount ₹{model.PlanAmount:N0}.");
             }
             if (!ModelState.IsValid)
             {
@@ -969,16 +1062,20 @@ public class SolarRequestController : Controller
             try
             {
                 // Flat ₹20,000 floor, same as the validation block above - no
-                // "cheaper plan pays in full" discount in any mode.
-                var hardMin = PaymentService.MinimumPaymentThreshold;
+                // "cheaper plan pays in full" discount in any mode. The only thing
+                // that moves the floor is an already-active deposit (image point 1),
+                // which is netted off the plan before these limits are applied.
+                var hardMin = effectiveMin;
 
                 if (model.PaymentAmount < hardMin)
                 {
                     TempData["Warning"] = $"Request saved, but first payment of ₹{model.PaymentAmount:N0} is below the ₹{hardMin:N0} minimum. Please add the remaining amount from the Payment page.";
                 }
-                else if (model.PlanAmount > 0 && model.PaymentAmount > model.PlanAmount)
+                else if (payableNow > 0 && model.PaymentAmount > payableNow)
                 {
-                    TempData["Warning"] = $"Request saved, but the entered payment ₹{model.PaymentAmount:N0} exceeds the project total ₹{model.PlanAmount:N0}. Payment was not recorded — please re-enter from the Payment page.";
+                    TempData["Warning"] = activeDeposit > 0m
+                        ? $"Request saved, but the entered payment ₹{model.PaymentAmount:N0} exceeds the remaining ₹{payableNow:N0} (project ₹{model.PlanAmount:N0} − ₹{activeDeposit:N0} already deposited). Payment was not recorded — please re-enter from the Payment page."
+                        : $"Request saved, but the entered payment ₹{model.PaymentAmount:N0} exceeds the project total ₹{model.PlanAmount:N0}. Payment was not recorded — please re-enter from the Payment page.";
                 }
                 else
                 {
@@ -1289,16 +1386,9 @@ public class SolarRequestController : Controller
     ///
     /// Result: a clean raw IdNo that matches M_MemberMaster.Idno exactly.
     /// </summary>
-    private static string NormalizeIdNo(string? raw)
-    {
-        if (string.IsNullOrWhiteSpace(raw)) return string.Empty;
-        var s = raw.Trim();
-        if (s.StartsWith("member-", StringComparison.OrdinalIgnoreCase))
-            s = s.Substring("member-".Length);
-        var atIdx = s.IndexOf('@');
-        if (atIdx > 0) s = s.Substring(0, atIdx);
-        return s.Trim();
-    }
+    /// (Implementation now lives in Helpers/MemberIdNo.cs so the Solar A/c page
+    /// normalises identically — same rules, one copy.)
+    private static string NormalizeIdNo(string? raw) => Helpers.MemberIdNo.Normalize(raw);
 
     // Helper: find a SolarProject matching the given KV and connection type.
     // Used by Mode 2 (and as fallback for Mode 1) to auto-fetch the project amount
@@ -1560,7 +1650,16 @@ public class SolarRequestController : Controller
         ViewBag.Payments = await _paymentService.GetByRequestIdAsync(id);
         ViewBag.TotalPaid = await _paymentService.GetTotalPaidAsync(id);
         ViewBag.VerifiedPaid = await _paymentService.GetVerifiedPaidAsync(id);
-        ViewBag.MinimumThreshold = PaymentService.MinimumPaymentThreshold;
+
+        // Already-active deposit (image point 1) — the legacy cPanel order money is
+        // a credit against this project, so the page shows it and works off the
+        // remaining amount instead of the raw project total.
+        var payDeposit = await GetDepositForRequestAsync(result.Data!);
+        var (payPayable, payMin) = ApplyDeposit(result.Data!.RequestedAmount, payDeposit);
+        ViewBag.ActiveIdDeposit = payDeposit;
+        ViewBag.PayableAmount = payPayable;
+
+        ViewBag.MinimumThreshold = payMin;
         ViewBag.HasMetMinimum = await _paymentService.HasMetMinimumAsync(id);
         // Payment methods come from the legacy M_PayModeMaster table so the
         // dropdown matches the old SolFit system exactly (per spec).
@@ -1602,9 +1701,13 @@ public class SolarRequestController : Controller
         if (!reqResult.IsSuccess || reqResult.Data == null)
             return Json(new { success = false, message = "Solar request not found." });
 
-        var projectTotal = reqResult.Data.RequestedAmount;
+        // Already-active deposit (image point 1) is netted off the project total, so
+        // the ceiling below is what is genuinely still owed and the ₹20,000 floor
+        // can never demand more than that. Deposit is 0 for every other mode, which
+        // leaves these two lines behaving exactly as they did before.
+        var deposit = await GetDepositForRequestAsync(reqResult.Data);
+        var (projectTotal, min) = ApplyDeposit(reqResult.Data.RequestedAmount, deposit);
         var alreadyPaid = await _paymentService.GetTotalPaidAsync(dto.SolarRequestId);
-        var min = PaymentService.MinimumPaymentThreshold;
 
         // Guard: if the project is already fully paid, reject any further payment
         // outright with a clear message. The UI hides the form in this case, but a
