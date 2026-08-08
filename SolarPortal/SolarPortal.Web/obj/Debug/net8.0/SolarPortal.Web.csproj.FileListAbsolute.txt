@@ -1236,7 +1236,6 @@ E:\Sadhna Garg\SolarGithub\Solar\SolarPortal\SolarPortal.Web\obj\Debug\net8.0\re
 \\localhost\Sadhna\SolerGithub\Solar\SolarPortal\SolarPortal.Web\obj\Debug\net8.0\staticwebassets.development.json
 \\localhost\Sadhna\SolerGithub\Solar\SolarPortal\SolarPortal.Web\obj\Debug\net8.0\staticwebassets.build.endpoints.json
 \\localhost\Sadhna\SolerGithub\Solar\SolarPortal\SolarPortal.Web\obj\Debug\net8.0\swae.build.ex.cache
-\\localhost\Sadhna\SolerGithub\Solar\SolarPortal\SolarPortal.Web\obj\Debug\net8.0\staticwebassets.upToDateCheck.txt
 \\localhost\Sadhna\SolerGithub\Solar\SolarPortal\SolarPortal.Web\obj\Debug\net8.0\SolarPor.FEE2856E.Up2Date
 \\localhost\Sadhna\SolerGithub\Solar\SolarPortal\SolarPortal.Web\obj\Debug\net8.0\SolarPortal.Web.dll
 \\localhost\Sadhna\SolerGithub\Solar\SolarPortal\SolarPortal.Web\obj\Debug\net8.0\refint\SolarPortal.Web.dll

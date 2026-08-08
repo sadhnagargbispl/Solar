@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Mvc.Authorization;
 using Serilog;
 using SolarPortal.Infrastructure;
@@ -55,6 +56,17 @@ builder.Services.ConfigureApplicationCookie(options =>
     options.LogoutPath = "/Account/Logout";
     options.AccessDeniedPath = "/Account/AccessDenied";
 });
+
+// Data protection key ring. Antiforgery tokens and the auth cookie are encrypted
+// with it; left unconfigured it lands in the launching account's profile folder,
+// which an IIS app pool does not load, so the keys are regenerated on every
+// recycle and every form rendered before it starts failing with a bare 400.
+// Pin it to the deployment and name the app so all workers agree.
+var userKeyRing = new DirectoryInfo(Path.Combine(builder.Environment.ContentRootPath, "App_Data", "keys"));
+userKeyRing.Create();
+builder.Services.AddDataProtection()
+    .PersistKeysToFileSystem(userKeyRing)
+    .SetApplicationName("SolarPortal.User");
 
 var app = builder.Build();
 
