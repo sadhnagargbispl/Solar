@@ -1,8 +1,9 @@
-using Microsoft.AspNetCore.Authorization;
+﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using SolarPortal.Application.Services;
 using SolarPortal.Domain.Entities;
+using SolarPortal.Domain.Enums;
 using SolarPortal.Infrastructure.Data;
 
 namespace SolarPortal.Web.Areas.SolarPanelInstaller.Controllers;
@@ -20,6 +21,47 @@ public class WithdrawController : Controller
         _db = db;
         _incWallet = incWallet;
         _banks = banks;
+    }
+
+    /// <summary>
+    /// KYC gate on WITHDRAWALS: "mark installation to kar sakta bina KYC, par
+    /// withdrawal nahi hoga jab tak KYC approve na ho."
+    ///
+    /// So an INC works and earns freely; only taking the money out waits on KYC.
+    /// All THREE sections must be Approved - and the Bank section especially,
+    /// because that is the account the payout is sent to. Paying into a bank
+    /// account nobody verified is exactly what this rule exists to stop.
+    ///
+    /// Returns the message to show, or null when the withdrawal may proceed.
+    /// </summary>
+    private async Task<string?> KycBlockAsync(int workerId)
+    {
+        // Read the type from the DB rather than the auth cookie: the cookie is
+        // stamped at login and goes stale the moment admin changes a worker's
+        // type, and this decides whether the rule applies at all.
+        var worker = await _db.Workers.AsNoTracking().FirstOrDefaultAsync(w => w.Id == workerId);
+        if (worker == null || worker.Type != WorkerType.INC) return null;
+
+        var kyc = await _db.IncKycDocuments.AsNoTracking()
+                           .Where(k => k.WorkerId == workerId)
+                           .OrderByDescending(k => k.Id)
+                           .FirstOrDefaultAsync();
+
+        if (kyc == null)
+            return "You have not submitted your KYC yet. Withdrawals open once it is approved — " +
+                   "open My KYC to upload it.";
+
+        if (kyc.IsFullyApproved) return null;
+
+        // Name what is actually outstanding, so the installer knows whether to
+        // re-upload something or simply wait for the admin.
+        var pending = new List<string>();
+        if (kyc.AddressStatus != ApprovalStatus.Approved) pending.Add($"Address Proof ({kyc.AddressStatus})");
+        if (kyc.BankStatus != ApprovalStatus.Approved) pending.Add($"Bank Detail ({kyc.BankStatus})");
+        if (kyc.PanStatus != ApprovalStatus.Approved) pending.Add($"PAN Card ({kyc.PanStatus})");
+
+        return "Your KYC is not fully approved yet — " + string.Join(", ", pending) +
+               ". Withdrawals open once all three sections are approved. Your earnings stay safe until then.";
     }
 
     private int WorkerId => int.TryParse(User.FindFirst("WorkerId")?.Value, out var id) ? id : 0;
@@ -55,6 +97,10 @@ public class WithdrawController : Controller
     // (Report) so the menu can link straight to it.
     public async Task<IActionResult> Index()
     {
+        // Surfaced on the form as well - a Request button that always fails is
+        // worse than one that explains itself before being pressed.
+        ViewBag.KycBlock = await KycBlockAsync(WorkerId);
+
         if (!IsInc)
         {
             TempData["Warning"] = "Withdrawal is available to INC workers only.";
@@ -107,6 +153,15 @@ public class WithdrawController : Controller
     {
         if (!IsInc) { TempData["Warning"] = "INC workers only."; return RedirectToAction("Index", "Dashboard"); }
         var wid = WorkerId;
+
+        // KYC gate. Earning is free; taking the money out is not.
+        var kycBlock = await KycBlockAsync(wid);
+        if (kycBlock != null)
+        {
+            TempData["Error"] = kycBlock;
+            return RedirectToAction(nameof(Index));
+        }
+
         var available = await ComputeAvailableAsync(wid);
 
         bankName = bankName?.Trim();

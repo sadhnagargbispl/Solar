@@ -1,4 +1,4 @@
-@{
+﻿@{
     ViewData["Title"] = "Withdraw";
     var available = (decimal)(ViewBag.Available ?? 0m);
     var banks = ViewBag.Banks as List<SolarPortal.Application.Services.BankDto>
@@ -10,6 +10,19 @@
         <div class="ph-title">Withdraw</div>
         <div class="ph-sub">Request a payout from your available balance. Admin approves / rejects each request.</div>
     </div>
+
+    @* KYC gates the withdrawal, not the earning. Say it here so the Request
+       button is never a trap that only fails after it is pressed. *@
+    @if (!string.IsNullOrEmpty(ViewBag.KycBlock as string))
+    {
+        <div class="card" style="margin-bottom:14px;border-left:4px solid #dc2626;background:#fef2f2">
+            <div style="padding:12px 14px;font-size:13.5px;color:#991b1b">
+                🔒 <strong>Withdrawal is on hold until your KYC is approved</strong>
+                <div style="margin-top:6px">@ViewBag.KycBlock</div>
+                <a class="btn btn-p btn-sm" asp-controller="Kyc" asp-action="Index" style="margin-top:10px">Open My KYC</a>
+            </div>
+        </div>
+    }
 
     <div class="card">
         <div class="ct"><span class="ct-dot"></span>Request Withdrawal</div>
