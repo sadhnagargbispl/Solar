@@ -1,4 +1,4 @@
-using Microsoft.AspNetCore.Authorization;
+﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using SolarPortal.Application.DTOs;
 using SolarPortal.Application.Interfaces;
@@ -38,6 +38,52 @@ public class InstallationController : Controller
         _requestService = requestService;
         _fileUpload = fileUpload;
         _incWallet = incWallet;
+    }
+
+    /// <summary>
+    /// Whether this INC's KYC is still outstanding.
+    ///
+    /// Installation does NOT require KYC - an installer can mark work complete
+    /// either way. What KYC gates is the WITHDRAWAL of the money it earns, so this
+    /// is only used to warn on the queue page; the hard stop lives in
+    /// WithdrawController.
+    ///
+    /// All THREE sections must be Approved - Address Proof, Bank Detail and PAN.
+    /// Part-approved is not approved: the bank section is what the commission is
+    /// eventually paid against, so letting the work be completed on an unverified
+    /// account only defers the problem to payout time.
+    ///
+    /// JOB workers are untouched - they are salaried and are never asked for KYC.
+    /// Returns the message to show, or null when the installer may proceed.
+    /// </summary>
+    private async Task<string?> KycBlockAsync(int workerId)
+    {
+        var worker = await _uow.Workers.GetByIdAsync(workerId);
+
+        // Read the type from the DB, not from the auth cookie: the cookie is
+        // stamped at login and goes stale the moment admin switches a worker's
+        // type, and this decides whether the rule applies at all.
+        if (worker == null || worker.Type != WorkerType.INC) return null;
+
+        var kyc = (await _uow.IncKycDocuments.FindAsync(k => k.WorkerId == workerId))
+                  .OrderByDescending(k => k.Id)
+                  .FirstOrDefault();
+
+        if (kyc == null)
+            return "You have not submitted your KYC yet. Commission you earn will be held " +
+                   "until it is approved - you will not be able to withdraw.";
+
+        if (kyc.IsFullyApproved) return null;
+
+        // Name the sections that are actually holding it up, so the installer knows
+        // what to fix instead of guessing.
+        var pending = new List<string>();
+        if (kyc.AddressStatus != ApprovalStatus.Approved) pending.Add($"Address Proof ({kyc.AddressStatus})");
+        if (kyc.BankStatus != ApprovalStatus.Approved) pending.Add($"Bank Detail ({kyc.BankStatus})");
+        if (kyc.PanStatus != ApprovalStatus.Approved) pending.Add($"PAN Card ({kyc.PanStatus})");
+
+        return "Your KYC is not fully approved yet - " + string.Join(", ", pending) +
+               ". Withdrawals stay blocked until all three sections are approved.";
     }
 
     private int WorkerId => int.TryParse(User.FindFirst("WorkerId")?.Value, out var id) ? id : 0;
@@ -113,6 +159,11 @@ public class InstallationController : Controller
         ViewBag.RejectedCount = allRows.Count(r => r.IsRejected);
         ViewBag.MaxPhotos = InstallationPhoto.MaxPerInstallation;
 
+        // Informational only - installation is never blocked by KYC. It warns that
+        // the money earned here cannot be withdrawn until KYC is approved, which is
+        // better learned now than at withdrawal time.
+        ViewBag.KycBlock = await KycBlockAsync(wid);
+
         // Actionable = project abhi Installation stage par hai aur complete nahi hua.
         // "rejected" is a separate bucket: admin sent the photos back and the
         // installer has to re-upload (image point 11).
@@ -147,6 +198,7 @@ public class InstallationController : Controller
             TempData["Warning"] = "Worker session not found. Please log in again.";
             return RedirectToAction(nameof(Index));
         }
+
 
         var request = await _uow.SolarRequests.GetByIdAsync(requestId);
         if (request == null)

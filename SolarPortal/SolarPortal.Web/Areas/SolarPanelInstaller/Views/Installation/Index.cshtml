@@ -1,4 +1,4 @@
-@using SolarPortal.Web.Areas.SolarPanelInstaller.Controllers
+﻿@using SolarPortal.Web.Areas.SolarPanelInstaller.Controllers
 @model List<InstallationController.InstallationRow>
 @{
     ViewData["Title"] = "My Installations";
@@ -8,6 +8,11 @@
 
     // Image point 11 — how many photos the installer may attach in one go.
     var maxPhotos = (int)(ViewBag.MaxPhotos ?? 30);
+
+    // Set when this installer's KYC is not fully approved. Only an approved INC
+    // may mark an installation complete, so the reason is shown up front rather
+    // than after they have filled the form.
+    var kycBlock = ViewBag.KycBlock as string;
 
     // Stored paths may be "uploads/x.jpg" or "/uploads/x.jpg" — normalise.
     string PhotoUrl(string? p)
@@ -22,6 +27,20 @@
         <div class="ph-title">My Installations</div>
         <div class="ph-sub">Installations assigned to you in material dispatch — Mark Complete them from here.</div>
     </div>
+
+    @* A warning, not a block: installation can be marked complete without KYC.
+       What KYC holds up is WITHDRAWING the money it earns, so flag it here rather
+       than let the installer find out when they try to take the money out. *@
+    @if (!string.IsNullOrEmpty(kycBlock))
+    {
+        <div class="card" style="margin-bottom:14px;border-left:4px solid #f59e0b;background:#fffbeb">
+            <div style="padding:12px 14px;font-size:13.5px;color:#92400e">
+                ⚠️ <strong>You can complete installations, but you cannot withdraw yet</strong>
+                <div style="margin-top:6px">@kycBlock</div>
+                <a class="btn btn-p btn-sm" asp-controller="Kyc" asp-action="Index" style="margin-top:10px">Open My KYC</a>
+            </div>
+        </div>
+    }
 
     @* Default tab "All" — admin reports ke jaisa hi. *@
     <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px">

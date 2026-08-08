@@ -1,4 +1,4 @@
-@{
+﻿@{
     ViewData["Title"] = "My Reports";
     var f          = (ViewBag.Filter as string) ?? "all";
     var requests   = ViewBag.Requests    as List<SolarPortal.Domain.Entities.SolarRequest> ?? new();
@@ -18,6 +18,10 @@
     var fileExists = ViewBag.FileExists as Dictionary<string, bool> ?? new();
     var paidByReq  = ViewBag.PaidByRequest as Dictionary<int, decimal> ?? new();
     decimal PaidOf(int id) => paidByReq.TryGetValue(id, out var _pv) ? _pv : 0m;
+    // Point 1: already INSIDE PaidOf - carried separately only so the row can say
+    // where it came from, or "Paid ₹30,000" against ₹10,100 of receipts reads wrong.
+    var depositByReq = ViewBag.DepositByRequest as Dictionary<int, decimal> ?? new();
+    decimal DepositOf(int id) => depositByReq.TryGetValue(id, out var _dv) ? _dv : 0m;
 
     // Resolved URL per stored path (controller-built): local wwwroot when present,
     // otherwise the admin server (admin-panel uploads live there).
@@ -150,7 +154,16 @@
                                 <td style="font-size:12.5px;max-width:160px" title="@r.SelectedPlan">@Dash(r.SelectedPlan)</td>
                                 <td>@r.KVCapacity kV</td>
                                 <td>₹@r.PlanAmount.ToString("N0")</td>
-                                <td style="color:#16a34a;font-weight:600">₹@PaidOf(r.Id).ToString("N0")</td>
+                                <td style="color:#16a34a;font-weight:600">
+                                    ₹@PaidOf(r.Id).ToString("N0")
+                                    @if (DepositOf(r.Id) > 0m)
+                                    {
+                                        <div style="font-size:10.5px;font-weight:600;color:#0d9488"
+                                             title="Paid on the order that activated this ID - not outstanding">
+                                            &#10004; ₹@DepositOf(r.Id).ToString("N0") already paid on Active ID
+                                        </div>
+                                    }
+                                </td>
                                 <td style="color:@(due > 0 ? "#dc2626" : "#16a34a");font-weight:600">₹@due.ToString("N0")</td>
                                 <td><span class="sts sts-disp">@r.CurrentStage.ToString().Replace("_", " ")</span></td>
                                 <td>@Html.Raw(ApprovalBadge(effectiveApproval))</td>

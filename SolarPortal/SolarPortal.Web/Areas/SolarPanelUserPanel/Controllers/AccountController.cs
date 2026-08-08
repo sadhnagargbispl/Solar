@@ -1,4 +1,4 @@
-using Microsoft.AspNetCore.Authorization;
+﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using SolarPortal.Application.DTOs;
@@ -90,9 +90,19 @@ public class AccountController : Controller
         //
         // Only "Already Active" requests draw on it; every other mode gets 0 and
         // the totals below stay exactly what they always were.
+        // Resolve through the SHARED rule, keyed off the request that actually
+        // carries the Already-Active mode - not off the signed-in user id. The two
+        // are normally the same, but this page was computing its own answer and
+        // silently reporting 0, which is how Solar A/c ended up billing a member
+        // for money they had already paid.
         decimal activeDeposit = 0m;
-        if (projects.Any(p => p.RequestType == RequestType.AlreadyActiveOnlyRequest))
-            activeDeposit = await _legacyBridge.GetApprovedOrderAmountAsync(Normalize(userId));
+        var activeReq = projects.FirstOrDefault(p => p.RequestType == RequestType.AlreadyActiveOnlyRequest);
+        if (activeReq != null)
+        {
+            activeDeposit = await _legacyBridge.GetDepositForRequestAsync(
+                activeReq.RequestType,
+                Normalize(string.IsNullOrWhiteSpace(activeReq.UserId) ? userId : activeReq.UserId));
+        }
 
         // Never let the deposit push Due below zero — a member whose old order was
         // bigger than the solar plan simply owes nothing.
@@ -101,7 +111,12 @@ public class AccountController : Controller
         ViewBag.Projects = projects;
         ViewBag.Payments = allPayments;
         ViewBag.TotalProjectAmount = totalProject;
-        ViewBag.TotalPaid = totalPaid;
+        // Point 1: the deposit is money this project has ALREADY received, so it
+        // belongs in Total Paid too - not just netted out of Due. Showing
+        // "Paid ₹0" beside "Due ₹26,400" on a ₹30,000 project made the card
+        // contradict itself and read like a bug.
+        ViewBag.TotalPaid = creditedTotal;
+        ViewBag.PaymentsOnly = totalPaid;   // receipts alone, for the sub-line
         ViewBag.ActiveIdDeposit = activeDeposit;
         ViewBag.TotalDue = Math.Max(0m, totalProject - creditedTotal);
 

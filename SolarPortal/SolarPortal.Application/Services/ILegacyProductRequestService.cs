@@ -1,3 +1,4 @@
+﻿using SolarPortal.Domain.Enums;
 namespace SolarPortal.Application.Services;
 
 /// <summary>
@@ -57,6 +58,18 @@ public interface ILegacyProductRequestService
     /// callers can treat it as "no deposit" without special-casing failures.
     /// </summary>
     Task<decimal> GetApprovedOrderAmountAsync(string memberIdNo);
+
+    /// <summary>
+    /// The deposit that applies to ONE request (image point 1).
+    ///
+    /// Only an "Already Active" request draws on the legacy cPanel order money:
+    /// a With-Activation member pays for their product as part of the same
+    /// submission, so counting it again would credit it twice. Every screen that
+    /// shows a paid / due / minimum figure calls THIS, so the rule cannot drift
+    /// from one page to the next - which is exactly how Status, PM Surya and the
+    /// admin queue ended up disagreeing about the same project.
+    /// </summary>
+    Task<decimal> GetDepositForRequestAsync(RequestType requestType, string? memberIdNo);
 }
 
 public class LegacyProductRequestInput

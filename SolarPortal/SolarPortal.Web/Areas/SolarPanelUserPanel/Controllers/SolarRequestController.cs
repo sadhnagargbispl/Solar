@@ -1,4 +1,4 @@
-using Microsoft.AspNetCore.Authorization;
+﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -88,8 +88,16 @@ public class SolarRequestController : Controller
     /// </summary>
     private static (decimal Payable, decimal Minimum) ApplyDeposit(decimal planAmount, decimal deposit)
     {
-        var payable = Math.Max(0m, planAmount - Math.Max(0m, deposit));
-        var minimum = Math.Min(PaymentService.MinimumPaymentThreshold, payable);
+        var onDeposit = Math.Max(0m, deposit);
+        var payable = Math.Max(0m, planAmount - onDeposit);
+
+        // NOT min(20000, payable). That demanded a fresh ₹20,000 on top of the
+        // deposit whenever the balance was big enough - but the floor is on the
+        // PROJECT TOTAL, and the deposit is already part of that total. A member
+        // with ₹19,900 on deposit only has to add ₹100 to reach ₹20,000.
+        var stillNeededForFloor = Math.Max(0m, PaymentService.MinimumPaymentThreshold - onDeposit);
+        var minimum = Math.Min(stillNeededForFloor, payable);
+
         return (payable, minimum);
     }
 
@@ -100,8 +108,8 @@ public class SolarRequestController : Controller
     /// </summary>
     private async Task<decimal> GetDepositForRequestAsync(SolarRequestDto req)
     {
-        if (req.RequestType != RequestType.AlreadyActiveOnlyRequest) return 0m;
-        return await _legacyBridge.GetApprovedOrderAmountAsync(NormalizeIdNo(req.UserId));
+        // Delegates so the "who gets a deposit" rule lives in exactly one place.
+        return await _legacyBridge.GetDepositForRequestAsync(req.RequestType, NormalizeIdNo(req.UserId));
     }
 
     // GET: New Request Form (multi-step)
@@ -1545,7 +1553,10 @@ public class SolarRequestController : Controller
         foreach (var p in projects)
         {
             // "Total Paid" on My Projects = admin-verified only (pending/rejected excluded).
-            paidMap[p.Id] = await _paymentService.GetVerifiedPaidAsync(p.Id);
+            // Same rule as every other screen - an Already-Active project counts
+            // its cPanel deposit as paid, so the list agrees with the detail page.
+            paidMap[p.Id] = await _paymentService.GetVerifiedPaidAsync(p.Id)
+                          + await GetDepositForRequestAsync(p);
 
             // Collect all images attached to this request — payment receipts,
             // site survey photos, KYC/PM docs — so the row can show a thumbnail
@@ -1648,8 +1659,13 @@ public class SolarRequestController : Controller
         var result = await _solarRequestService.GetByIdAsync(id);
         if (!result.IsSuccess) return NotFound();
         ViewBag.Payments = await _paymentService.GetByRequestIdAsync(id);
-        ViewBag.TotalPaid = await _paymentService.GetTotalPaidAsync(id);
-        ViewBag.VerifiedPaid = await _paymentService.GetVerifiedPaidAsync(id);
+        // Point 1: the Already-Active deposit is money this project has already
+        // received, so it counts here too. Every other mode gets 0 and these two
+        // lines behave exactly as they did before.
+        var detailDeposit = await GetDepositForRequestAsync(result.Data!);
+        ViewBag.ActiveIdDeposit = detailDeposit;
+        ViewBag.TotalPaid = await _paymentService.GetTotalPaidAsync(id) + detailDeposit;
+        ViewBag.VerifiedPaid = await _paymentService.GetVerifiedPaidAsync(id) + detailDeposit;
 
         // Already-active deposit (image point 1) — the legacy cPanel order money is
         // a credit against this project, so the page shows it and works off the
@@ -1799,10 +1815,20 @@ public class SolarRequestController : Controller
         // Surface payment totals so the user can see why the workflow has/hasn't advanced
         if (data != null)
         {
-            ViewBag.TotalSubmitted = await _paymentService.GetTotalPaidAsync(data.Id);
-            var verified = await _paymentService.GetVerifiedPaidAsync(data.Id);
+            // Point 1: the Already-Active cPanel deposit is money this project has
+            // already received. The Create form and Payment page allow for it, so
+            // this page has to as well - otherwise the same project reads
+            // "₹19,900 remaining" here while the payment form says it is settled.
+            var statusDeposit = await GetDepositForRequestAsync(data);
+            ViewBag.ActiveIdDeposit = statusDeposit;
+
+            ViewBag.TotalSubmitted = await _paymentService.GetTotalPaidAsync(data.Id) + statusDeposit;
+            var verified = await _paymentService.GetVerifiedPaidAsync(data.Id) + statusDeposit;
             ViewBag.VerifiedPaid = verified;
-            ViewBag.Minimum = PaymentService.MinimumPaymentThreshold;
+
+            // Same rule as ApplyDeposit(): the deposit counts towards the ₹20,000
+            // floor, so what is still needed is the floor minus what is on deposit.
+            ViewBag.Minimum = Math.Max(0m, PaymentService.MinimumPaymentThreshold - statusDeposit);
             ViewBag.CanActivateNow = IsActivationEligible(data, verified);
 
             // #2: show the actual product taken (With Activation) + its BV/DP.

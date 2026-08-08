@@ -1,4 +1,4 @@
-@model UserDashboardDto
+﻿@model UserDashboardDto
 @{
     ViewData["Title"] = "My Dashboard";
     var subTotal = (decimal)(ViewBag.TotalSubmitted ?? 0m);
@@ -39,7 +39,18 @@
         <div class="sc">
             <div class="sc-label">Total Paid</div>
             <div class="sc-val green">₹@Model.TotalPaid.ToString("N0")</div>
-            <div class="sc-sub">Across all projects</div>
+            @* Say where the extra money came from. Without this, "Total Paid
+               ₹30,000" against ₹10,100 of visible payments reads as a bug. *@
+            <div class="sc-sub">
+                @if (Model.ActiveIdDeposit > 0m)
+                {
+                    <text>incl. ₹@Model.ActiveIdDeposit.ToString("N0") deposited on your active ID</text>
+                }
+                else
+                {
+                    <text>Across all projects</text>
+                }
+            </div>
         </div>
         <div class="sc">
             <div class="sc-label">Due Amount</div>

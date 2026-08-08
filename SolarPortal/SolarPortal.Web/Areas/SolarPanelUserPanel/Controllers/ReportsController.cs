@@ -1,3 +1,4 @@
+﻿using SolarPortal.Application.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Identity;
@@ -27,14 +28,17 @@ public class ReportsController : Controller
     private readonly UserManager<ApplicationUser> _userManager;
     private readonly IWebHostEnvironment _env;
     private readonly IConfiguration _config;
+    private readonly ILegacyProductRequestService _legacyBridge;
 
     public ReportsController(IUnitOfWork uow, UserManager<ApplicationUser> userManager,
-        IWebHostEnvironment env, IConfiguration config)
+        IWebHostEnvironment env, IConfiguration config,
+        ILegacyProductRequestService legacyBridge)
     {
         _uow = uow;
         _userManager = userManager;
         _env = env;
         _config = config;
+        _legacyBridge = legacyBridge;
     }
 
     // Resolve a stored relative path (e.g. "/uploads/payments/abc.jpg") to a
@@ -88,7 +92,26 @@ public class ReportsController : Controller
         var paidByReq = myRequests.ToDictionary(
             r => r.Id,
             r => payments.Where(p => p.SolarRequestId == r.Id && p.IsVerified).Sum(p => p.Amount));
+
+        // Point 1: an Already-Active member already paid for the cPanel order that
+        // activated their ID, and that money sits against this project. It is not
+        // a Payment row, so without this the report bills them for it again -
+        // "₹19,900 due" on a project they have in fact paid in full.
+        //
+        // Folded INTO paidByReq so the Paid column, the Due column and anything
+        // derived from them are corrected in one place and cannot disagree.
+        // depositByReq is passed separately only so the row can name the money.
+        var depositByReq = new Dictionary<int, decimal>();
+        foreach (var r in myRequests)
+        {
+            var dep = await _legacyBridge.GetDepositForRequestAsync(r.RequestType, r.UserId);
+            if (dep <= 0m) continue;
+            depositByReq[r.Id] = dep;
+            paidByReq[r.Id] = paidByReq[r.Id] + dep;
+        }
+
         ViewBag.PaidByRequest = paidByReq;
+        ViewBag.DepositByRequest = depositByReq;
 
         if (f == "pending")  payments = payments.Where(p => p.Status == PaymentStatus.Pending).ToList();
         if (f == "approved") payments = payments.Where(p => p.Status == PaymentStatus.Completed).ToList();

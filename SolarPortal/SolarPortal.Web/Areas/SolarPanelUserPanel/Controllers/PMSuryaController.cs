@@ -1,4 +1,4 @@
-using Microsoft.AspNetCore.Authorization;
+﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using SolarPortal.Application.DTOs;
@@ -55,6 +55,18 @@ public class PMSuryaController : Controller
     /// past PMSurvey stay unlocked exactly as before, so nothing that used to
     /// work stops working.
     /// </summary>
+    /// <summary>
+    /// The placeholder request created at first login: no plan, no product, no
+    /// amount. It exists so the dashboard can show "Registration done", but it can
+    /// never be approved - so it must never be what PM Surya auto-picks.
+    /// Same test the Dashboard / Status / My Projects screens already apply.
+    /// </summary>
+    private static bool IsUnfilledStub(SolarRequest r) =>
+        r.SolarProjectId == null &&
+        r.ExternalProductId == null &&
+        r.KVCapacity == 0m &&
+        r.PlanAmount == 0m &&
+        r.CurrentStage != ProjectStatus.Completed;
     private static bool IsPMSuryaUnlocked(SolarRequest req) =>
         req.ApprovalStatus == ApprovalStatus.Approved ||
         req.CurrentStage >= ProjectStatus.PMSurvey;
@@ -65,17 +77,32 @@ public class PMSuryaController : Controller
     {
         var userId = _userManager.GetUserId(User)!;
 
-        // Auto-pick the user's most recent project if no id provided
+        // Auto-pick when the menu link carries no id.
+        //
+        // This used to take the newest row of ANY kind. Two things live in that
+        // list that must not be picked: the unfilled stub created at first login
+        // (no plan, no amount - it can never be approved), and a brand-new
+        // unapproved request. Landing on either told a member who DOES have an
+        // approved project that "PM Surya unlocks after your request is approved".
+        //
+        // So prefer a request that is genuinely open for PM Surya, then the newest
+        // real one, and only then anything at all.
         if (id == null || id.Value == 0)
         {
-            var mine = await _uow.SolarRequests.FindAsync(r => r.UserId == userId);
-            var latest = mine.OrderByDescending(r => r.CreatedAt).FirstOrDefault();
-            if (latest == null)
+            var mine = (await _uow.SolarRequests.FindAsync(r => r.UserId == userId)).ToList();
+
+            var real = mine.Where(r => !IsUnfilledStub(r)).ToList();
+
+            var pick = real.Where(IsPMSuryaUnlocked).OrderByDescending(r => r.CreatedAt).FirstOrDefault()
+                    ?? real.OrderByDescending(r => r.CreatedAt).FirstOrDefault()
+                    ?? mine.OrderByDescending(r => r.CreatedAt).FirstOrDefault();
+
+            if (pick == null)
             {
                 TempData["Error"] = "You don't have any active solar request yet. Please create one first.";
                 return RedirectToAction("Create", "SolarRequest");
             }
-            id = latest.Id;
+            id = pick.Id;
         }
 
         var req = await _uow.SolarRequests.GetByIdAsync(id.Value);

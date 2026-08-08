@@ -1,4 +1,4 @@
-@model CreateSolarRequestViewModel
+﻿@model CreateSolarRequestViewModel
 @{
     ViewData["Title"] = "New Solar Request";
     var projects = (IEnumerable<SolarPortal.Application.DTOs.SolarProjectDto>)(ViewBag.Projects ?? Enumerable.Empty<SolarPortal.Application.DTOs.SolarProjectDto>());
@@ -685,7 +685,7 @@
                 }
 
                 <div class="alert alert-i" style="font-size:13px" id="paymentHint">
-                    <span class="ai">ℹ</span>Minimum first payment is <strong>₹20,000</strong>. Cannot exceed project amount.
+                    <span class="ai">ℹ</span>Minimum first payment is <strong id="minPaymentLabel">₹20,000</strong>. Cannot exceed project amount.
                     Payment is saved as <strong>Pending</strong> — admin will verify it.
                 </div>
                 <div class="alert alert-s" style="font-size:13px;display:none" id="paymentOptionalHint">
@@ -831,6 +831,18 @@
 
         // Keeps the "you only pay the balance" banner showing a real figure once
         // a plan is picked (the plan amount is chosen after the page loads).
+        // The hint above is written for the no-deposit case. Once a deposit and a
+        // plan are known the real floor is (20,000 - deposit), so keep the number
+        // the user reads in step with the number that is actually enforced.
+        function refreshMinPaymentLabel() {
+            const lbl = document.getElementById('minPaymentLabel');
+            if (!lbl) return;
+            const planAmt = parseFloat(document.getElementById('planAmountInput')?.value || '0');
+            const payable = Math.max(0, planAmt - ACTIVE_DEPOSIT);
+            const need = Math.max(0, 20000 - ACTIVE_DEPOSIT);
+            const min = planAmt > 0 ? Math.min(need, payable) : need;
+            lbl.textContent = '\u20B9' + min.toLocaleString('en-IN');
+        }
         function refreshDepositLabel() {
             const lbl = document.getElementById('depositRemainingLabel');
             if (!lbl || ACTIVE_DEPOSIT <= 0) return;
@@ -1033,7 +1045,7 @@
             if (kvDisp) kvDisp.textContent = m.kv + ' kV';
             const payAmt = document.getElementById('paymentAmountInput');
             if (payAmt) payAmt.setAttribute('max', m.amount);
-            refreshDepositLabel();
+            refreshDepositLabel(); refreshMinPaymentLabel();
         }
 
         function selectPlanFromMaster(el) {
@@ -1057,7 +1069,7 @@
             document.getElementById('planAmountDisplay').textContent = '₹' + amount.toLocaleString('en-IN');
             document.getElementById('selectedPlanDisplay').textContent = name;
             document.getElementById('kvDisplay').textContent = kv + ' kV';
-            refreshDepositLabel();
+            refreshDepositLabel(); refreshMinPaymentLabel();
             // Reflect the user's chosen ConnectionType (not the plan's) since we no
             // longer overwrite the dropdown when a plan card is clicked.
             const curConn = document.querySelector('[name="ConnectionType"]')?.value || conn;
@@ -1105,7 +1117,7 @@
                 if (noPlanBox) noPlanBox.style.display = 'block';
                 // Also clear the amount so a stale value isn't submitted.
                 document.getElementById('planAmountInput').value = '';
-                refreshDepositLabel();
+                refreshDepositLabel(); refreshMinPaymentLabel();
                 return;
             }
             if (noPlanBox) noPlanBox.style.display = 'none';
@@ -1149,7 +1161,7 @@
             }
 
             // Keep the already-active deposit banner in step with the new plan.
-            refreshDepositLabel();
+            refreshDepositLabel(); refreshMinPaymentLabel();
         }
 
         function onKvChange(kv) {
@@ -1234,7 +1246,11 @@
                 return true;
             }
 
-            const hardMin = Math.min(20000, payable > 0 ? payable : 20000);
+            // Mirrors ApplyDeposit(): the deposit is money the project has already
+            // received, so it counts towards the ₹20,000 floor. ₹19,900 on deposit
+            // leaves a ₹100 minimum, not ₹10,100.
+            const stillNeededForFloor = Math.max(0, 20000 - ACTIVE_DEPOSIT);
+            const hardMin = payable > 0 ? Math.min(stillNeededForFloor, payable) : stillNeededForFloor;
 
             if (!payAmt || payAmt < hardMin) {
                 showWarning(`Minimum payment is ₹${hardMin.toLocaleString('en-IN')}. Please enter ₹${hardMin.toLocaleString('en-IN')} or more.`);

@@ -1,4 +1,4 @@
-namespace SolarPortal.Application.DTOs;
+﻿namespace SolarPortal.Application.DTOs;
 
 public class AdminDashboardDto
 {
@@ -19,6 +19,14 @@ public class UserDashboardDto
     public int PendingApprovals { get; set; }
     public decimal TotalPaid { get; set; }
     public decimal TotalDue { get; set; }
+
+    /// <summary>
+    /// Money an Already-Active member paid on the legacy cPanel order that
+    /// activated their ID (image point 1). Already counted inside TotalPaid and
+    /// netted out of TotalDue - carried separately only so the card can say where
+    /// the extra money came from, which otherwise reads as an arithmetic bug.
+    /// </summary>
+    public decimal ActiveIdDeposit { get; set; }
     public List<SolarRequestDto> MyProjects { get; set; } = new();
     public SolarRequestDto? LatestProject { get; set; }
     public List<NotificationDto> UnreadNotifications { get; set; } = new();

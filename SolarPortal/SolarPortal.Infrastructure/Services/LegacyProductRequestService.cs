@@ -1,3 +1,4 @@
+﻿using SolarPortal.Domain.Enums;
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -46,6 +47,23 @@ public class LegacyProductRequestService : ILegacyProductRequestService
     /// connection string all resolve to 0 so the solar-request form still opens.
     /// The caller treats 0 as "no deposit to adjust".
     /// </summary>
+    public async Task<decimal> GetDepositForRequestAsync(RequestType requestType, string? memberIdNo)
+    {
+        if (requestType != RequestType.AlreadyActiveOnlyRequest) return 0m;
+        if (string.IsNullOrWhiteSpace(memberIdNo)) return 0m;
+
+        // Normalise HERE, not in each caller. Identity sometimes surfaces the
+        // synthetic "member-SADHNATEST05@livedb.local" instead of the raw IdNo,
+        // and handing that to the legacy lookup silently finds nothing - which is
+        // a wrong number on screen, not an error anyone would notice.
+        var id = memberIdNo.Trim();
+        if (id.StartsWith("member-", StringComparison.OrdinalIgnoreCase))
+            id = id.Substring("member-".Length);
+        var at = id.IndexOf('@');
+        if (at > 0) id = id.Substring(0, at);
+
+        return await GetApprovedOrderAmountAsync(id.Trim());
+    }
     public async Task<decimal> GetApprovedOrderAmountAsync(string memberIdNo)
     {
         if (string.IsNullOrWhiteSpace(memberIdNo)) return 0m;

@@ -1,9 +1,13 @@
-@model SolarPortal.Application.DTOs.SolarRequestDto?
+﻿@model SolarPortal.Application.DTOs.SolarRequestDto?
 @{
     ViewData["Title"] = "Project Status";
     var subTotal = (decimal)(ViewBag.TotalSubmitted ?? 0m);
     var verTotal = (decimal)(ViewBag.VerifiedPaid ?? 0m);
     var minVal = (decimal)(ViewBag.Minimum ?? 20000m);
+    // Point 1: money the member already paid on the cPanel order that activated
+    // their ID. It is already inside VerifiedPaid, so it must be NAMED here -
+    // otherwise "Paid ₹30,000" against ₹10,100 of visible receipts looks wrong.
+    var statusDeposit = (decimal)(ViewBag.ActiveIdDeposit ?? 0m);
 
     string StageStsClass(SolarPortal.Domain.Enums.ProjectStatus s) => s switch
     {
@@ -216,11 +220,28 @@ else
                     <div class="sr"><span class="srk">Connection</span><span class="srv">@Model.ConnectionType</span></div>
                     <div class="sr"><span class="srk">Total Amount</span><span class="srv">₹@totalAmt.ToString("N0")</span></div>
                     <div class="sr"><span class="srk">Paid (Verified)</span><span class="srv" style="color:var(--green)">₹@paidVerified.ToString("N0")</span></div>
+                    @if (statusDeposit > 0m)
+                    {
+                        <div class="sr">
+                            <span class="srk">&nbsp;&nbsp;&nbsp;↳ already paid on your Active ID</span>
+                            <span class="srv" style="color:var(--green)">₹@statusDeposit.ToString("N0")</span>
+                        </div>
+                    }
                     @if (submittedTotal > paidVerified)
                     {
                         <div class="sr"><span class="srk">Submitted (Pending)</span><span class="srv" style="color:#d97706">₹@((submittedTotal - paidVerified).ToString("N0"))</span></div>
                     }
                     <div class="sr"><span class="srk">Remaining Balance</span><span class="srv" style="color:#d97706;font-weight:600">₹@remaining.ToString("N0")</span></div>
+                    @if (statusDeposit > 0m)
+                    {
+                        <div style="margin-top:8px;padding:8px 10px;border-radius:8px;
+                                    background:#f0fdf4;border:1px solid #bbf7d0;
+                                    font-size:12px;color:#166534">
+                            ✅ <strong>₹@statusDeposit.ToString("N0") aap pehle de chuke ho</strong> —
+                            ye aapke Active ID ke order ka amount hai, isliye ye Remaining Balance
+                            me se ghata diya gaya hai. Ye baaki nahi hai.
+                        </div>
+                    }
                 }
                 @* Approval row removed on request (same as the Dashboard's Project Info
                    card) - Stage already tells the user where the project is. The

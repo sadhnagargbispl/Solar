@@ -1,4 +1,4 @@
-@{
+﻿@{
     ViewData["Title"] = "Solar A/c";
     var projects = (IEnumerable<SolarPortal.Application.DTOs.SolarRequestDto>)ViewBag.Projects;
     var payments = (IEnumerable<SolarPortal.Application.DTOs.PaymentDto>)ViewBag.Payments;
@@ -13,6 +13,10 @@
     // shown here and is already netted out of Due Amount by the controller.
     // 0 (and hidden) for every other request mode.
     var activeIdDeposit = (decimal)(ViewBag.ActiveIdDeposit ?? 0m);
+    // Receipts alone. Total Paid now INCLUDES the deposit so that
+    // Project - Paid = Due actually holds on screen; this is only for the sub-line
+    // that explains where the difference came from.
+    var paymentsOnly = (decimal)(ViewBag.PaymentsOnly ?? 0m);
 }
 
 <div class="page active">
@@ -36,7 +40,19 @@
         <div class="sc">
             <div class="sc-label">Total Paid</div>
             <div class="sc-val green">₹@totalPaid.ToString("N0")</div>
-            <div class="sc-sub">Verified payments</div>
+            <div class="sc-sub">
+                @if (activeIdDeposit > 0m)
+                {
+                    <text>
+                        ₹@paymentsOnly.ToString("N0") verified +
+                        <strong>₹@activeIdDeposit.ToString("N0") already paid on Active ID</strong>
+                    </text>
+                }
+                else
+                {
+                    <text>Verified payments</text>
+                }
+            </div>
         </div>
         <div class="sc">
             <div class="sc-label">Due Amount</div>

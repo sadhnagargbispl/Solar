@@ -1,4 +1,4 @@
-using AutoMapper;
+﻿using AutoMapper;
 using SolarPortal.Application.DTOs;
 using SolarPortal.Application.Interfaces;
 using SolarPortal.Application.Interfaces.Services;
@@ -10,11 +10,13 @@ public class DashboardService : IDashboardService
 {
     private readonly IUnitOfWork _uow;
     private readonly IMapper _mapper;
+    private readonly ILegacyProductRequestService _legacy;
 
-    public DashboardService(IUnitOfWork uow, IMapper mapper)
+    public DashboardService(IUnitOfWork uow, IMapper mapper, ILegacyProductRequestService legacy)
     {
         _uow = uow;
         _mapper = mapper;
+        _legacy = legacy;
     }
 
     public async Task<AdminDashboardDto> GetAdminDashboardAsync()
@@ -101,7 +103,27 @@ public class DashboardService : IDashboardService
                                        .Where(pmt => pmt.IsVerified)
                                        .Sum(pmt => pmt.Amount);
         var totalPlanned = realProjects.Sum(p => p.PlanAmount);
-        var totalDue     = Math.Max(0m, totalPlanned - verifiedPaid);
+
+        // Point 1: an Already-Active member already paid for the cPanel order that
+        // activated their ID, and that money sits against this solar project. The
+        // request form, Payment page and Solar A/c all allow for it, so these two
+        // dashboard cards have to as well - otherwise the same project reads
+        // "₹19,900 due" here while the payment form says it is settled.
+        //
+        // ONE deposit per member however many projects they have: it is a single
+        // legacy order, so crediting it to each project would invent money. The
+        // earliest Already-Active project owns it.
+        var depositOwner = realProjects
+            .Where(p => p.RequestType == RequestType.AlreadyActiveOnlyRequest)
+            .OrderBy(p => p.CreatedAt)
+            .FirstOrDefault();
+
+        var activeIdDeposit = depositOwner == null
+            ? 0m
+            : await _legacy.GetDepositForRequestAsync(depositOwner.RequestType, depositOwner.UserId);
+
+        var creditedPaid = verifiedPaid + activeIdDeposit;
+        var totalDue     = Math.Max(0m, totalPlanned - creditedPaid);
 
         return new UserDashboardDto
         {
@@ -112,8 +134,9 @@ public class DashboardService : IDashboardService
             PendingApprovals = realProjects.Count(p =>
                 p.ApprovalStatus == ApprovalStatus.Pending &&
                 p.CurrentStage   != ProjectStatus.Completed),
-            TotalPaid = verifiedPaid,
+            TotalPaid = creditedPaid,
             TotalDue = totalDue,
+            ActiveIdDeposit = activeIdDeposit,
             // Per spec ("Dashboard pr dikhna chahiye"): the user HAS registered,
             // so the dashboard shows their project CARD + timeline even when it's
             // still an unfilled stub (Registration done, rest pending). The view
