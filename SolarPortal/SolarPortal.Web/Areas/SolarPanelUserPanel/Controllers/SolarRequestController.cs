@@ -1819,6 +1819,12 @@ public class SolarRequestController : Controller
             // already received. The Create form and Payment page allow for it, so
             // this page has to as well - otherwise the same project reads
             // "₹19,900 remaining" here while the payment form says it is settled.
+            // Point 3: the timeline must not tick Meter Dispatch as done just
+            // because the site survey pushed the project past it.
+            ViewBag.MeterDispatched = await _db.MeterDispatches
+                .AsNoTracking()
+                .AnyAsync(m => m.SolarRequestId == data.Id && m.IsDispatched);
+
             var statusDeposit = await GetDepositForRequestAsync(data);
             ViewBag.ActiveIdDeposit = statusDeposit;
 

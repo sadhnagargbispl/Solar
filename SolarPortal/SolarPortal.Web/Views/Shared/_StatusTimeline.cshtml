@@ -1,4 +1,4 @@
-@model SolarPortal.Application.DTOs.SolarRequestDto?
+﻿@model SolarPortal.Application.DTOs.SolarRequestDto?
 @{
     if (Model == null) { return; }
 
@@ -55,6 +55,20 @@
     {
         // Steps strictly before the current in-progress step are the completed ones.
         progress = (int)Math.Round(visibleCurrentIdx * 100.0 / visibleSteps.Length);
+    }
+
+    // Point 3: Meter Dispatch no longer gates the workflow - an approved site
+    // survey moves the project on and the meter is recorded whenever it happens.
+    // So "the project is past this step" no longer means "this step is done", and
+    // position alone would tick Meter Dispatch as Completed on a project whose
+    // meter has never been sent. The parent view passes the real answer.
+    bool? meterDispatched = ViewData["MeterDispatched"] as bool?;
+    var meterStillPending = meterDispatched == false;
+
+    if (meterStillPending && progress > 0)
+    {
+        // One step that looked done is not - do not overstate the progress bar.
+        progress = Math.Max(0, progress - (int)Math.Round(100.0 / visibleSteps.Length));
     }
 }
 
@@ -121,7 +135,14 @@
             var step = visibleSteps[i];
             var isDone = i < visibleCurrentIdx || (isFullyComplete && i == visibleCurrentIdx);
             var isCurrent = !isFullyComplete && i == visibleCurrentIdx;
-            var isPending = i > visibleCurrentIdx;
+
+            // The one step that can be skipped past: show it honestly.
+            var isSkippedMeter = meterStillPending
+                                 && step.Stage == SolarPortal.Domain.Enums.ProjectStatus.MeterDispatch
+                                 && isDone;
+            if (isSkippedMeter) { isDone = false; }
+
+            var isPending = i > visibleCurrentIdx || isSkippedMeter;
             var color = isDone ? "#10b981" : isCurrent ? "#f59e0b" : "#d1d5db";
             var bgColor = isDone ? "#d1fae5" : isCurrent ? "#fef3c7" : "#f3f4f6";
 
@@ -138,6 +159,7 @@
                     <small class="text-muted">
                         @if (isDone) { <span>Completed</span> }
                         else if (isCurrent) { <span>In progress</span> }
+                        else if (isSkippedMeter) { <span>Awaiting meter — does not hold up your project</span> }
                         else { <span>Pending</span> }
                     </small>
                 </div>

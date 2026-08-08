@@ -143,8 +143,17 @@ else
                                     <a class="btn btn-p btn-full" asp-controller="SiteSurvey" asp-action="Index" asp-route-id="@Model.Id">Go to Site Survey</a>
                                     break;
                                 case SolarPortal.Domain.Enums.ProjectStatus.MeterDispatch:
-                                    <h6>⚡ Awaiting Meter Dispatch</h6>
-                                    <p class="text-muted" style="font-size:13px">Admin is preparing your meter. Check back for updates.</p>
+                                    @* Point 3: Meter Dispatch and Site Survey are open together, and
+                                       the SURVEY is what moves the project on - the meter is recorded
+                                       by admin whenever it happens. So the action to show here is the
+                                       survey; "check back for updates" left the user waiting on
+                                       something they were never blocked by. *@
+                                    <h6>📐 Site Survey</h6>
+                                    <p class="text-muted" style="font-size:13px">
+                                        Download the form, fill it on site, then upload it back with photos.
+                                        Your meter is being arranged separately — you do not have to wait for it.
+                                    </p>
+                                    <a class="btn btn-p btn-full" asp-controller="SiteSurvey" asp-action="Index" asp-route-id="@Model.Id">Go to Site Survey</a>
                                     break;
                                 case SolarPortal.Domain.Enums.ProjectStatus.MaterialDispatch:
                                     <h6>📦 Awaiting Material Dispatch</h6>

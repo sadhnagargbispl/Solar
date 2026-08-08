@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Authorization;
+﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using SolarPortal.Application.Interfaces.Services;
@@ -15,17 +16,20 @@ public class DashboardController : Controller
     private readonly IDashboardService _dashboardService;
     private readonly IPaymentService _paymentService;
     private readonly ILegacyProductRequestService _deposits;
+    private readonly SolarPortal.Infrastructure.Data.ApplicationDbContext _db;
     private readonly UserManager<ApplicationUser> _userManager;
 
     public DashboardController(
         IDashboardService dashboardService,
         IPaymentService paymentService,
         ILegacyProductRequestService deposits,
+        SolarPortal.Infrastructure.Data.ApplicationDbContext db,
         UserManager<ApplicationUser> userManager)
     {
         _dashboardService = dashboardService;
         _paymentService = paymentService;
         _deposits = deposits;
+        _db = db;
         _userManager = userManager;
     }
 
@@ -45,6 +49,11 @@ public class DashboardController : Controller
                 ? await _deposits.GetApprovedOrderAmountAsync(dashboard.LatestProject.UserId)
                 : 0m;
             ViewBag.ActiveIdDeposit = deposit;
+
+            // Same as the Status page - the shared timeline partial reads this.
+            ViewBag.MeterDispatched = await _db.MeterDispatches
+                .AsNoTracking()
+                .AnyAsync(m => m.SolarRequestId == dashboard.LatestProject.Id && m.IsDispatched);
 
             ViewBag.TotalSubmitted = await _paymentService.GetTotalPaidAsync(dashboard.LatestProject.Id) + deposit;
             var verified = await _paymentService.GetVerifiedPaidAsync(dashboard.LatestProject.Id) + deposit;
