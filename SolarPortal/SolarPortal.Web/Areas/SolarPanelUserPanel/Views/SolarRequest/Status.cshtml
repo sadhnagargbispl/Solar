@@ -58,16 +58,32 @@ else
                 <partial name="~/Views/Shared/_StatusTimeline.cshtml" model="Model" />
             </div>
             <div>
-                @* "Activate Now" — shown ONLY for a fully-paid "Without Activation"
-                   ID (spec). Hidden for With-Activation / already-active IDs. *@
+                @* "Activate Now" — shown for a "Without Activation" ID once the admin
+                   has verified the ₹20,000 minimum (spec). Hidden for With-Activation
+                   / already-active IDs. *@
                 @if ((bool)(ViewBag.CanActivateNow ?? false))
                 {
+                    var actDue = (decimal)(ViewBag.ActivationOutstanding ?? 0m);
                     <div class="card" style="margin-bottom:14px;border-left:4px solid var(--green);background:linear-gradient(180deg,#f0fdf4,#fff)">
                         <div class="ct"><span class="ct-dot"></span>Ready to Activate</div>
                         <p class="text-muted" style="font-size:13px;margin-bottom:12px">
-                            Your payments are complete. You can now activate this ID —
-                            select a product and continue the activation process.
-                            <strong>No further payment is needed.</strong>
+                            @if (actDue > 0)
+                            {
+                                <text>
+                                    Your minimum payment has been verified. You can now activate this ID —
+                                    select a product and continue the activation process.
+                                    <strong>No payment is taken at this step</strong>; ₹@actDue.ToString("N0")
+                                    is still due on the plan.
+                                </text>
+                            }
+                            else
+                            {
+                                <text>
+                                    Your payments are complete. You can now activate this ID —
+                                    select a product and continue the activation process.
+                                    <strong>No further payment is needed.</strong>
+                                </text>
+                            }
                         </p>
                         <a class="btn btn-p btn-full" asp-action="Activate" asp-route-id="@Model.Id">⚡ Activate Now</a>
                     </div>
@@ -164,9 +180,9 @@ else
                                     <p class="text-muted" style="font-size:13px">An installer (INC) has been assigned. They'll update progress here.</p>
                                     break;
                                 case SolarPortal.Domain.Enums.ProjectStatus.DCRUpdate:
-                                    <h6>📄 Upload DCR Document</h6>
-                                    <p class="text-muted" style="font-size:13px">Final step — upload your DCR document for admin verification.</p>
-                                    <a class="btn btn-p btn-full" asp-controller="DCR" asp-action="Upload" asp-route-id="@Model.Id">Upload DCR</a>
+                                    @* DCR is uploaded by the ADMIN panel — nothing for the user to do here. *@
+                                    <h6>📄 Awaiting DCR Update</h6>
+                                    <p class="text-muted" style="font-size:13px">Final step — the admin is updating your DCR document. Your project completes once that is done.</p>
                                     break;
                                 case SolarPortal.Domain.Enums.ProjectStatus.Completed:
                                     <h6>✅ Project Complete</h6>

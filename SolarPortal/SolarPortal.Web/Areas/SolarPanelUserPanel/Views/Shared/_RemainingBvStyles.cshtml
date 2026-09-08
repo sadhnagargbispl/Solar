@@ -1,0 +1,234 @@
+@* Shared styling for the Remaining BV form and report. Kept in one partial so
+   the two screens can never drift apart. Everything is scoped under .rbv-wrap
+   and carries enough specificity to beat the layout's own CSS. *@
+<style>
+    .rbv-wrap {
+        max-width: 1020px;
+        margin: 0 auto;
+        padding: 26px 18px 40px;
+        background: #f4f6f2;
+        color: #1a2118;
+        font-family: "Source Sans 3", -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+        font-size: 15px;
+        line-height: 1.6;
+        text-align: left;
+        -webkit-font-smoothing: antialiased;
+    }
+
+    .rbv-wrap .rbv-eyebrow {
+        font-family: "Archivo", Arial, sans-serif;
+        font-size: 11px; font-weight: 600; letter-spacing: .16em;
+        text-transform: uppercase; color: #78826f; margin: 0 0 8px;
+    }
+    .rbv-wrap h3.rbv-hd {
+        font-family: "Archivo", Arial, sans-serif;
+        font-size: 27px; font-weight: 700; letter-spacing: -.02em; line-height: 1.15;
+        color: #1a2118; margin: 0 0 5px; padding: 0; border: 0;
+    }
+    .rbv-wrap p.rbv-sub { color: #47523f; font-size: 14px; margin: 0 0 24px; padding: 0; }
+
+    /* ---- cards ---- */
+    .rbv-wrap .rbv-card {
+        background: #fff; border: 1px solid #dfe5da; border-radius: 10px;
+        box-shadow: 0 1px 2px rgba(20,32,18,.05), 0 10px 26px -20px rgba(20,32,18,.4);
+        margin-bottom: 18px;
+    }
+    .rbv-wrap .rbv-card-hd {
+        font-family: "Archivo", Arial, sans-serif;
+        padding: 14px 22px; border-bottom: 1px solid #edf0ea;
+        font-weight: 600; color: #1a2118; font-size: 14px;
+        display: flex; align-items: baseline; flex-wrap: wrap; gap: 12px;
+    }
+    .rbv-wrap .rbv-card-hd-sub {
+        margin-left: auto; font-size: 12.5px; font-weight: 500; color: #78826f;
+    }
+    .rbv-wrap .rbv-card-bd { padding: 22px; }
+    .rbv-wrap .rbv-card-ft {
+        padding: 15px 22px; border-top: 1px solid #edf0ea; background: #fbfcfa;
+        border-radius: 0 0 10px 10px; display: flex; align-items: center;
+        justify-content: space-between; flex-wrap: wrap; gap: 12px;
+    }
+
+    /* ---- key / value strip ---- */
+    .rbv-wrap .rbv-strip { display: flex; flex-wrap: wrap; gap: 18px; }
+    .rbv-wrap .rbv-k {
+        font-family: "Archivo", Arial, sans-serif;
+        font-size: 10px; font-weight: 600; text-transform: uppercase;
+        letter-spacing: .14em; color: #78826f; margin-bottom: 4px;
+    }
+    .rbv-wrap .rbv-v { font-size: 14px; color: #1a2118; font-weight: 600; word-break: break-word; }
+
+    /* ---- BV tiles, read as one equation ---- */
+    .rbv-wrap .rbv-tiles {
+        display: flex; flex-wrap: wrap; align-items: stretch; margin: 22px 0 14px; gap: 10px;
+    }
+    .rbv-wrap .rbv-tile {
+        flex: 1 1 190px; border: 1px solid #edf0ea; border-radius: 8px;
+        padding: 15px 17px; background: #fbfcfa;
+    }
+    .rbv-wrap .rbv-tile-k {
+        font-family: "Archivo", Arial, sans-serif;
+        font-size: 10px; font-weight: 600; text-transform: uppercase;
+        letter-spacing: .14em; color: #78826f; margin-bottom: 8px;
+    }
+    .rbv-wrap .rbv-tile-v {
+        font-family: "JetBrains Mono", Consolas, monospace;
+        font-size: 26px; font-weight: 700; line-height: 1; color: #1a2118;
+        font-variant-numeric: tabular-nums;
+    }
+    .rbv-wrap .rbv-tile-note { font-size: 12px; color: #78826f; margin-top: 9px; line-height: 1.45; }
+    .rbv-wrap .rbv-tile.is-main { background: #f0f9f2; border-color: #bfe3c8; }
+    .rbv-wrap .rbv-tile.is-main .rbv-tile-v { color: #1f7a34; }
+    .rbv-wrap .rbv-tile-op {
+        display: flex; align-items: center; justify-content: center; flex: 0 0 24px;
+        font-family: "JetBrains Mono", Consolas, monospace;
+        font-size: 22px; font-weight: 700; color: #c3cbd5;
+    }
+
+    /* ---- form lines ---- */
+    .rbv-wrap .rbv-line {
+        display: flex; flex-wrap: wrap; align-items: flex-start;
+        padding: 16px 0; border-bottom: 1px solid #edf0ea;
+    }
+    .rbv-wrap .rbv-line:last-child { border-bottom: 0; padding-bottom: 0; }
+    .rbv-wrap .rbv-line-k {
+        flex: 0 0 190px; padding-top: 5px; font-weight: 600; color: #1a2118; font-size: 14px;
+    }
+    .rbv-wrap .rbv-amt {
+        font-family: "JetBrains Mono", Consolas, monospace;
+        font-size: 15px; font-weight: 700; color: #1f7a34; margin-top: 3px;
+        font-variant-numeric: tabular-nums;
+    }
+    .rbv-wrap .rbv-req { color: #c0392b; }
+    .rbv-wrap .rbv-line-b { flex: 1 1 360px; min-width: 0; }
+    .rbv-wrap .rbv-line-hint { font-size: 12px; color: #78826f; margin-top: 6px; line-height: 1.5; }
+
+    .rbv-wrap .rbv-inline { display: flex; flex-wrap: wrap; align-items: center; gap: 9px; }
+    .rbv-wrap input.rbv-input {
+        width: 215px; padding: 8px 12px; font-size: 14px; line-height: 1.4;
+        font-family: inherit; color: #1a2118; border: 1px solid #cdd6c8;
+        border-radius: 6px; background: #fff;
+    }
+    .rbv-wrap input.rbv-input:focus {
+        border-color: #1f7a34; outline: 0; box-shadow: 0 0 0 3px rgba(31,122,52,.14);
+    }
+    .rbv-wrap input.rbv-input.is-fixed { background: #f1f4ef; color: #78826f; cursor: not-allowed; }
+
+    /* ---- radios ---- */
+    .rbv-wrap .rbv-radio label {
+        font-weight: 500; font-size: 14px; color: #1a2118;
+        margin: 0 20px 0 0; padding: 0; cursor: pointer; display: inline-block;
+    }
+    .rbv-wrap .rbv-radio input[type="radio"] { margin: 0 6px 0 0; vertical-align: middle; cursor: pointer; }
+
+    /* ---- status text ---- */
+    .rbv-wrap .rbv-ok  { color: #1f7a34; font-weight: 600; font-size: 13px; }
+    .rbv-wrap .rbv-bad { color: #c0392b; font-weight: 600; font-size: 13px; }
+
+    /* ---- alerts ---- */
+    .rbv-wrap .rbv-alert {
+        padding: 13px 17px; border-radius: 8px; margin-bottom: 16px;
+        font-size: 13.5px; line-height: 1.55; border-left: 4px solid;
+    }
+    .rbv-wrap .rbv-alert-wait { background: #fdf6e3; border-color: #d99500; color: #6d4a05; }
+    .rbv-wrap .rbv-alert-done { background: #eef8f0; border-color: #1f7a34; color: #14532d; }
+    .rbv-wrap .rbv-alert-info { background: #eef4fb; border-color: #2b6cb0; color: #1c4e80; }
+    .rbv-wrap .rbv-alert-bad  { background: #fbeceb; border-color: #c0392b; color: #7d1f16; }
+
+    /* ---- status pill (report) ---- */
+    .rbv-wrap .rbv-pill {
+        font-family: "Archivo", Arial, sans-serif;
+        font-size: 11px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase;
+        padding: 4px 11px; border-radius: 999px; border: 1px solid; white-space: nowrap;
+    }
+    .rbv-wrap .rbv-pill-wait { background: #fdf6e3; border-color: #e5c26a; color: #6d4a05; }
+    .rbv-wrap .rbv-pill-done { background: #eef8f0; border-color: #bfe3c8; color: #14532d; }
+    .rbv-wrap .rbv-pill-bad  { background: #fbeceb; border-color: #e2a49d; color: #7d1f16; }
+
+    /* ---- summary (report) ---- */
+    .rbv-wrap .rbv-sum { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 22px; }
+    .rbv-wrap .rbv-sum-cell {
+        flex: 1 1 160px; background: #fff; border: 1px solid #dfe5da;
+        border-radius: 8px; padding: 14px 17px;
+    }
+    .rbv-wrap .rbv-sum-cell.is-main { background: #f0f9f2; border-color: #bfe3c8; }
+    .rbv-wrap .rbv-sum-k {
+        font-family: "Archivo", Arial, sans-serif;
+        font-size: 10px; font-weight: 600; text-transform: uppercase;
+        letter-spacing: .14em; color: #78826f; margin-bottom: 7px;
+    }
+    .rbv-wrap .rbv-sum-v {
+        font-family: "JetBrains Mono", Consolas, monospace;
+        font-size: 24px; font-weight: 700; line-height: 1; color: #1a2118;
+        font-variant-numeric: tabular-nums;
+    }
+    .rbv-wrap .rbv-sum-cell.is-main .rbv-sum-v { color: #1f7a34; }
+
+    /* ---- report record header ---- */
+    .rbv-wrap .rbv-rec-hd {
+        padding: 14px 22px; border-bottom: 1px solid #edf0ea;
+        display: flex; align-items: center; flex-wrap: wrap; gap: 12px;
+    }
+    .rbv-wrap .rbv-rec-title {
+        font-family: "Archivo", Arial, sans-serif; font-weight: 600;
+        color: #1a2118; font-size: 15px;
+    }
+    .rbv-wrap .rbv-rec-when { font-size: 12.5px; color: #78826f; margin-left: auto; }
+
+    /* ---- report head rows ---- */
+    .rbv-wrap .rbv-hrow {
+        display: flex; flex-wrap: wrap; align-items: baseline; gap: 10px;
+        padding: 12px 0; border-bottom: 1px solid #edf0ea;
+    }
+    .rbv-wrap .rbv-hrow:last-child { border-bottom: 0; padding-bottom: 0; }
+    .rbv-wrap .rbv-hrow-k { flex: 0 0 165px; font-weight: 600; color: #1a2118; font-size: 14px; }
+    .rbv-wrap .rbv-hrow-mode { flex: 0 0 55px; font-size: 12px; color: #78826f; }
+    .rbv-wrap .rbv-hrow-id {
+        font-family: "JetBrains Mono", Consolas, monospace;
+        font-size: 13px; font-weight: 700; color: #1f7a34; flex: 0 0 auto;
+    }
+    .rbv-wrap .rbv-hrow-name { font-size: 13.5px; color: #47523f; flex: 1 1 120px; }
+    .rbv-wrap .rbv-hrow-amt {
+        font-family: "JetBrains Mono", Consolas, monospace;
+        font-size: 14px; font-weight: 700; color: #1a2118; flex: 0 0 auto;
+        font-variant-numeric: tabular-nums;
+    }
+
+    /* ---- empty state ---- */
+    .rbv-wrap .rbv-empty {
+        text-align: center; padding: 52px 26px; color: #47523f;
+        font-size: 14.5px; line-height: 1.65;
+    }
+    .rbv-wrap .rbv-empty-icon { font-size: 36px; color: #c3cbd5; margin-bottom: 12px; line-height: 1; }
+    .rbv-wrap .rbv-empty span { display: inline-block; max-width: 46ch; }
+
+    /* ---- buttons ---- */
+    .rbv-wrap .rbv-btn {
+        font-family: "Archivo", Arial, sans-serif;
+        background: #1f7a34; border: 1px solid #1a6a2c; color: #fff;
+        padding: 10px 30px; border-radius: 6px; font-weight: 600; font-size: 14px;
+        line-height: 1.2; cursor: pointer;
+    }
+    .rbv-wrap .rbv-btn:hover { background: #18632a; }
+    .rbv-wrap .rbv-btn-sm {
+        font-family: "Archivo", Arial, sans-serif;
+        background: #fff; border: 1px solid #cdd6c8; color: #1a2118;
+        padding: 8px 18px; border-radius: 6px; font-size: 13px; font-weight: 600;
+        line-height: 1.2; cursor: pointer;
+    }
+    .rbv-wrap .rbv-btn-sm:hover { background: #f1f4ef; }
+    .rbv-wrap .rbv-btn:focus-visible,
+    .rbv-wrap .rbv-btn-sm:focus-visible,
+    .rbv-wrap .rbv-link:focus-visible { outline: 2px solid #1f7a34; outline-offset: 2px; }
+    .rbv-wrap .rbv-link { color: #1f7a34; font-weight: 600; font-size: 13.5px; text-decoration: none; }
+    .rbv-wrap .rbv-link:hover { text-decoration: underline; color: #18632a; }
+
+    @@media (max-width: 620px) {
+        .rbv-wrap { padding: 18px 12px 30px; }
+        .rbv-wrap .rbv-line-k,
+        .rbv-wrap .rbv-hrow-k { flex: 1 1 100%; padding-top: 0; }
+        .rbv-wrap input.rbv-input { width: 100%; }
+        .rbv-wrap .rbv-tile-op { flex: 1 1 100%; height: 14px; }
+        .rbv-wrap .rbv-rec-when { margin-left: 0; flex: 1 1 100%; }
+    }
+</style>

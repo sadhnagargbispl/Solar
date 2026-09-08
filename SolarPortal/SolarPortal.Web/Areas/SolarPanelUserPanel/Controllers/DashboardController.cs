@@ -60,12 +60,15 @@ public class DashboardController : Controller
             ViewBag.VerifiedPaid   = verified;
             ViewBag.Minimum        = Math.Max(0m, PaymentService.MinimumPaymentThreshold - deposit);
 
-            // "Activate Now" — only for a fully-paid "Without Activation" ID (spec).
+            // "ID Active" option (spec): a "Without Activation" ID may activate as
+            // soon as the admin has VERIFIED the ₹20,000 minimum — it no longer
+            // waits for the plan to be paid in full. Same helper as the Status page
+            // so the two screens cannot disagree.
             var lp = dashboard.LatestProject;
             ViewBag.CanActivateNow =
-                lp.RequestType == SolarPortal.Domain.Enums.RequestType.OnlySolarWithoutActivation
-                && lp.RequestedAmount > 0
-                && verified >= lp.RequestedAmount;
+                WorkflowGates.IsActivationEligible(lp.RequestType, lp.RequestedAmount, verified);
+            ViewBag.ActivationOutstanding =
+                WorkflowGates.OutstandingAmount(lp.RequestedAmount, verified);
         }
         return View(dashboard);
     }

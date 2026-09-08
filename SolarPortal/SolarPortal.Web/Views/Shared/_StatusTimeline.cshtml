@@ -23,9 +23,24 @@
         ? SolarPortal.Domain.Enums.ProjectStatus.Payment
         : Model.CurrentStage;
 
+    // Point 3: Meter Dispatch and Site Survey run side by side, and only the
+    // SURVEY moves the stage on - so a project keeps sitting at MeterDispatch
+    // even after the admin has actually sent the meter. Position alone would then
+    // read "Meter Dispatch - In progress" forever. The parent view tells us
+    // whether the meter is really out (ViewData["MeterDispatched"]); when it is,
+    // the leg that is genuinely still open is the Site Survey, so the timeline
+    // ticks the meter and points at the survey instead.
+    bool? meterDispatched = ViewData["MeterDispatched"] as bool?;
+    var meterStillPending = meterDispatched == false;
+
+    var displayStage = meterDispatched == true
+                       && effectiveStage == SolarPortal.Domain.Enums.ProjectStatus.MeterDispatch
+        ? SolarPortal.Domain.Enums.ProjectStatus.SiteSurvey
+        : effectiveStage;
+
     int currentIdx = -1;
     for (int i = 0; i < steps.Length; i++)
-        if (steps[i].Stage == effectiveStage) { currentIdx = i; break; }
+        if (steps[i].Stage == displayStage) { currentIdx = i; break; }
 
     // Commercial connections skip DCR — collapse the timeline
     var isDomestic = Model.ConnectionType == SolarPortal.Domain.Enums.ConnectionType.Domestic;
@@ -33,7 +48,11 @@
 
     int visibleCurrentIdx = -1;
     for (int i = 0; i < visibleSteps.Length; i++)
-        if (visibleSteps[i].Stage == effectiveStage) { visibleCurrentIdx = i; break; }
+        if (visibleSteps[i].Stage == displayStage) { visibleCurrentIdx = i; break; }
+
+    int visibleMeterIdx = -1;
+    for (int i = 0; i < visibleSteps.Length; i++)
+        if (visibleSteps[i].Stage == SolarPortal.Domain.Enums.ProjectStatus.MeterDispatch) { visibleMeterIdx = i; break; }
 
     // Progress = how many steps are actually DONE, as a % of total.
     // The CURRENT step is "in progress", not finished, so it must NOT be counted
@@ -57,15 +76,12 @@
         progress = (int)Math.Round(visibleCurrentIdx * 100.0 / visibleSteps.Length);
     }
 
-    // Point 3: Meter Dispatch no longer gates the workflow - an approved site
-    // survey moves the project on and the meter is recorded whenever it happens.
-    // So "the project is past this step" no longer means "this step is done", and
-    // position alone would tick Meter Dispatch as Completed on a project whose
-    // meter has never been sent. The parent view passes the real answer.
-    bool? meterDispatched = ViewData["MeterDispatched"] as bool?;
-    var meterStillPending = meterDispatched == false;
-
-    if (meterStillPending && progress > 0)
+    // The other half of the same story: an approved site survey can push the
+    // project PAST Meter Dispatch while no meter has been sent, so "the project
+    // is past this step" does not mean the step is done. Only then does the bar
+    // overstate progress - at the MeterDispatch stage itself the step is not
+    // counted as done anyway, so nothing must be subtracted there.
+    if (meterStillPending && visibleMeterIdx >= 0 && visibleCurrentIdx > visibleMeterIdx && progress > 0)
     {
         // One step that looked done is not - do not overstate the progress bar.
         progress = Math.Max(0, progress - (int)Math.Round(100.0 / visibleSteps.Length));

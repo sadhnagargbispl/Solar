@@ -4,24 +4,55 @@
     var basicProducts = (ViewBag.BasicProducts as List<SolarPortal.Application.Services.BasicProductDto>)
                         ?? new List<SolarPortal.Application.Services.BasicProductDto>();
     var verified = (decimal)(ViewBag.VerifiedPaid ?? 0m);
+    // Activation opens at the ₹20,000 verified minimum, so the plan may still have
+    // a balance running. Say so rather than promising nothing is left to pay.
+    var due = (decimal)(ViewBag.Outstanding ?? 0m);
 }
 
 <div class="page active">
     <div class="ph">
         <div class="ph-bc">👤 User / <span>Activate Now</span></div>
         <div class="ph-title">⚡ Activate Your Solar ID</div>
-        <div class="ph-sub">Your payments are complete — pick a product to activate. No further payment is required.</div>
+        <div class="ph-sub">
+            @(due > 0
+                ? "Minimum payment verified — pick a product to activate. Nothing is charged at this step."
+                : "Your payments are complete — pick a product to activate. No further payment is required.")
+        </div>
     </div>
 
     <div class="alert alert-s">
         <span class="ai">✅</span>
         <div>
-            <strong>All payments completed.</strong>
-            You've paid <strong>₹@verified.ToString("N0")</strong> for <strong>@req.RequestNumber</strong>.
+            @if (due > 0)
+            {
+                <text>
+                    <strong>Minimum payment verified.</strong>
+                    ₹@verified.ToString("N0") of ₹@req.RequestedAmount.ToString("N0") has been verified on
+                    <strong>@req.RequestNumber</strong>.
+                </text>
+            }
+            else
+            {
+                <text>
+                    <strong>All payments completed.</strong>
+                    You've paid <strong>₹@verified.ToString("N0")</strong> for <strong>@req.RequestNumber</strong>.
+                </text>
+            }
             Activation will continue as <strong>With Activation</strong> — Product Selection → ID Activation →
             Document Upload. <strong>Payment step is skipped.</strong>
         </div>
     </div>
+
+    @if (due > 0)
+    {
+        <div class="alert alert-w">
+            <span class="ai">⚠</span>
+            <div>
+                <strong>₹@due.ToString("N0") is still due</strong> on this plan. Activating now does not clear it —
+                keep paying the balance from the Payment page.
+            </div>
+        </div>
+    }
 
     <form asp-area="SolarPanelUserPanel" asp-controller="SolarRequest" asp-action="ActivateConfirm" method="post" id="activateForm">
         @Html.AntiForgeryToken()
@@ -91,7 +122,26 @@
 
         <div class="card">
             <div class="alert alert-i" style="font-size:13px">
-                <span class="ai">➡️</span>After activation you'll be taken to <strong>PM Surya Ghar</strong> to upload your documents.
+                @* Activation never rewinds the project, so this promise has to follow the
+                   stage the request is actually on - a DCR-complete project was being told
+                   to go and upload PM Surya Ghar documents it finished with long ago. *@
+                <span class="ai">➡️</span>
+                @switch (req.CurrentStage)
+                {
+                    case SolarPortal.Domain.Enums.ProjectStatus.MeterDispatch:
+                    case SolarPortal.Domain.Enums.ProjectStatus.SiteSurvey:
+                        <text>After activation you'll be taken to your <strong>Site Survey</strong> — your project keeps its current progress.</text>
+                        break;
+                    case SolarPortal.Domain.Enums.ProjectStatus.MaterialDispatch:
+                    case SolarPortal.Domain.Enums.ProjectStatus.Installation:
+                    case SolarPortal.Domain.Enums.ProjectStatus.DCRUpdate:
+                    case SolarPortal.Domain.Enums.ProjectStatus.Completed:
+                        <text>After activation you'll be taken back to your <strong>project status</strong> — your project keeps its current progress and no steps are repeated.</text>
+                        break;
+                    default:
+                        <text>After activation you'll be taken to <strong>PM Surya Ghar</strong> to upload your documents.</text>
+                        break;
+                }
             </div>
             <div class="btn-row" style="justify-content:center">
                 <button type="submit" class="btn btn-p" style="padding:12px 32px;font-size:15px" onclick="return confirmActivate()">

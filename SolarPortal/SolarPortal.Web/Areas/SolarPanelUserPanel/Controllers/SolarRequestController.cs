@@ -8,6 +8,7 @@ using SolarPortal.Application.Services;
 using SolarPortal.Domain.Entities;
 using SolarPortal.Domain.Enums;
 using SolarPortal.Infrastructure.Data;
+using SolarPortal.Web.Areas.SolarPanelUserPanel.Helpers;
 using SolarPortal.Web.ViewModels;
 
 namespace SolarPortal.Web.Areas.SolarPanelUserPanel.Controllers;
@@ -1836,6 +1837,9 @@ public class SolarRequestController : Controller
             // floor, so what is still needed is the floor minus what is on deposit.
             ViewBag.Minimum = Math.Max(0m, PaymentService.MinimumPaymentThreshold - statusDeposit);
             ViewBag.CanActivateNow = IsActivationEligible(data, verified);
+            // Activation can now happen with a balance still open, so the card has
+            // to show what is left instead of claiming payments are complete.
+            ViewBag.ActivationOutstanding = WorkflowGates.OutstandingAmount(data.RequestedAmount, verified);
 
             // #2: show the actual product taken (With Activation) + its BV/DP.
             if (data.ExternalProductId.HasValue)
@@ -1846,18 +1850,21 @@ public class SolarRequestController : Controller
 
     // ─── "Activate Now" (spec) ───────────────────────────────────────────
     // Eligibility: a request registered as "Only Solar — Without Activation" whose
-    // payments are all completed (verified total >= project amount). The option is
-    // shown ONLY to these users — never for With-Activation or already-active IDs.
+    // ADMIN-VERIFIED payments have reached the ₹20,000 minimum (or the plan total,
+    // when the plan is cheaper than that). The option is shown ONLY to these users
+    // — never for With-Activation or already-active IDs.
+    //
+    // The rule lives in WorkflowGates so this page, the Dashboard card and the
+    // POST below can never drift apart.
     private static bool IsActivationEligible(SolarRequestDto? req, decimal verifiedPaid)
         => req != null
-           && req.RequestType == RequestType.OnlySolarWithoutActivation
-           && req.RequestedAmount > 0
-           && verifiedPaid >= req.RequestedAmount;
+           && WorkflowGates.IsActivationEligible(req.RequestType, req.RequestedAmount, verifiedPaid);
 
     // GET: /User/SolarRequest/Activate/5
-    // Starts the With-Activation flow for a fully-paid Without-Activation ID:
-    // Product Selection → (submit) → ID Activation → Document Upload. The payment
-    // step is skipped because the user has already paid in full.
+    // Starts the With-Activation flow for a Without-Activation ID that has cleared
+    // the ₹20,000 minimum: Product Selection → (submit) → ID Activation → Document
+    // Upload. No payment is collected here — any balance left on the plan stays
+    // payable on the Payment page as usual.
     public async Task<IActionResult> Activate(int id)
     {
         var userId = _userManager.GetUserId(User)!;
@@ -1868,13 +1875,17 @@ public class SolarRequestController : Controller
         var verified = await _paymentService.GetVerifiedPaidAsync(id);
         if (!IsActivationEligible(req, verified))
         {
-            TempData["Warning"] = "Activation is available only for a fully-paid Without-Activation request.";
+            var need = WorkflowGates.ActivationMinimum(req?.RequestedAmount ?? 0m);
+            TempData["Warning"] = $"Activation opens for a Without-Activation request once the admin has verified ₹{need:N0}.";
             return RedirectToAction(nameof(Status), new { id });
         }
 
         ViewBag.Request       = req;
         ViewBag.BasicProducts = await _basicProducts.GetActiveAsync();
         ViewBag.VerifiedPaid  = verified;
+        // The plan may still have a balance — activation no longer waits for it, so
+        // the page has to say so rather than promising "no further payment".
+        ViewBag.Outstanding   = WorkflowGates.OutstandingAmount(req!.RequestedAmount, verified);
         return View();
     }
 
@@ -1893,12 +1904,12 @@ public class SolarRequestController : Controller
             return RedirectToAction(nameof(Status), new { id });
         }
 
-        // Re-check eligibility server-side (defence-in-depth).
+        // Re-check eligibility server-side (defence-in-depth). Same ₹20,000 rule as
+        // the GET — PlanAmount is what RequestedAmount maps from.
         var verified = await _paymentService.GetVerifiedPaidAsync(id);
-        if (entity.RequestType != RequestType.OnlySolarWithoutActivation
-            || !(entity.PlanAmount > 0 && verified >= entity.PlanAmount))
+        if (!WorkflowGates.IsActivationEligible(entity.RequestType, entity.PlanAmount, verified))
         {
-            TempData["Warning"] = "Activation unlocks only for a fully-paid Without-Activation request.";
+            TempData["Warning"] = $"Activation unlocks once the admin has verified ₹{WorkflowGates.ActivationMinimum(entity.PlanAmount):N0} on this request.";
             return RedirectToAction(nameof(Status), new { id });
         }
 
@@ -1926,7 +1937,7 @@ public class SolarRequestController : Controller
             entity.ApprovalStatus = ApprovalStatus.Approved;
         if (entity.CurrentStage < ProjectStatus.PMSurvey)
             entity.CurrentStage = ProjectStatus.PMSurvey;
-        var marker = $"[Activated by user (payment already complete) on {DateTime.UtcNow:yyyy-MM-dd HH:mm} UTC]";
+        var marker = $"[Activated by user (₹{verified:N0} verified of ₹{entity.PlanAmount:N0}) on {DateTime.UtcNow:yyyy-MM-dd HH:mm} UTC]";
         entity.AdminNotes = string.IsNullOrWhiteSpace(entity.AdminNotes)
             ? marker
             : entity.AdminNotes + " | " + marker;
@@ -1989,9 +2000,52 @@ public class SolarRequestController : Controller
             NotificationType = "Activation"
         });
 
-        TempData["Success"] = "Activation started! Please upload your PM Surya Ghar documents to continue.";
-        return RedirectToAction("Upload", "PMSurya", new { id });
+        // "Activate Now" only flips the request to With-Activation — it never rewinds
+        // the project (see the CurrentStage guard above). So the follow-up must point
+        // at the step the project is REALLY on. Hard-coding PM Surya Ghar here sent a
+        // member whose project was already DCR-complete off to upload scheme
+        // documents they had finished with long ago.
+        var (activationMessage, activationRedirect) = ActivationNextStep(entity.CurrentStage, id);
+        TempData["Success"] = activationMessage;
+        return activationRedirect;
     }
+
+    /// <summary>
+    /// What the member is told after "Activate Now", and where they land — keyed off
+    /// the stage the request is actually sitting at, since activation can happen at
+    /// any point in the project's life.
+    /// </summary>
+    private (string Message, IActionResult Redirect) ActivationNextStep(ProjectStatus stage, int id) => stage switch
+    {
+        ProjectStatus.Registration or ProjectStatus.ProductSelection
+        or ProjectStatus.Payment or ProjectStatus.PMSurvey
+            => ("Activation started! Please upload your PM Surya Ghar documents to continue.",
+                RedirectToAction("Upload", "PMSurya", new { id })),
+
+        // Meter Dispatch and Site Survey run side by side and the SURVEY is the part
+        // the member does, so both stages point there.
+        ProjectStatus.MeterDispatch or ProjectStatus.SiteSurvey
+            => ("ID activated! Your next step is the site survey.",
+                RedirectToAction("Index", "SiteSurvey", new { id })),
+
+        ProjectStatus.MaterialDispatch
+            => ("ID activated! Your material dispatch is with the admin — nothing further is needed from you right now.",
+                RedirectToAction(nameof(Status), new { id })),
+
+        ProjectStatus.Installation
+            => ("ID activated! Your installation is already in progress.",
+                RedirectToAction(nameof(Status), new { id })),
+
+        ProjectStatus.DCRUpdate
+            => ("ID activated! Your project is at the final DCR step with the admin.",
+                RedirectToAction(nameof(Status), new { id })),
+
+        ProjectStatus.Completed
+            => ("ID activated! Your solar project is already complete — nothing else is pending.",
+                RedirectToAction(nameof(Status), new { id })),
+
+        _ => ("ID activated!", RedirectToAction(nameof(Status), new { id }))
+    };
 
     // AJAX: Get status flow JSON
     [HttpGet]

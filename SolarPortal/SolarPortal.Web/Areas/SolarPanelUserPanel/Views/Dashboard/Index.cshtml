@@ -74,14 +74,28 @@
                 <partial name="~/Views/Shared/_StatusTimeline.cshtml" model="Model.LatestProject" />
             </div>
             <div>
-                @* "Activate Now" — only for a fully-paid "Without Activation" ID (spec). *@
+                @* "ID Active" — opens for a "Without Activation" ID once the admin has
+                   verified the ₹20,000 minimum (spec). A balance may still be open. *@
                 @if ((bool)(ViewBag.CanActivateNow ?? false))
                 {
+                    var actDue = (decimal)(ViewBag.ActivationOutstanding ?? 0m);
                     <div class="card" style="margin-bottom:14px;border-left:4px solid var(--green);background:linear-gradient(180deg,#f0fdf4,#fff)">
                         <div class="ct"><span class="ct-dot"></span>Ready to Activate</div>
                         <p class="text-muted" style="font-size:13px;margin-bottom:12px">
-                            Payments complete — activate this ID now. Select a product and continue;
-                            <strong>no further payment needed.</strong>
+                            @if (actDue > 0)
+                            {
+                                <text>
+                                    Minimum payment verified — you can activate this ID now. Select a product and continue;
+                                    <strong>no payment is taken at this step</strong> (₹@actDue.ToString("N0") still due on the plan).
+                                </text>
+                            }
+                            else
+                            {
+                                <text>
+                                    Payments complete — activate this ID now. Select a product and continue;
+                                    <strong>no further payment needed.</strong>
+                                </text>
+                            }
                         </p>
                         <a class="btn btn-p btn-full" asp-area="SolarPanelUserPanel" asp-controller="SolarRequest" asp-action="Activate" asp-route-id="@Model.LatestProject.Id">⚡ Activate Now</a>
                     </div>
@@ -129,8 +143,28 @@
                                 <a class="btn btn-p btn-full" asp-area="SolarPanelUserPanel" asp-controller="SiteSurvey" asp-action="Index" asp-route-id="@Model.LatestProject.Id">Go to Site Survey</a>
                                 break;
                             case SolarPortal.Domain.Enums.ProjectStatus.MeterDispatch:
-                                <h6>⚡ Awaiting Meter Dispatch</h6>
-                                <p class="text-muted" style="font-size:13px">Admin is preparing your meter. Check back for updates.</p>
+                                @* Point 3: Meter Dispatch and Site Survey are open together and the
+                                   SURVEY is what moves the project on - the meter is recorded by admin
+                                   whenever it happens. Same wording as the Status page, which already
+                                   said this; the dashboard kept telling the user to "check back for
+                                   updates" on a meter that was often already dispatched. *@
+                                if ((bool)(ViewBag.MeterDispatched ?? false))
+                                {
+                                    <h6>📐 Site Survey</h6>
+                                    <p class="text-muted" style="font-size:13px">
+                                        ⚡ Meter dispatched by admin. Next: download the form, fill it on site,
+                                        then upload it back with photos.
+                                    </p>
+                                }
+                                else
+                                {
+                                    <h6>📐 Site Survey</h6>
+                                    <p class="text-muted" style="font-size:13px">
+                                        Download the form, fill it on site, then upload it back with photos.
+                                        Your meter is being arranged separately — you do not have to wait for it.
+                                    </p>
+                                }
+                                <a class="btn btn-p btn-full" asp-area="SolarPanelUserPanel" asp-controller="SiteSurvey" asp-action="Index" asp-route-id="@Model.LatestProject.Id">Go to Site Survey</a>
                                 break;
                             case SolarPortal.Domain.Enums.ProjectStatus.MaterialDispatch:
                                 <h6>📦 Awaiting Material Dispatch</h6>
@@ -141,9 +175,9 @@
                                 <p class="text-muted" style="font-size:13px">An installer (INC) has been assigned. They'll update progress here.</p>
                                 break;
                             case SolarPortal.Domain.Enums.ProjectStatus.DCRUpdate:
-                                <h6>📄 Upload DCR Document</h6>
-                                <p class="text-muted" style="font-size:13px">Final step — upload your DCR document for admin verification.</p>
-                                <a class="btn btn-p btn-full" asp-area="SolarPanelUserPanel" asp-controller="DCR" asp-action="Upload" asp-route-id="@Model.LatestProject.Id">Upload DCR</a>
+                                @* DCR is uploaded by the ADMIN panel — nothing for the user to do here. *@
+                                <h6>📄 Awaiting DCR Update</h6>
+                                <p class="text-muted" style="font-size:13px">Final step — the admin is updating your DCR document. Your project completes once that is done.</p>
                                 break;
                             case SolarPortal.Domain.Enums.ProjectStatus.Completed:
                                 <h6>✅ Project Complete</h6>

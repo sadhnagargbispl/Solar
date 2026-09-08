@@ -1,0 +1,258 @@
+@model SolarPortal.Web.ViewModels.RemainingBvViewModel
+@{
+    ViewData["Title"] = "Update Remaining BV";
+    var locked = Model.IsLocked;
+    // Editable only before the first submit, or after the admin sends it back.
+    // A Pending record is with the admin, so the whole form is read-only.
+    var canEdit = Model.CanEdit;
+    var readOnly = !canEdit;
+    var discomOther = Model.DiscomIncomeMode == SolarPortal.Domain.Enums.BvBeneficiaryMode.Other;
+    var dealOther = Model.DealCloseMode == SolarPortal.Domain.Enums.BvBeneficiaryMode.Other;
+}
+
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700&family=Source+Sans+3:wght@400;600&family=JetBrains+Mono:wght@400;700&display=swap" />
+
+<partial name="_RemainingBvStyles" />
+
+<div class="rbv-wrap">
+
+    <p class="rbv-eyebrow">Solar Request</p>
+    <h3 class="rbv-hd">Update Remaining BV</h3>
+    <p class="rbv-sub">Choose who receives the remaining BV of your approved solar request.</p>
+
+    @if (locked)
+    {
+        <div class="rbv-alert rbv-alert-done">
+            <strong>Final approved and locked.</strong>
+            Approved on @(Model.ApprovedAt?.ToLocalTime().ToString("dd MMM yyyy, hh:mm tt") ?? "-").
+            This record can no longer be corrected.
+            @if (Model.PayoutPostedAt.HasValue)
+            {
+                <text> Added to the daily payout on @Model.PayoutPostedAt.Value.ToLocalTime().ToString("dd MMM yyyy").</text>
+            }
+        </div>
+    }
+    else if (Model.IsRejected)
+    {
+        <div class="rbv-alert rbv-alert-bad">
+            <strong>Sent back by the admin.</strong>
+            @Model.RejectionReason
+            <div style="margin-top:5px">Correct the details below and save again. This updates the same record.</div>
+        </div>
+    }
+    else if (Model.IsSubmitted)
+    {
+        <div class="rbv-alert rbv-alert-wait">
+            <strong>Awaiting admin verification.</strong>
+            Submitted on @(Model.SubmittedAt?.ToLocalTime().ToString("dd MMM yyyy, hh:mm tt") ?? "-").
+            This record is now with the admin and cannot be changed. If anything needs correcting,
+            the admin will send it back to you with a reason.
+        </div>
+    }
+
+    @if (!string.IsNullOrWhiteSpace(Model.AdminRemark))
+    {
+        <div class="rbv-alert rbv-alert-info">
+            <strong>Admin remark:</strong> @Model.AdminRemark
+        </div>
+    }
+
+    @if (!ViewData.ModelState.IsValid)
+    {
+        <div class="rbv-alert rbv-alert-bad">
+            @foreach (var err in ViewData.ModelState.Values.SelectMany(v => v.Errors))
+            {
+                <div>@err.ErrorMessage</div>
+            }
+        </div>
+    }
+
+    <!-- Request, product and the BV breakdown -->
+    <div class="rbv-card">
+        <div class="rbv-card-hd">Solar Request &amp; Product</div>
+        <div class="rbv-card-bd">
+
+            <div class="rbv-strip">
+                <div style="flex:0 1 150px">
+                    <div class="rbv-k">Request No</div>
+                    <div class="rbv-v">@Model.RequestNumber</div>
+                </div>
+                <div style="flex:2 1 300px">
+                    <div class="rbv-k">Plan Taken</div>
+                    <div class="rbv-v">@(string.IsNullOrWhiteSpace(Model.PlanName) ? "-" : Model.PlanName)</div>
+                </div>
+                <div style="flex:0 1 130px">
+                    <div class="rbv-k">Capacity</div>
+                    <div class="rbv-v">@Model.SolarTypeKV.ToString("0.##") KW</div>
+                </div>
+            </div>
+
+            <div class="rbv-tiles">
+                <div class="rbv-tile">
+                    <div class="rbv-tile-k">Total BV</div>
+                    <div class="rbv-tile-v">@Model.TotalBV.ToString("N2")</div>
+                    <div class="rbv-tile-note">Full BV of the plan you selected.</div>
+                </div>
+                <div class="rbv-tile-op">&minus;</div>
+                <div class="rbv-tile">
+                    <div class="rbv-tile-k">Solar Request BV</div>
+                    <div class="rbv-tile-v">@Model.FixedBV.ToString("N2")</div>
+                    <div class="rbv-tile-note">Already credited with the product you took.</div>
+                </div>
+                <div class="rbv-tile-op">=</div>
+                <div class="rbv-tile is-main">
+                    <div class="rbv-tile-k">Remaining BV</div>
+                    <div class="rbv-tile-v">@Model.RemainingBV.ToString("N2")</div>
+                    <div class="rbv-tile-note">Yours to distribute below.</div>
+                </div>
+            </div>
+
+            <div class="rbv-line-hint">BV source: @Model.BvSource</div>
+        </div>
+    </div>
+
+    <!-- Income heads -->
+    <form method="post" asp-action="Save" asp-controller="RemainingBv" asp-area="SolarPanelUserPanel" id="rbvForm">
+        @Html.AntiForgeryToken()
+        <input type="hidden" name="requestId" value="@Model.RequestId" />
+
+        <div class="rbv-card">
+            <div class="rbv-card-hd">
+                Income Distribution
+                <span class="rbv-card-hd-sub">Total payout @Model.TotalIncome.ToString("C0", System.Globalization.CultureInfo.GetCultureInfo("en-IN"))</span>
+            </div>
+            <div class="rbv-card-bd">
+
+                <div class="rbv-line">
+                    <div class="rbv-line-k">
+                        Sponsor ID
+                    </div>
+                    <div class="rbv-line-b">
+                        <div class="rbv-inline">
+                            <input class="rbv-input is-fixed" value="@Model.SponsorIdNo" disabled />
+                            <span class="rbv-ok">@Model.SponsorName</span>
+                        </div>
+                        <div class="rbv-line-hint">Filled in automatically from your sponsor.</div>
+                    </div>
+                </div>
+
+                <div class="rbv-line">
+                    <div class="rbv-line-k">
+                        Discom Income <span class="rbv-req">*</span>
+                        <div class="rbv-amt">@Model.DiscomIncomeAmount.ToString("C0", System.Globalization.CultureInfo.GetCultureInfo("en-IN"))</div>
+                    </div>
+                    <div class="rbv-line-b">
+                        <div class="rbv-radio">
+                            <label><input type="radio" name="DiscomIncomeMode" value="Self" checked="@(!discomOther)" disabled="@readOnly" onchange="rbvToggle('discom', false)" /> Self</label>
+                            <label><input type="radio" name="DiscomIncomeMode" value="Other" checked="@discomOther" disabled="@readOnly" onchange="rbvToggle('discom', true)" /> Other</label>
+                        </div>
+                        <div class="rbv-inline" id="discomOther" style="margin-top:10px;@(discomOther ? "" : "display:none")">
+                            <input class="rbv-input" type="text" name="DiscomIncomeIdNo" id="discomId"
+                                   value="@(discomOther ? Model.DiscomIncomeIdNo : "")" placeholder="Enter ID No" disabled="@readOnly" />
+                            <button type="button" class="rbv-btn-sm" onclick="rbvVerify('discom')" @(readOnly ? "disabled" : "")>Verify</button>
+                            <span id="discomStatus" class="@(discomOther && !string.IsNullOrWhiteSpace(Model.DiscomIncomeName) ? "rbv-ok" : "")">@(discomOther ? Model.DiscomIncomeName : "")</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="rbv-line">
+                    <div class="rbv-line-k">
+                        Deal Close <span class="rbv-req">*</span>
+                        <div class="rbv-amt">@Model.DealCloseAmount.ToString("C0", System.Globalization.CultureInfo.GetCultureInfo("en-IN"))</div>
+                    </div>
+                    <div class="rbv-line-b">
+                        <div class="rbv-radio">
+                            <label><input type="radio" name="DealCloseMode" value="Self" checked="@(!dealOther)" disabled="@readOnly" onchange="rbvToggle('deal', false)" /> Self</label>
+                            <label><input type="radio" name="DealCloseMode" value="Other" checked="@dealOther" disabled="@readOnly" onchange="rbvToggle('deal', true)" /> Other</label>
+                        </div>
+                        <div class="rbv-inline" id="dealOther" style="margin-top:10px;@(dealOther ? "" : "display:none")">
+                            <input class="rbv-input" type="text" name="DealCloseIdNo" id="dealId"
+                                   value="@(dealOther ? Model.DealCloseIdNo : "")" placeholder="Enter ID No" disabled="@readOnly" />
+                            <button type="button" class="rbv-btn-sm" onclick="rbvVerify('deal')" @(readOnly ? "disabled" : "")>Verify</button>
+                            <span id="dealStatus" class="@(dealOther && !string.IsNullOrWhiteSpace(Model.DealCloseName) ? "rbv-ok" : "")">@(dealOther ? Model.DealCloseName : "")</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="rbv-line">
+                    <div class="rbv-line-k">
+                        SCI Income
+                        <div class="rbv-amt">@Model.SciIncomeAmount.ToString("C0", System.Globalization.CultureInfo.GetCultureInfo("en-IN"))</div>
+                    </div>
+                    <div class="rbv-line-b">
+                        <div class="rbv-inline">
+                            <input class="rbv-input is-fixed" value="@Model.SciIncomeIdNo" disabled />
+                            <span class="rbv-ok">@Model.SciIncomeName</span>
+                        </div>
+                        <div class="rbv-line-hint">Always paid to your sponsor's ID.</div>
+                    </div>
+                </div>
+
+                <div class="rbv-line">
+                    <div class="rbv-line-k">&nbsp;</div>
+                    <div class="rbv-line-b">
+                        <div class="rbv-line-hint" style="margin-top:0">
+                            An "Other" ID must be in your sponsor upline. An ID from your downline is not allowed.
+                            The amounts above come from your plan and cannot be changed.
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+            <div class="rbv-card-ft">
+                <a class="rbv-link" asp-action="Report" asp-controller="RemainingBv" asp-area="SolarPanelUserPanel">View my report</a>
+                @if (canEdit)
+                {
+                    <button type="submit" class="rbv-btn">@(Model.IsRejected ? "Re-submit" : "Save")</button>
+                }
+                else if (locked)
+                {
+                    <span class="rbv-line-hint" style="margin:0">Locked - no changes possible.</span>
+                }
+                else
+                {
+                    <span class="rbv-line-hint" style="margin:0">
+                        With the admin for verification - no changes possible until they respond.
+                    </span>
+                }
+            </div>
+        </div>
+    </form>
+</div>
+
+@section Scripts {
+    <script>
+        function rbvToggle(which, isOther) {
+            var box = document.getElementById(which + 'Other');
+            if (box) box.style.display = isOther ? '' : 'none';
+            var st = document.getElementById(which + 'Status');
+            if (st && !isOther) { st.textContent = ''; st.className = ''; }
+        }
+
+        function rbvVerify(which) {
+            var input = document.getElementById(which + 'Id');
+            var st = document.getElementById(which + 'Status');
+            if (!input || !st) return;
+
+            st.className = '';
+            st.textContent = 'Checking...';
+
+            var url = '@Url.Action("VerifyId", "RemainingBv", new { area = "SolarPanelUserPanel" })'
+                    + '?requestId=@Model.RequestId&idNo=' + encodeURIComponent(input.value);
+
+            fetch(url, { headers: { 'Accept': 'application/json' } })
+                .then(function (r) { return r.json(); })
+                .then(function (d) {
+                    st.textContent = d.message;
+                    st.className = d.ok ? 'rbv-ok' : 'rbv-bad';
+                })
+                .catch(function () {
+                    st.textContent = 'Could not check that ID right now. Please try again.';
+                    st.className = 'rbv-bad';
+                });
+        }
+    </script>
+}

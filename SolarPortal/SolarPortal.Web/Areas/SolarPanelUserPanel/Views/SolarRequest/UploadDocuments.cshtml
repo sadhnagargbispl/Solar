@@ -92,24 +92,10 @@
 
             @if (isDomestic)
             {
-                <div class="dcr-card" style="margin-top:14px">
-                    <div class="dcr-h">📋 DCR Document Upload <span class="chip chip-s">Domestic Only</span></div>
-                    <div class="alert alert-s" style="margin-bottom:10px">
-                        <span class="ai">✅</span>DCR document is required for Domestic connection.
-                    </div>
-                    <div class="upload-area">
-                        <input type="file" id="doc-dcr" accept="image/*,.pdf"
-                               onchange="previewSingle('doc-dcr','prev-dcr')" />
-                        <div class="upload-icon">📄</div>
-                        <div class="upload-txt">Upload DCR Document</div>
-                        <div class="upload-hint">PDF or Image</div>
-                    </div>
-                    <div id="prev-dcr"></div>
-                    <div id="status-doc-dcr" style="font-size:11px;margin-top:4px"></div>
-                    <button type="button" class="btn btn-s btn-sm" style="margin-top:6px"
-                            onclick="uploadDocument(@requestId, 'DCRDocument', 'doc-dcr', 'status-doc-dcr')">
-                        ⬆ Upload DCR
-                    </button>
+                @* DCR upload removed from the user side - the DCR document is
+                   uploaded by the ADMIN panel at the DCR Update stage. *@
+                <div class="alert alert-i" style="margin-top:14px">
+                    <span class="ai">ℹ</span>Your DCR document is handled by the admin at the DCR Update stage — you do not have to upload it.
                 </div>
             }
         </div>

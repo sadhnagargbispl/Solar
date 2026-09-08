@@ -34,8 +34,14 @@
     <a class="sb-item @IsActive("SiteSurvey")" asp-area="SolarPanelUserPanel" asp-controller="SiteSurvey" asp-action="Index">
         <span class="sbi">📐</span>Site Survey
     </a>
-    <a class="sb-item @IsActive("DCR")" asp-area="SolarPanelUserPanel" asp-controller="DCR" asp-action="Upload">
-        <span class="sbi">📄</span>DCR Upload
+    @* DCR Upload removed from the user side - the DCR is uploaded by the ADMIN
+       panel now. The DCR stage still shows on the status timeline so the user can
+       see where the project is, and past DCR records stay visible under Reports. *@
+    @* Opens once the plan is PAID IN FULL and the INSTALLATION is complete - an
+       approved solar request alone is not enough. The controller redirects with a
+       message if it is not open yet. *@
+    <a class="sb-item @IsActive("RemainingBv","Index")" asp-area="SolarPanelUserPanel" asp-controller="RemainingBv" asp-action="Index">
+        <span class="sbi">⚖️</span>Update Remaining BV
     </a>
 </div>
 <div class="sb-section">
@@ -45,5 +51,8 @@
     <div class="sb-label">Reports</div>
     <a class="sb-item @IsActive("Reports")" asp-area="SolarPanelUserPanel" asp-controller="Reports" asp-action="Index">
         <span class="sbi">📊</span>My Reports
+    </a>
+    <a class="sb-item @IsActive("RemainingBv","Report")" asp-area="SolarPanelUserPanel" asp-controller="RemainingBv" asp-action="Report">
+        <span class="sbi">⚖️</span>Remaining BV Report
     </a>
 </div>

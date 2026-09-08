@@ -99,6 +99,56 @@ WHERE d.FormNo = (SELECT TOP 1 Formno FROM M_MemberMaster WHERE Idno = @id)
         }
     }
 
+    public async Task<LegacyProductOrderDto?> GetVerifiedOrderAsync(string memberIdNo, int? productId)
+    {
+        if (string.IsNullOrWhiteSpace(memberIdNo)) return null;
+
+        var connStr = _config.GetConnectionString("DefaultConnection")
+                   ?? _db.Database.GetConnectionString();
+        if (string.IsNullOrWhiteSpace(connStr)) return null;
+
+        try
+        {
+            await using var conn = new SqlConnection(connStr);
+            await conn.OpenAsync();
+
+            // Same Idno -> Formno resolution the insert and deposit paths use.
+            // @prodId = 0 means "any product", so a member whose request carries no
+            // ExternalProductId still resolves to their latest verified order.
+            await using var cmd = new SqlCommand(@"
+SELECT TOP 1 d.OrderNo, d.FormNo, d.ProductID, ISNULL(d.ProductName,'') AS ProductName,
+       ISNULL(d.Qty, 0) AS Qty, ISNULL(d.NetAmount, 0) AS NetAmount, ISNULL(d.bv, 0) AS BV
+FROM   TrnProductorderDetail d
+WHERE  d.FormNo = (SELECT TOP 1 Formno FROM M_MemberMaster WHERE Idno = @id)
+  AND  d.IsApprove = 'Y'
+  AND  (@prodId = 0 OR d.ProductID = @prodId)
+ORDER BY d.ID DESC;", conn);
+            cmd.Parameters.AddWithValue("@id", memberIdNo.Trim());
+            cmd.Parameters.AddWithValue("@prodId", productId ?? 0);
+
+            await using var reader = await cmd.ExecuteReaderAsync();
+            if (!await reader.ReadAsync()) return null;
+
+            return new LegacyProductOrderDto
+            {
+                OrderNo     = reader["OrderNo"]?.ToString()?.Trim() ?? string.Empty,
+                FormNo      = Convert.ToDecimal(reader["FormNo"]),
+                ProductId   = Convert.ToInt32(reader["ProductID"]),
+                ProductName = reader["ProductName"]?.ToString()?.Trim() ?? string.Empty,
+                Qty         = Convert.ToDecimal(reader["Qty"]),
+                NetAmount   = Convert.ToDecimal(reader["NetAmount"]),
+                BV          = Convert.ToDecimal(reader["BV"])
+            };
+        }
+        catch (Exception ex)
+        {
+            // Never throw: the caller treats null as "no verified order yet" and
+            // shows the member a plain explanation instead of an error page.
+            _log.LogWarning(ex, "Legacy verified-order lookup failed for IdNo '{IdNo}'.", memberIdNo);
+            return null;
+        }
+    }
+
     public async Task<LegacyInsertResult> InsertWithActivationAsync(LegacyProductRequestInput input)
     {
         var result = new LegacyInsertResult();

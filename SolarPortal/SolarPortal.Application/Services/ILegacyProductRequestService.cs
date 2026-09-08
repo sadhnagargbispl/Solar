@@ -70,6 +70,33 @@ public interface ILegacyProductRequestService
     /// admin queue ended up disagreeing about the same project.
     /// </summary>
     Task<decimal> GetDepositForRequestAsync(RequestType requestType, string? memberIdNo);
+
+    /// <summary>
+    /// The member's VERIFIED product order out of TrnProductorderDetail
+    /// (IsApprove = 'Y'), newest first. Null when nothing has been verified yet.
+    ///
+    /// A product request only becomes an approved order once admin verifies it, so
+    /// this row is both the proof that the product was really taken AND the source
+    /// of the BV that the solar request already consumed.
+    ///
+    /// Pass <paramref name="productId"/> (the SolarRequest's ExternalProductId) to
+    /// tie the lookup to the product this request is about; leave it null to take
+    /// the member's latest verified order whatever it was.
+    /// </summary>
+    Task<LegacyProductOrderDto?> GetVerifiedOrderAsync(string memberIdNo, int? productId);
+}
+
+/// <summary>One verified row of the legacy TrnProductorderDetail table.</summary>
+public class LegacyProductOrderDto
+{
+    public string OrderNo { get; set; } = string.Empty;
+    public decimal FormNo { get; set; }
+    public int ProductId { get; set; }
+    public string ProductName { get; set; } = string.Empty;
+    public decimal Qty { get; set; }
+    public decimal NetAmount { get; set; }
+    /// <summary>BV credited by this order - the 100 the solar request already used.</summary>
+    public decimal BV { get; set; }
 }
 
 public class LegacyProductRequestInput

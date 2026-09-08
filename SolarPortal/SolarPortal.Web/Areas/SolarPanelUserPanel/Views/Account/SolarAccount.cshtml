@@ -118,12 +118,7 @@
                                             <a class="btn btn-sm btn-p" asp-area="SolarPanelUserPanel" asp-controller="SiteSurvey"
                                                asp-action="Index" asp-route-id="@p.Id" title="Site survey form">📐 Survey</a>
                                         }
-                                        @if (p.CurrentStage == SolarPortal.Domain.Enums.ProjectStatus.DCRUpdate
-                                             && p.ConnectionType == SolarPortal.Domain.Enums.ConnectionType.Domestic)
-                                        {
-                                            <a class="btn btn-sm btn-p" asp-area="SolarPanelUserPanel" asp-controller="DCR"
-                                               asp-action="Upload" asp-route-id="@p.Id" title="Upload DCR document">📄 DCR</a>
-                                        }
+                                        @* No DCR button — the DCR is uploaded by the ADMIN panel now. *@
                                     </td>
                                 </tr>
                             }

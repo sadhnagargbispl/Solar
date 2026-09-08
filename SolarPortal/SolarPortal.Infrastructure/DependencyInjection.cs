@@ -99,6 +99,9 @@ public static class DependencyInjection
         services.AddScoped<IWithdrawalService, WithdrawalService>();
         // Legacy view reader for the With Activation product picker (V#SpProductDetail)
         services.AddScoped<IBasicProductService, BasicProductService>();
+        // Sponsor tree out of legacy m_membermaster (RefFormNo chain) - backs the
+        // "upline only, never downline" check on the Update Remaining BV screen.
+        services.AddScoped<ISponsorTreeService, SponsorTreeService>();
         // Payment modes from legacy M_PayModeMaster — shown in the payment forms.
         services.AddScoped<IPayModeService, PayModeService>();
         // States from legacy M_StateDivMaster — shown in address State dropdowns.

@@ -117,24 +117,57 @@ public class ReportsController : Controller
         if (f == "approved") payments = payments.Where(p => p.Status == PaymentStatus.Completed).ToList();
         if (f == "rejected") payments = payments.Where(p => p.Status == PaymentStatus.Rejected).ToList();
 
+        // Every section is sorted NEWEST FIRST, on the same date the section shows
+        // in its own "Date" column (payment date, dispatch date, survey date …) so
+        // the ordering matches what the member can actually read on screen. Where
+        // that date is nullable and unset, CreatedAt stands in; Id breaks ties so
+        // two rows stamped the same day keep a stable, newest-first order.
+        payments = payments.OrderByDescending(p => p.PaymentDate)
+                           .ThenByDescending(p => p.Id)
+                           .ToList();
+
         var pmDocs = (await _uow.PMDocuments.FindAsync(d => reqIds.Contains(d.SolarRequestId))).ToList();
         if (f == "pending")  pmDocs = pmDocs.Where(d => d.Status == ApprovalStatus.Pending).ToList();
         if (f == "approved") pmDocs = pmDocs.Where(d => d.Status == ApprovalStatus.Approved).ToList();
         if (f == "rejected") pmDocs = pmDocs.Where(d => d.Status == ApprovalStatus.Rejected).ToList();
+
+        // The view groups these by request; GroupBy keeps first-appearance order,
+        // so sorting the flat list newest-first also lands the request with the
+        // most recent upload at the top of the table.
+        pmDocs = pmDocs.OrderByDescending(d => d.CreatedAt)
+                       .ThenByDescending(d => d.Id)
+                       .ToList();
 
         var siteSurveys = (await _uow.SiteSurveys.FindAsync(s => reqIds.Contains(s.SolarRequestId))).ToList();
         if (f == "pending")  siteSurveys = siteSurveys.Where(s => s.ApprovalStatus == ApprovalStatus.Pending && !s.IsCompleted).ToList();
         if (f == "approved") siteSurveys = siteSurveys.Where(s => s.ApprovalStatus == ApprovalStatus.Approved || s.IsCompleted).ToList();
         if (f == "rejected") siteSurveys = siteSurveys.Where(s => s.ApprovalStatus == ApprovalStatus.Rejected).ToList();
 
-        var meters       = (await _uow.MeterDispatches.FindAsync(m => reqIds.Contains(m.SolarRequestId))).ToList();
-        var materials    = (await _uow.MaterialDispatches.FindAsync(m => reqIds.Contains(m.SolarRequestId))).ToList();
-        var installations = (await _uow.Installations.FindAsync(i => reqIds.Contains(i.SolarRequestId))).ToList();
+        siteSurveys = siteSurveys.OrderByDescending(s => s.SurveyDate ?? s.CreatedAt)
+                                 .ThenByDescending(s => s.Id)
+                                 .ToList();
+
+        var meters       = (await _uow.MeterDispatches.FindAsync(m => reqIds.Contains(m.SolarRequestId)))
+                           .OrderByDescending(m => m.DispatchDate ?? m.CreatedAt)
+                           .ThenByDescending(m => m.Id)
+                           .ToList();
+        var materials    = (await _uow.MaterialDispatches.FindAsync(m => reqIds.Contains(m.SolarRequestId)))
+                           .OrderByDescending(m => m.DispatchDate ?? m.CreatedAt)
+                           .ThenByDescending(m => m.Id)
+                           .ToList();
+        var installations = (await _uow.Installations.FindAsync(i => reqIds.Contains(i.SolarRequestId)))
+                           .OrderByDescending(i => i.InstallationDate ?? i.CreatedAt)
+                           .ThenByDescending(i => i.Id)
+                           .ToList();
 
         var dcrDocs = (await _uow.DCRDocuments.FindAsync(d => reqIds.Contains(d.SolarRequestId))).ToList();
         if (f == "pending")  dcrDocs = dcrDocs.Where(d => d.ApprovalStatus == ApprovalStatus.Pending).ToList();
         if (f == "approved") dcrDocs = dcrDocs.Where(d => d.ApprovalStatus == ApprovalStatus.Approved).ToList();
         if (f == "rejected") dcrDocs = dcrDocs.Where(d => d.ApprovalStatus == ApprovalStatus.Rejected).ToList();
+
+        dcrDocs = dcrDocs.OrderByDescending(d => d.DCRDate ?? d.CreatedAt)
+                         .ThenByDescending(d => d.Id)
+                         .ToList();
 
         ViewBag.Filter      = f;
         ViewBag.Requests    = myRequests;

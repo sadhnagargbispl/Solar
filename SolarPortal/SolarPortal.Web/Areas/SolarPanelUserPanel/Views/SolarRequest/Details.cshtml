@@ -66,10 +66,7 @@
                             stage == Domain.Enums.ProjectStatus.PMSurvey);
                         // Site Survey button only while at that stage
                         var showSiteSurvey = !isDone && stage == Domain.Enums.ProjectStatus.SiteSurvey;
-                        // DCR button only at DCR stage AND only for Domestic
-                        var showDcr = !isDone &&
-                                       stage == Domain.Enums.ProjectStatus.DCRUpdate &&
-                                       Model.ConnectionType == Domain.Enums.ConnectionType.Domestic;
+                        // No DCR button — the DCR is uploaded by the ADMIN panel now.
                     }
 
                     @if (showPmSurya)
@@ -81,11 +78,6 @@
                     {
                         <a asp-area="SolarPanelUserPanel" asp-controller="SiteSurvey" asp-action="Index" asp-route-id="@Model.Id"
                            class="btn btn-s">📐 Site Survey</a>
-                    }
-                    @if (showDcr)
-                    {
-                        <a asp-area="SolarPanelUserPanel" asp-controller="DCR" asp-action="Upload" asp-route-id="@Model.Id"
-                           class="btn btn-s">📄 DCR Upload</a>
                     }
                     @if (!isDone)
                     {

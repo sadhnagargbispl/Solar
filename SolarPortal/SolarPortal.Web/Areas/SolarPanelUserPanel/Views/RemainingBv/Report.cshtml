@@ -1,0 +1,351 @@
+@model List<SolarPortal.Web.ViewModels.RemainingBvReportRow>
+@using SolarPortal.Domain.Enums
+@{
+    ViewData["Title"] = "Remaining BV Report";
+    var inr = System.Globalization.CultureInfo.GetCultureInfo("en-IN");
+
+    var approved = Model.Count(r => r.Status == ApprovalStatus.Approved);
+    var rejected = Model.Count(r => r.Status == ApprovalStatus.Rejected);
+    var pending  = Model.Count - approved - rejected;
+
+    var approvedIncome = Model.Where(r => r.Status == ApprovalStatus.Approved).Sum(r => r.TotalIncome);
+    var totalRemaining = Model.Sum(r => r.RemainingBV);
+    var totalIncome    = Model.Sum(r => r.TotalIncome);
+
+    // Filter key on each row, so the tabs can hide/show without a round trip.
+    string Key(ApprovalStatus s) => s switch
+    {
+        ApprovalStatus.Approved => "approved",
+        ApprovalStatus.Rejected => "rejected",
+        _                       => "pending"
+    };
+    string Badge(ApprovalStatus s) => s switch
+    {
+        ApprovalStatus.Approved => "<span class='sts sts-act'>✅ Approved</span>",
+        ApprovalStatus.Rejected => "<span class='sts sts-rej'>❌ Sent back</span>",
+        _                       => "<span class='sts sts-pend'>⏳ Pending</span>"
+    };
+    string Mode(BvBeneficiaryMode m) => m == BvBeneficiaryMode.Other ? "Other" : "Self";
+    string Dash(string? v) => string.IsNullOrWhiteSpace(v) ? "—" : v;
+}
+
+<style>
+    /* ── Remaining BV report — same shell as My Reports ──────────────── */
+    .rpt-card { background:#fff; border:1px solid #e5e7eb; border-radius:10px; margin-bottom:16px; overflow:hidden; box-shadow:0 1px 2px rgba(0,0,0,.04); }
+    .rpt-head { display:flex; align-items:center; gap:10px; padding:13px 16px; border-bottom:1px solid #e5e7eb; background:linear-gradient(180deg,#f8fafc,#f1f5f9); }
+    .rpt-head .ttl { font-weight:700; font-size:14px; color:#0f172a; }
+    .rpt-head .cnt { background:#16a34a; color:#fff; font-size:11.5px; font-weight:700; border-radius:999px; padding:2px 9px; }
+    .rpt-card table { width:100%; border-collapse:collapse; }
+    .rpt-card thead th { font-size:11px; letter-spacing:.4px; text-transform:uppercase; color:#64748b; text-align:left; padding:9px 12px; background:#fafafa; border-bottom:1px solid #e5e7eb; white-space:nowrap; }
+    .rpt-card tbody td { padding:10px 12px; font-size:13px; color:#1e293b; border-bottom:1px solid #f1f5f9; vertical-align:middle; }
+    .rpt-card tbody tr:hover:not(.det-tr) { background:#f8fafc; }
+    .rpt-card tfoot td { padding:11px 12px; font-size:13px; font-weight:700; color:#0f172a; background:#f8fafc; border-top:2px solid #e5e7eb; white-space:nowrap; }
+    .btn-det { border:1px solid #16a34a; color:#16a34a; background:#fff; border-radius:6px; padding:3px 10px; font-size:12px; font-weight:600; cursor:pointer; white-space:nowrap; }
+    .btn-det:hover { background:#16a34a; color:#fff; }
+    .det-tr > td { background:#f8fafc !important; padding:0 !important; }
+    .det-box { padding:16px 18px; }
+    .det-sec { margin-bottom:14px; }
+    .det-sec:last-child { margin-bottom:0; }
+    .det-sec-ttl { font-size:12px; font-weight:700; color:#166534; text-transform:uppercase; letter-spacing:.5px; margin-bottom:8px; border-bottom:1px dashed #cbd5e1; padding-bottom:4px; }
+    .kv-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(220px,1fr)); gap:10px 22px; }
+    .kv .k { font-size:11px; color:#64748b; margin-bottom:2px; }
+    .kv .v { font-size:13px; font-weight:600; color:#0f172a; word-break:break-word; }
+    .tbl-wrap { overflow-x:auto; }
+    .inner-tbl { background:#fff; border:1px solid #e5e7eb; border-radius:8px; overflow:hidden; }
+    .inner-tbl thead th { background:#f1f5f9; }
+
+    /* numbers read as a column, not as prose */
+    .num { text-align:right; font-variant-numeric:tabular-nums; white-space:nowrap; }
+    .num-b { text-align:right; font-variant-numeric:tabular-nums; white-space:nowrap; font-weight:700; }
+    .rbv-id { font-family:Consolas,"JetBrains Mono",monospace; font-size:12px; font-weight:700; color:#16a34a; }
+    .rbv-sub2 { font-size:11px; color:#64748b; }
+
+    /* summary strip */
+    .rpt-sum { display:flex; flex-wrap:wrap; gap:10px; margin-bottom:16px; }
+    .rpt-sum .cell { flex:1 1 165px; background:#fff; border:1px solid #e5e7eb; border-radius:10px; padding:13px 16px; }
+    .rpt-sum .cell.is-main { background:#f0fdf4; border-color:#bbf7d0; }
+    .rpt-sum .k { font-size:11px; letter-spacing:.4px; text-transform:uppercase; color:#64748b; margin-bottom:6px; }
+    .rpt-sum .v { font-size:22px; font-weight:700; line-height:1; color:#0f172a; font-variant-numeric:tabular-nums; }
+    .rpt-sum .cell.is-main .v { color:#16a34a; }
+
+    @@media print {
+        .no-print { display:none !important; }
+        .rpt-card { box-shadow:none; page-break-inside:auto; }
+        .rpt-card tbody tr { page-break-inside:avoid; }
+    }
+</style>
+
+<div class="page-header" style="padding:16px">
+    <h2>Remaining BV Report</h2>
+    <p class="text-muted">
+        Every Remaining BV record you have submitted — the BV split, who receives each income head,
+        and where the record stands with the admin. View only.
+    </p>
+</div>
+
+<div class="container-fluid">
+
+    @if (Model.Count == 0)
+    {
+        <div class="card">
+            <div class="card-body text-center text-muted" style="padding:32px">
+                You have not submitted any Remaining BV record yet.
+                <br />
+                <a class="btn btn-success mt-3"
+                   asp-area="SolarPanelUserPanel" asp-controller="RemainingBv" asp-action="Index">
+                    ➕ Open Update Remaining BV
+                </a>
+            </div>
+        </div>
+    }
+    else
+    {
+        <div class="mb-3 no-print" style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+            <a href="javascript:void(0)" class="btn btn-p"       data-f="all"      onclick="rbvFilter('all', this)">📋 All (@Model.Count)</a>
+            <a href="javascript:void(0)" class="btn btn-outline" data-f="pending"  onclick="rbvFilter('pending', this)">⏳ Pending (@pending)</a>
+            <a href="javascript:void(0)" class="btn btn-outline" data-f="approved" onclick="rbvFilter('approved', this)">✅ Approved (@approved)</a>
+            <a href="javascript:void(0)" class="btn btn-outline" data-f="rejected" onclick="rbvFilter('rejected', this)">❌ Sent back (@rejected)</a>
+            <button type="button" class="btn btn-outline" style="margin-left:auto" onclick="window.print()">🖨️ Print</button>
+        </div>
+
+        <div class="rpt-sum">
+            <div class="cell">
+                <div class="k">Records</div>
+                <div class="v">@Model.Count</div>
+            </div>
+            <div class="cell">
+                <div class="k">Pending</div>
+                <div class="v">@pending</div>
+            </div>
+            <div class="cell">
+                <div class="k">Sent back</div>
+                <div class="v">@rejected</div>
+            </div>
+            <div class="cell">
+                <div class="k">Remaining BV</div>
+                <div class="v">@totalRemaining.ToString("N2")</div>
+            </div>
+            <div class="cell is-main">
+                <div class="k">Approved income</div>
+                <div class="v">@approvedIncome.ToString("C0", inr)</div>
+            </div>
+        </div>
+
+        <div class="rpt-card">
+            <div class="rpt-head">
+                <span>💠</span>
+                <span class="ttl">Remaining BV Records</span>
+                <span class="cnt" id="rbvCount">@Model.Count</span>
+            </div>
+            <div class="tbl-wrap">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Request #</th>
+                            <th>Plan Taken</th>
+                            <th>Capacity</th>
+                            <th class="num">Total BV</th>
+                            <th class="num">Solar Request BV</th>
+                            <th class="num">Remaining BV</th>
+                            <th>Discom Income</th>
+                            <th>Deal Close</th>
+                            <th>SCI Income</th>
+                            <th class="num">Total Income</th>
+                            <th>Status</th>
+                            <th>Submitted</th>
+                            <th class="no-print">Full Details</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var r in Model)
+                        {
+                            var k = Key(r.Status);
+                            <tr class="rbv-row" data-st="@k">
+                                <td class="td-b" style="font-weight:700">@Dash(r.RequestNumber)</td>
+                                <td style="font-size:12.5px;max-width:170px" title="@r.PlanName">@Dash(r.PlanName)</td>
+                                <td style="white-space:nowrap">@r.SolarTypeKV.ToString("0.##") kV</td>
+                                <td class="num">@r.TotalBV.ToString("N2")</td>
+                                <td class="num">@r.FixedBV.ToString("N2")</td>
+                                <td class="num-b" style="color:#16a34a">@r.RemainingBV.ToString("N2")</td>
+                                <td>
+                                    <div class="rbv-id">@Dash(r.DiscomIncomeIdNo)</div>
+                                    <div class="rbv-sub2">@Mode(r.DiscomIncomeMode) · @r.DiscomIncomeAmount.ToString("C0", inr)</div>
+                                </td>
+                                <td>
+                                    <div class="rbv-id">@Dash(r.DealCloseIdNo)</div>
+                                    <div class="rbv-sub2">@Mode(r.DealCloseMode) · @r.DealCloseAmount.ToString("C0", inr)</div>
+                                </td>
+                                <td>
+                                    <div class="rbv-id">@Dash(r.SciIncomeIdNo)</div>
+                                    <div class="rbv-sub2">Sponsor · @r.SciIncomeAmount.ToString("C0", inr)</div>
+                                </td>
+                                <td class="num-b" style="color:#16a34a">@r.TotalIncome.ToString("C0", inr)</td>
+                                <td>@Html.Raw(Badge(r.Status))</td>
+                                <td style="white-space:nowrap">@(r.SubmittedAt?.ToLocalTime().ToString("dd MMM yyyy") ?? "—")</td>
+                                <td class="no-print"><button type="button" class="btn-det" onclick="toggleDet('rbv-@r.Id', this)">▸ Details</button></td>
+                            </tr>
+                            <tr id="rbv-@r.Id" class="det-tr rbv-det" data-st="@k" style="display:none">
+                                <td colspan="13">
+                                    <div class="det-box">
+
+                                        <div class="det-sec">
+                                            <div class="det-sec-ttl">🧮 BV Breakdown</div>
+                                            <div class="kv-grid">
+                                                <div class="kv"><div class="k">Total BV (plan)</div><div class="v">@r.TotalBV.ToString("N2")</div></div>
+                                                <div class="kv"><div class="k">Solar Request BV (fixed)</div><div class="v">@r.FixedBV.ToString("N2")</div></div>
+                                                <div class="kv"><div class="k">Remaining BV</div><div class="v" style="color:#16a34a">@r.RemainingBV.ToString("N2")</div></div>
+                                                <div class="kv"><div class="k">BV Source</div><div class="v" style="font-weight:500">@Dash(r.BvSource)</div></div>
+                                            </div>
+                                        </div>
+
+                                        <div class="det-sec">
+                                            <div class="det-sec-ttl">📦 Plan &amp; Order</div>
+                                            <div class="kv-grid">
+                                                <div class="kv"><div class="k">Plan Taken</div><div class="v">@Dash(r.PlanName)</div></div>
+                                                <div class="kv"><div class="k">Capacity</div><div class="v">@r.SolarTypeKV.ToString("0.##") kV</div></div>
+                                                <div class="kv"><div class="k">Order No</div><div class="v">@Dash(r.OrderNo)</div></div>
+                                                <div class="kv"><div class="k">Product</div><div class="v">@Dash(r.ProductName)</div></div>
+                                                <div class="kv"><div class="k">Sponsor ID</div><div class="v">@Dash(r.SponsorIdNo)</div></div>
+                                                <div class="kv"><div class="k">Sponsor Name</div><div class="v">@Dash(r.SponsorName)</div></div>
+                                            </div>
+                                        </div>
+
+                                        <div class="det-sec">
+                                            <div class="det-sec-ttl">💰 Income Heads</div>
+                                            <table class="inner-tbl">
+                                                <thead>
+                                                    <tr>
+                                                        <th>Head</th>
+                                                        <th>Beneficiary</th>
+                                                        <th>ID No</th>
+                                                        <th>Name</th>
+                                                        <th class="num">Amount</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    <tr>
+                                                        <td>Discom Income</td>
+                                                        <td>@Mode(r.DiscomIncomeMode)</td>
+                                                        <td class="rbv-id">@Dash(r.DiscomIncomeIdNo)</td>
+                                                        <td>@Dash(r.DiscomIncomeName)</td>
+                                                        <td class="num">@r.DiscomIncomeAmount.ToString("C0", inr)</td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td>Deal Close</td>
+                                                        <td>@Mode(r.DealCloseMode)</td>
+                                                        <td class="rbv-id">@Dash(r.DealCloseIdNo)</td>
+                                                        <td>@Dash(r.DealCloseName)</td>
+                                                        <td class="num">@r.DealCloseAmount.ToString("C0", inr)</td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td>SCI Income</td>
+                                                        <td>Sponsor</td>
+                                                        <td class="rbv-id">@Dash(r.SciIncomeIdNo)</td>
+                                                        <td>@Dash(r.SciIncomeName)</td>
+                                                        <td class="num">@r.SciIncomeAmount.ToString("C0", inr)</td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td colspan="4" style="font-weight:700">Total</td>
+                                                        <td class="num-b" style="color:#16a34a">@r.TotalIncome.ToString("C0", inr)</td>
+                                                    </tr>
+                                                </tbody>
+                                            </table>
+                                        </div>
+
+                                        <div class="det-sec">
+                                            <div class="det-sec-ttl">🗂️ Verification Trail</div>
+                                            <div class="kv-grid">
+                                                <div class="kv"><div class="k">Status</div><div class="v">@Html.Raw(Badge(r.Status))</div></div>
+                                                <div class="kv"><div class="k">Submitted On</div><div class="v">@(r.SubmittedAt?.ToLocalTime().ToString("dd MMM yyyy HH:mm") ?? "—")</div></div>
+                                                <div class="kv"><div class="k">Approved On</div><div class="v">@(r.ApprovedAt?.ToLocalTime().ToString("dd MMM yyyy HH:mm") ?? "—")</div></div>
+                                                <div class="kv"><div class="k">Added To Daily Payout</div><div class="v">@(r.PayoutPostedAt?.ToLocalTime().ToString("dd MMM yyyy") ?? "—")</div></div>
+                                                <div class="kv"><div class="k">Admin Remark</div><div class="v" style="font-weight:500">@Dash(r.AdminRemark)</div></div>
+                                                <div class="kv">
+                                                    <div class="k">Rejection Reason</div>
+                                                    <div class="v" style="font-weight:500;color:@(string.IsNullOrWhiteSpace(r.RejectionReason) ? "#0f172a" : "#dc2626")">@Dash(r.RejectionReason)</div>
+                                                </div>
+                                            </div>
+                                            <div style="margin-top:10px;font-size:12px;color:#64748b">
+                                                @if (r.Status == ApprovalStatus.Approved)
+                                                {
+                                                    if (r.PayoutPostedAt.HasValue)
+                                                    {
+                                                        <text>This record is locked and the income has been added to the daily payout.</text>
+                                                    }
+                                                    else
+                                                    {
+                                                        <text>This record is locked and the income is due in the daily payout.</text>
+                                                    }
+                                                }
+                                                else if (r.Status == ApprovalStatus.Rejected)
+                                                {
+                                                    <text>
+                                                        Sent back by the admin. Correct it on the
+                                                        <a asp-area="SolarPanelUserPanel" asp-controller="RemainingBv" asp-action="Index" style="color:#16a34a;font-weight:600">Update Remaining BV</a>
+                                                        page and save again — it reuses this same record.
+                                                    </text>
+                                                }
+                                                else
+                                                {
+                                                    <text>
+                                                        With the admin for verification. You can still change this record on the
+                                                        <a asp-area="SolarPanelUserPanel" asp-controller="RemainingBv" asp-action="Index" style="color:#16a34a;font-weight:600">Update Remaining BV</a>
+                                                        page until it is approved.
+                                                    </text>
+                                                }
+                                            </div>
+                                        </div>
+
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                    <tfoot>
+                        <tr>
+                            <td colspan="5">Grand Total</td>
+                            <td class="num" style="color:#16a34a">@totalRemaining.ToString("N2")</td>
+                            <td colspan="3"></td>
+                            <td class="num" style="color:#16a34a">@totalIncome.ToString("C0", inr)</td>
+                            <td colspan="3" class="rbv-sub2" style="font-weight:500">
+                                Approved only: @approvedIncome.ToString("C0", inr)
+                            </td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+        </div>
+    }
+</div>
+
+<script>
+    // Expand / collapse a "Full Details" row
+    function toggleDet(id, btn) {
+        var row = document.getElementById(id);
+        if (!row) return;
+        var open = row.style.display !== 'none';
+        row.style.display = open ? 'none' : 'table-row';
+        if (btn) btn.innerHTML = open ? '▸ Details' : '▾ Hide';
+    }
+
+    // Status tabs. Collapses every open detail row first, so a hidden record can
+    // never be left expanded behind a filter.
+    function rbvFilter(f, el) {
+        document.querySelectorAll('[data-f]').forEach(function (b) {
+            b.className = (b.getAttribute('data-f') === f) ? 'btn btn-p' : 'btn btn-outline';
+        });
+
+        document.querySelectorAll('.rbv-det').forEach(function (d) { d.style.display = 'none'; });
+        document.querySelectorAll('.btn-det').forEach(function (b) { b.innerHTML = '▸ Details'; });
+
+        var shown = 0;
+        document.querySelectorAll('.rbv-row').forEach(function (tr) {
+            var ok = (f === 'all') || (tr.getAttribute('data-st') === f);
+            tr.style.display = ok ? 'table-row' : 'none';
+            if (ok) shown++;
+        });
+
+        var c = document.getElementById('rbvCount');
+        if (c) c.innerHTML = shown;
+    }
+</script>
