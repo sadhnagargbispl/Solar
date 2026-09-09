@@ -179,8 +179,11 @@
                                     <button type="button" class="btn btn-sm btn-s"
                                             onclick="openCameraFor(document.getElementById('file-@d.Type'))">📷 Camera</button>
                                 }
+                                @* Named "Gallery" next to Camera, so the pair is obvious: a PC with
+                                   no webcam (or with camera access blocked) still has a way in, and
+                                   it is the same button that used to say Upload / Replace. *@
                                 <button class="btn btn-sm @(uploaded != null ? "btn-s" : "btn-p") pm-pick" data-target="file-@d.Type">
-                                    @(uploaded != null ? "Replace" : "Upload")
+                                    @(uploaded != null ? "🖼️ Replace" : "🖼️ Gallery")
                                 </button>
                             }
                             @if (uploaded != null)
@@ -264,6 +267,27 @@
                     else { pmLabel = "Not uploaded yet"; pmCls = "sts-pend"; }
                 }
                 <div class="sr"><span class="srk">PM Surya Status</span><span class="srv"><span class="sts @pmCls">@pmLabel</span></span></div>
+                @{
+                    // The admin panel lets only the admin who ACCEPTED the case approve
+                    // it, so that name is the approver. Shown to the member once the
+                    // project has actually moved past PM Surya — before that, nothing
+                    // has been approved and naming an admin would be misleading.
+                    var pmApprovedBy = req.PmSuryaAcceptedByName ?? req.PmSuryaAcceptedBy;
+                    var pmPastSurvey = (int)req.CurrentStage > (int)SolarPortal.Domain.Enums.ProjectStatus.PMSurvey;
+                }
+                @if (pmPastSurvey && !string.IsNullOrWhiteSpace(pmApprovedBy))
+                {
+                    <div class="sr">
+                        <span class="srk">Approved By</span>
+                        <span class="srv">
+                            @pmApprovedBy
+                            @if (req.PmSuryaAcceptedAt.HasValue)
+                            {
+                                <div class="hint">@req.PmSuryaAcceptedAt.Value.ToLocalTime().ToString("dd MMM yyyy, HH:mm")</div>
+                            }
+                        </span>
+                    </div>
+                }
                 @if (!string.IsNullOrWhiteSpace(loanOpt))
                 {
                     <div class="sr"><span class="srk">Loan Preference</span><span class="srv">@(loanOpt == "Loan" ? "On Loan" : "Without Loan")</span></div>

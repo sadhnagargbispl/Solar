@@ -1,0 +1,55 @@
+2026-09-09 15:55:08.345 +05:30 [INF] DbSeeder: skipping all DB schema work (live DB managed externally).
+2026-09-09 15:55:08.700 +05:30 [INF] Now listening on: http://localhost:5038
+2026-09-09 15:55:08.706 +05:30 [INF] Application started. Press Ctrl+C to shut down.
+2026-09-09 15:55:08.709 +05:30 [INF] Hosting environment: Production
+2026-09-09 15:55:08.713 +05:30 [INF] Content root path: \\localhost\Sadhna\SolerGithub\Solar\SolarPortal\SolarPortal.Web
+2026-09-09 15:55:33.746 +05:30 [INF] Request starting HTTP/1.1 GET http://localhost:5038/ - null null
+2026-09-09 15:55:34.226 +05:30 [WRN] Failed to determine the https port for redirect.
+2026-09-09 15:55:34.354 +05:30 [INF] Executing endpoint 'SolarPortal.Web.Controllers.HomeController.Index (SolarPortal.Web)'
+2026-09-09 15:55:34.373 +05:30 [INF] Route matched with {action = "Index", controller = "Home", area = ""}. Executing controller action with signature Microsoft.AspNetCore.Mvc.IActionResult Index() on controller SolarPortal.Web.Controllers.HomeController (SolarPortal.Web).
+2026-09-09 15:55:34.380 +05:30 [INF] Authorization failed. These requirements were not met:
+DenyAnonymousAuthorizationRequirement: Requires an authenticated user.
+2026-09-09 15:55:34.381 +05:30 [INF] Authorization failed for the request at filter 'Microsoft.AspNetCore.Mvc.Authorization.AuthorizeFilter'.
+2026-09-09 15:55:34.383 +05:30 [INF] Executing ChallengeResult with authentication schemes ([]).
+2026-09-09 15:55:34.387 +05:30 [INF] AuthenticationScheme: Identity.Application was challenged.
+2026-09-09 15:55:34.393 +05:30 [INF] Executed action SolarPortal.Web.Controllers.HomeController.Index (SolarPortal.Web) in 13.8226ms
+2026-09-09 15:55:34.397 +05:30 [INF] Executed endpoint 'SolarPortal.Web.Controllers.HomeController.Index (SolarPortal.Web)'
+2026-09-09 15:55:34.402 +05:30 [INF] Request finished HTTP/1.1 GET http://localhost:5038/ - 302 0 null 656.9077ms
+2026-09-09 15:55:34.408 +05:30 [INF] Request starting HTTP/1.1 GET http://localhost:5038/Account/Login?ReturnUrl=%2F - null null
+2026-09-09 15:55:34.414 +05:30 [INF] Executing endpoint 'SolarPortal.Web.Controllers.AccountController.Login (SolarPortal.Web)'
+2026-09-09 15:55:34.423 +05:30 [INF] Route matched with {action = "Login", controller = "Account", area = ""}. Executing controller action with signature Microsoft.AspNetCore.Mvc.IActionResult Login(System.String, System.String) on controller SolarPortal.Web.Controllers.AccountController (SolarPortal.Web).
+2026-09-09 15:55:35.429 +05:30 [INF] Executing ViewResult, running view Login.
+2026-09-09 15:55:35.627 +05:30 [INF] Executed ViewResult - view Login executed in 232.8076ms.
+2026-09-09 15:55:35.667 +05:30 [INF] Executed action SolarPortal.Web.Controllers.AccountController.Login (SolarPortal.Web) in 1243.0782ms
+2026-09-09 15:55:35.668 +05:30 [INF] Executed endpoint 'SolarPortal.Web.Controllers.AccountController.Login (SolarPortal.Web)'
+2026-09-09 15:55:35.674 +05:30 [INF] Request finished HTTP/1.1 GET http://localhost:5038/Account/Login?ReturnUrl=%2F - 200 null text/html; charset=utf-8 1265.3811ms
+2026-09-09 15:57:04.152 +05:30 [INF] DbSeeder: skipping all DB schema work (live DB managed externally).
+2026-09-09 15:57:04.375 +05:30 [INF] Now listening on: http://localhost:5038
+2026-09-09 15:57:04.478 +05:30 [INF] Application started. Press Ctrl+C to shut down.
+2026-09-09 15:57:04.484 +05:30 [INF] Hosting environment: Development
+2026-09-09 15:57:04.487 +05:30 [INF] Content root path: \\localhost\Sadhna\SolerGithub\Solar\SolarPortal\SolarPortal.Web
+2026-09-09 15:59:15.487 +05:30 [INF] DbSeeder: skipping all DB schema work (live DB managed externally).
+2026-09-09 15:59:15.834 +05:30 [INF] Now listening on: http://localhost:5038
+2026-09-09 15:59:15.843 +05:30 [INF] Application started. Press Ctrl+C to shut down.
+2026-09-09 15:59:15.848 +05:30 [INF] Hosting environment: Development
+2026-09-09 15:59:15.851 +05:30 [INF] Content root path: \\localhost\Sadhna\SolerGithub\Solar\SolarPortal\SolarPortal.Web
+2026-09-09 15:59:38.110 +05:30 [INF] Request starting HTTP/1.1 GET http://localhost:5038/ - null null
+2026-09-09 15:59:38.665 +05:30 [WRN] Failed to determine the https port for redirect.
+2026-09-09 15:59:38.739 +05:30 [INF] Executing endpoint 'SolarPortal.Web.Controllers.HomeController.Index (SolarPortal.Web)'
+2026-09-09 15:59:38.855 +05:30 [INF] Route matched with {action = "Index", controller = "Home", area = ""}. Executing controller action with signature Microsoft.AspNetCore.Mvc.IActionResult Index() on controller SolarPortal.Web.Controllers.HomeController (SolarPortal.Web).
+2026-09-09 15:59:38.960 +05:30 [INF] Authorization failed. These requirements were not met:
+DenyAnonymousAuthorizationRequirement: Requires an authenticated user.
+2026-09-09 15:59:38.961 +05:30 [INF] Authorization failed for the request at filter 'Microsoft.AspNetCore.Mvc.Authorization.AuthorizeFilter'.
+2026-09-09 15:59:38.963 +05:30 [INF] Executing ChallengeResult with authentication schemes ([]).
+2026-09-09 15:59:38.968 +05:30 [INF] AuthenticationScheme: Identity.Application was challenged.
+2026-09-09 15:59:38.973 +05:30 [INF] Executed action SolarPortal.Web.Controllers.HomeController.Index (SolarPortal.Web) in 16.2108ms
+2026-09-09 15:59:38.976 +05:30 [INF] Executed endpoint 'SolarPortal.Web.Controllers.HomeController.Index (SolarPortal.Web)'
+2026-09-09 15:59:38.981 +05:30 [INF] Request finished HTTP/1.1 GET http://localhost:5038/ - 302 0 null 873.8359ms
+2026-09-09 15:59:38.986 +05:30 [INF] Request starting HTTP/1.1 GET http://localhost:5038/Account/Login?ReturnUrl=%2F - null null
+2026-09-09 15:59:38.993 +05:30 [INF] Executing endpoint 'SolarPortal.Web.Controllers.AccountController.Login (SolarPortal.Web)'
+2026-09-09 15:59:39.002 +05:30 [INF] Route matched with {action = "Login", controller = "Account", area = ""}. Executing controller action with signature Microsoft.AspNetCore.Mvc.IActionResult Login(System.String, System.String) on controller SolarPortal.Web.Controllers.AccountController (SolarPortal.Web).
+2026-09-09 15:59:40.145 +05:30 [INF] Executing ViewResult, running view Login.
+2026-09-09 15:59:41.831 +05:30 [INF] Executed ViewResult - view Login executed in 1710.4459ms.
+2026-09-09 15:59:41.852 +05:30 [INF] Executed action SolarPortal.Web.Controllers.AccountController.Login (SolarPortal.Web) in 2849.5215ms
+2026-09-09 15:59:41.853 +05:30 [INF] Executed endpoint 'SolarPortal.Web.Controllers.AccountController.Login (SolarPortal.Web)'
+2026-09-09 15:59:41.859 +05:30 [INF] Request finished HTTP/1.1 GET http://localhost:5038/Account/Login?ReturnUrl=%2F - 200 null text/html; charset=utf-8 2872.0309ms

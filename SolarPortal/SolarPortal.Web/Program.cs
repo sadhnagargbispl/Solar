@@ -26,7 +26,13 @@ var mvcBuilder = builder.Services.AddControllersWithViews(options =>
 });
 
 // Razor runtime compilation in Development for hot-reload of .cshtml
-if (builder.Environment.IsDevelopment())
+// Switchable: this is the one piece of startup that walks the whole content root.
+// With the project on a network share the walk can stall, and the app then never
+// reaches Kestrel - it hangs with no log line at all. Set
+// "RazorRuntimeCompilation": false in appsettings.Development.json to start
+// without it; .cshtml edits then need a rebuild, as in Release.
+if (builder.Environment.IsDevelopment() &&
+    builder.Configuration.GetValue("RazorRuntimeCompilation", true))
 {
     mvcBuilder.AddRazorRuntimeCompilation();
 }

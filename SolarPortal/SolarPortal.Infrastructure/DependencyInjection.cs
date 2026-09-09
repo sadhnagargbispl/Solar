@@ -118,6 +118,9 @@ public static class DependencyInjection
 
         // INC commission + wallet: on Mark Complete the installer's commission is         // worked out from CommissionMasters and credited to IncCommissionLedger and         // the legacy TrnVoucher INC wallet (AcType 'I').
         services.AddScoped<IIncWalletService, IncWalletService>();
+        // The member's SOLAR wallet (dbo.SolarTrnvoucher): a solar payment credits
+        // it the moment it is submitted, and admin Fund Transfer moves it either way.
+        services.AddScoped<ISolarWalletService, SolarWalletService>();
 
         return services;
     }

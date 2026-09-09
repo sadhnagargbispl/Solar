@@ -94,9 +94,13 @@ public class IncWalletService : IIncWalletService
 
         int? projectId;
         string requestNumber;
+        string memberIdNo;
         await using (var q = conn.CreateCommand())
         {
-            q.CommandText = "SELECT SolarProjectId, RequestNumber FROM dbo.SolarRequests WHERE Id = @r";
+            // UserId comes along for the narration: the voucher used to name only the
+            // request number, so anyone reading the INC ledger had to look the member
+            // up separately. Same line the admin panel's writer produces.
+            q.CommandText = "SELECT SolarProjectId, RequestNumber, UserId FROM dbo.SolarRequests WHERE Id = @r";
             q.Parameters.Add(new SqlParameter("@r", solarRequestId));
             await using var rd = await q.ExecuteReaderAsync();
             if (!await rd.ReadAsync())
@@ -106,6 +110,7 @@ public class IncWalletService : IIncWalletService
             }
             projectId     = rd.IsDBNull(0) ? null : Convert.ToInt32(rd.GetValue(0));
             requestNumber = rd.IsDBNull(1) ? string.Empty : (rd.GetValue(1)?.ToString() ?? string.Empty).Trim();
+            memberIdNo    = rd.IsDBNull(2) ? string.Empty : (rd.GetValue(2)?.ToString() ?? string.Empty).Trim();
         }
 
         if (projectId is null or 0)
@@ -135,7 +140,12 @@ public class IncWalletService : IIncWalletService
         result.TdsAmount   = 0m;
         result.NetAmount   = commission;
 
-        var narration = $"INC commission for {requestNumber}";
+        // Narration carries the MEMBER ID next to the request number — the voucher is
+        // read on its own in the ledger, where "SCR-010" alone says nothing about
+        // whose project it was. (Narration is varchar(2500).)
+        var narration = string.IsNullOrWhiteSpace(memberIdNo)
+            ? $"INC commission for {requestNumber}"
+            : $"INC commission for {requestNumber} · Member ID {memberIdNo}";
         var refNo     = $"INC/{requestNumber}";
 
         await using var tx = (SqlTransaction)await conn.BeginTransactionAsync();

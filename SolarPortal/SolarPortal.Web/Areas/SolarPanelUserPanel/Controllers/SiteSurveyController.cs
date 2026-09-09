@@ -215,6 +215,11 @@ public class SiteSurveyController : Controller
             existing.RejectionReason     = null;
             existing.RejectedAt          = null;
             existing.RejectedBy          = null;
+            // This is a FRESH submission on the same row, so its dates move to now.
+            // Left alone, the admin's queue and every report showed the day the
+            // survey was first filled, not the day this one actually arrived.
+            existing.SurveyDate          = DateTime.UtcNow;
+            existing.CreatedAt           = DateTime.UtcNow;
             existing.UpdatedAt           = DateTime.UtcNow;
             existing.UpdatedBy           = userId;
             await _uow.SaveChangesAsync();

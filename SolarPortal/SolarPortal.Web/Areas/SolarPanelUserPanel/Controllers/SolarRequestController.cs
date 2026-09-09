@@ -986,6 +986,14 @@ public class SolarRequestController : Controller
                         : $"[Resubmitted on {DateTime.UtcNow:yyyy-MM-dd HH:mm} UTC] | Prior reject reason: {priorNote}";
                 }
 
+                // ─── Request date = the day it was actually submitted ──────────
+                // The row itself may be days old: an auto-stub is created at first
+                // login and can sit unfilled, and a rejected request keeps its
+                // original row when it is re-submitted. CreatedAt is what every
+                // screen labels "Request Date", so leaving it alone showed a member
+                // who filled the form today as having requested a week ago.
+                // Stamping it here makes the date mean "when this request came in".
+                entity.CreatedAt = DateTime.UtcNow;
                 entity.UpdatedAt = DateTime.UtcNow;
                 entity.UpdatedBy = userId;
                 await _db.SaveChangesAsync();

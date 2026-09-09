@@ -55,6 +55,16 @@ public class SolarRequest : BaseEntity
     // user's own draft and stays replaceable until the next submit.
     public DateTime? PMSuryaSubmittedAt { get; set; }
 
+    // ─── Which admin handled the PM Surya Ghar case ──────────────────────
+    // Written by the ADMIN panel (shared DB columns) when an admin ACCEPTS the
+    // case. Only that admin may approve it — the admin panel refuses anyone else
+    // — so once the request has moved past PM Surya, the name here is also the
+    // one who APPROVED it, and the member is shown it on their PM Surya page.
+    // Read-only from this app's point of view; nothing here ever writes them.
+    public string? PmSuryaAcceptedBy { get; set; }
+    public string? PmSuryaAcceptedByName { get; set; }
+    public DateTime? PmSuryaAcceptedAt { get; set; }
+
 
     // ─── Mode history (which mode was taken, and when) ───────────────────
     // "Activate Now" upgrades a Without-Activation request by OVERWRITING

@@ -50,6 +50,11 @@ public class PMDocumentService : IPMDocumentService
             existing.FileSize    = fileSize;
             existing.Status      = ApprovalStatus.Pending; // re-review from scratch
             existing.Remarks     = null;                   // clear prior reject remark
+            // The row now stands for the file uploaded JUST NOW, so its date moves
+            // with it. Left at the first upload, every screen that shows an upload
+            // date (the user's PM Surya page, the admin's document list, My Reports)
+            // reported a week-old date for a file replaced today.
+            existing.CreatedAt   = DateTime.UtcNow;
             existing.UpdatedAt   = DateTime.UtcNow;
             _unitOfWork.PMDocuments.Update(existing);
             document = existing;
