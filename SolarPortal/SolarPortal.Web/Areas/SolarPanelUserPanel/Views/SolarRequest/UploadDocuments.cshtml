@@ -1,4 +1,4 @@
-@{
+﻿@{
     ViewData["Title"] = "Upload Documents";
     int requestId = (int)(ViewBag.RequestId ?? 0);
     string requestNumber = (string)(ViewBag.RequestNumber ?? "");
@@ -33,7 +33,7 @@
                 <div class="fg">
                     <label>@label @if (required) { <span class="req">*</span> }</label>
                     <div class="upload-area">
-                        <input type="file" id="@inputId" accept="image/*,.pdf"
+                        <input type="file" id="@inputId" accept="image/*,.pdf" data-camera
                                onchange="previewDoc('@inputId','prev-@inputId','@docType.ToLower()')" />
                         <div class="upload-icon">@icon</div>
                         <div class="upload-txt">Upload @label</div>
@@ -59,7 +59,7 @@
                     <span style="font-size:10px;color:var(--text3)">(Farad / पट्टा / Registry)</span>
                 </label>
                 <div class="upload-area">
-                    <input type="file" id="doc-prop" accept="image/*,.pdf"
+                    <input type="file" id="doc-prop" accept="image/*,.pdf" data-camera
                            onchange="previewSingle('doc-prop','prev-prop')" />
                     <div class="upload-icon">🏠</div>
                     <div class="upload-txt">Upload Property Document</div>
@@ -76,7 +76,7 @@
             <div class="fg">
                 <label>GPS Photo <span class="req">*</span></label>
                 <div class="upload-area">
-                    <input type="file" id="doc-gps" accept="image/*"
+                    <input type="file" id="doc-gps" accept="image/*" data-camera
                            onchange="previewSingle('doc-gps','prev-gps')" />
                     <div class="upload-icon">📍</div>
                     <div class="upload-txt">Upload GPS Location Photo</div>

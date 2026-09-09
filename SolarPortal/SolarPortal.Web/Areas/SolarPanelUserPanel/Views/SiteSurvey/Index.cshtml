@@ -1,4 +1,4 @@
-@{
+﻿@{
     ViewData["Title"] = "Site Survey";
     var req = (SolarPortal.Domain.Entities.SolarRequest)ViewBag.Request;
     var latest = (SolarPortal.Domain.Entities.SiteSurvey?)ViewBag.LatestSurvey;
@@ -280,7 +280,7 @@
                     <div class="fc">
                         <label class="fl">Roof Photo</label>
                         <div class="file-row">
-                            <input type="file" name="roofPhoto" accept="image/*" onchange="previewImg(this,'roofPrev')" />
+                            <input type="file" name="roofPhoto" accept="image/*" data-camera onchange="previewImg(this,'roofPrev')" />
                             <div style="font-size:11px;color:#94a3b8;margin-top:4px">JPG / PNG • Max 5 MB</div>
                             <div id="roofPrev" class="img-prev">
                                 @if (!string.IsNullOrWhiteSpace(latest?.RoofPhotoPath))
@@ -295,7 +295,7 @@
                         @* Spec task 16: GPS / Location Photo replaced with House Photo. *@
                         <label class="fl">House Photo</label>
                         <div class="file-row">
-                            <input type="file" name="housePhoto" accept="image/*" onchange="previewImg(this,'housePrev')" />
+                            <input type="file" name="housePhoto" accept="image/*" data-camera onchange="previewImg(this,'housePrev')" />
                             <div style="font-size:11px;color:#94a3b8;margin-top:4px">Front of the house • JPG / PNG • Max 5 MB</div>
                             <div id="housePrev" class="img-prev">
                                 @if (!string.IsNullOrWhiteSpace(latest?.GpsPhotoPath))

@@ -30,7 +30,10 @@
 
     // DocumentType values 11-14 belong to the ADMIN project (no enum member here).
     string DocTypeLabel(SolarPortal.Domain.Enums.DocumentType t) =>
-        (int)t >= 11 && (int)t <= 14 ? "Admin Approval Document" : t.ToString();
+        (int)t >= 11 && (int)t <= 14 ? "Admin Approval Document"
+        : t == SolarPortal.Domain.Enums.DocumentType.AadharCard     ? "Aadhaar Card — Front"
+        : t == SolarPortal.Domain.Enums.DocumentType.AadharCardBack ? "Aadhaar Card — Back"
+        : t.ToString();
 
     string Dash(string? v) => string.IsNullOrWhiteSpace(v) ? "—" : v;
 

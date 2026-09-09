@@ -3,7 +3,9 @@
     ViewData["Title"] = "My Dashboard";
     var subTotal = (decimal)(ViewBag.TotalSubmitted ?? 0m);
     var verTotal = (decimal)(ViewBag.VerifiedPaid ?? 0m);
-    var minVal   = (decimal)(ViewBag.Minimum ?? 20000m);
+    @* Fallback reads the same server constant, so a missing ViewBag can never
+       quote an out-of-date floor. *@
+    var minVal   = (decimal)(ViewBag.Minimum ?? SolarPortal.Application.Services.PaymentService.MinimumPaymentThreshold);
 
     string StageStsClass(Domain.Enums.ProjectStatus s) => s switch
     {

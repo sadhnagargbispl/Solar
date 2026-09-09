@@ -22,6 +22,11 @@
     // mode except Already Active, so the payment block below is untouched for
     // everyone else.
     decimal activeIdDeposit = (decimal)(ViewBag.ActiveIdDeposit ?? 0m);
+
+    // The first-payment floor. Read from the one server-side constant instead of
+    // being typed into the page, so the label, the input's min and the JS all move
+    // together the day the figure changes (it was ₹20,000, now ₹15,900).
+    decimal minFirstPayment = SolarPortal.Application.Services.PaymentService.MinimumPaymentThreshold;
 }
 
 <div class="page active">
@@ -352,7 +357,7 @@
                         <div class="fg">
                             <label>Proof (Light bill / relation proof) <span class="req">*</span></label>
                             <div class="upload-area">
-                                <input type="file" asp-for="LightBillProof" id="lightBillProofInput" accept="image/*,.pdf" onchange="previewLightBillProof(this)" />
+                                <input type="file" asp-for="LightBillProof" id="lightBillProofInput" accept="image/*,.pdf" data-camera onchange="previewLightBillProof(this)" />
                                 <div class="upload-icon">📎</div>
                                 <div class="upload-txt">Upload light bill / proof</div>
                                 <div class="upload-hint">JPG, PNG, PDF • Max 10 MB</div>
@@ -685,7 +690,7 @@
                 }
 
                 <div class="alert alert-i" style="font-size:13px" id="paymentHint">
-                    <span class="ai">ℹ</span>Minimum first payment is <strong id="minPaymentLabel">₹20,000</strong>. Cannot exceed project amount.
+                    <span class="ai">ℹ</span>Minimum first payment is <strong id="minPaymentLabel">₹@minFirstPayment.ToString("N0")</strong>. Cannot exceed project amount.
                     Payment is saved as <strong>Pending</strong> — admin will verify it.
                 </div>
                 <div class="alert alert-s" style="font-size:13px;display:none" id="paymentOptionalHint">
@@ -695,7 +700,9 @@
                 <div class="fr">
                     <div class="fg">
                         <label asp-for="PaymentAmount">Payment Amount <span class="req">*</span></label>
-                        <input asp-for="PaymentAmount" id="paymentAmountInput" type="number" min="20000" step="1" placeholder="20000" />
+                        <input asp-for="PaymentAmount" id="paymentAmountInput" type="number"
+                               min="@minFirstPayment.ToString(System.Globalization.CultureInfo.InvariantCulture)" step="1"
+                               placeholder="@minFirstPayment.ToString(System.Globalization.CultureInfo.InvariantCulture)" />
                         <span asp-validation-for="PaymentAmount" class="hint" style="color:var(--danger)"></span>
                     </div>
                     <div class="fg">
@@ -732,7 +739,7 @@
                 <div class="fg">
                     <label>Payment Receipt (Image / PDF) <span class="req">*</span></label>
                     <div class="upload-area">
-                        <input type="file" asp-for="PaymentReceipt" id="paymentReceiptInput" accept="image/*,.pdf"
+                        <input type="file" asp-for="PaymentReceipt" id="paymentReceiptInput" accept="image/*,.pdf" data-camera
                                onchange="previewReceiptPreview(this)" />
                         <div class="upload-icon">🧾</div>
                         <div class="upload-txt">Upload payment screenshot / receipt</div>
@@ -828,18 +835,20 @@
         // floor and ceiling below are computed on (plan − deposit). 0 for every
         // other mode, which keeps the original rules exactly as they were.
         const ACTIVE_DEPOSIT = @activeIdDeposit.ToString(System.Globalization.CultureInfo.InvariantCulture);
+        // Same floor the server enforces — never a number typed into the script.
+        const MIN_FIRST_PAYMENT = @minFirstPayment.ToString(System.Globalization.CultureInfo.InvariantCulture);
 
         // Keeps the "you only pay the balance" banner showing a real figure once
         // a plan is picked (the plan amount is chosen after the page loads).
         // The hint above is written for the no-deposit case. Once a deposit and a
-        // plan are known the real floor is (20,000 - deposit), so keep the number
+        // plan are known the real floor is (minimum - deposit), so keep the number
         // the user reads in step with the number that is actually enforced.
         function refreshMinPaymentLabel() {
             const lbl = document.getElementById('minPaymentLabel');
             if (!lbl) return;
             const planAmt = parseFloat(document.getElementById('planAmountInput')?.value || '0');
             const payable = Math.max(0, planAmt - ACTIVE_DEPOSIT);
-            const need = Math.max(0, 20000 - ACTIVE_DEPOSIT);
+            const need = Math.max(0, MIN_FIRST_PAYMENT - ACTIVE_DEPOSIT);
             const min = planAmt > 0 ? Math.min(need, payable) : need;
             lbl.textContent = '\u20B9' + min.toLocaleString('en-IN');
         }
@@ -1247,9 +1256,9 @@
             }
 
             // Mirrors ApplyDeposit(): the deposit is money the project has already
-            // received, so it counts towards the ₹20,000 floor. ₹19,900 on deposit
-            // leaves a ₹100 minimum, not ₹10,100.
-            const stillNeededForFloor = Math.max(0, 20000 - ACTIVE_DEPOSIT);
+            // received, so it counts towards the minimum floor. A deposit ₹100 short
+            // of the floor leaves a ₹100 minimum, not the whole floor again.
+            const stillNeededForFloor = Math.max(0, MIN_FIRST_PAYMENT - ACTIVE_DEPOSIT);
             const hardMin = payable > 0 ? Math.min(stillNeededForFloor, payable) : stillNeededForFloor;
 
             if (!payAmt || payAmt < hardMin) {

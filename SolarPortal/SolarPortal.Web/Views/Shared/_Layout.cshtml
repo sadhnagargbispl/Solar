@@ -104,6 +104,13 @@
        asks the source before opening the picker. No existing markup changes.
     *@
     <script src="~/js/photo-source.js" asp-append-version="true"></script>
+    @*
+       The chooser above only reaches a phone's camera; on a desktop `capture` is
+       ignored, so there was no way to photograph a document from a PC at all.
+       This adds a "📷 Camera" button to any file input marked data-camera, using
+       the webcam on desktop and the OS camera on mobile.
+    *@
+    <script src="~/js/camera-capture.js" asp-append-version="true"></script>
     @await RenderSectionAsync("Scripts", required: false)
 
     <script>

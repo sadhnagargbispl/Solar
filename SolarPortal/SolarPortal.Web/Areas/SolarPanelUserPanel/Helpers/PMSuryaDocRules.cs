@@ -9,17 +9,28 @@ namespace SolarPortal.Web.Areas.SolarPanelUserPanel.Helpers;
 /// </summary>
 public static class PMSuryaDocRules
 {
-    /// <summary>The 8 documents the user must upload (same list as the Upload page).</summary>
+    /// <summary>
+    /// The documents the user MUST upload (same list as the Upload page).
+    /// Property Document is deliberately absent — it is optional now, so a member
+    /// who cannot produce a Farad / पट्टा / Registry is no longer held at the PM
+    /// Surya Ghar stage. It can still be uploaded, and is still reviewed when it is.
+    /// </summary>
     public static readonly DocumentType[] RequiredTypes =
     {
-        DocumentType.AadharCard,
+        DocumentType.AadharCard,        // front
+        DocumentType.AadharCardBack,    // back — Aadhaar is taken as two shots
         DocumentType.PANCard,
         DocumentType.LightBill,
         DocumentType.BankPassbook,
-        DocumentType.PropertyDocument,
         DocumentType.GPSPhoto,
         DocumentType.Photo,
         DocumentType.Signature
+    };
+
+    /// <summary>Documents the user may upload but is never blocked on.</summary>
+    public static readonly DocumentType[] OptionalTypes =
+    {
+        DocumentType.PropertyDocument
     };
 
     /// <summary>

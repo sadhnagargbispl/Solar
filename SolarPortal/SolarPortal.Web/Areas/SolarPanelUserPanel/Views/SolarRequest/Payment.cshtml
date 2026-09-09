@@ -1,4 +1,4 @@
-@model SolarPortal.Application.DTOs.SolarRequestDto
+﻿@model SolarPortal.Application.DTOs.SolarRequestDto
 @{
     ViewData["Title"] = "Payment";
     var payments = (IEnumerable<SolarPortal.Application.DTOs.PaymentDto>)(ViewBag.Payments ?? Enumerable.Empty<SolarPortal.Application.DTOs.PaymentDto>());
@@ -33,7 +33,7 @@
                 @{
                     var totalPaid = (decimal)(ViewBag.TotalPaid ?? 0m);
                     var verified  = (decimal)(ViewBag.VerifiedPaid ?? 0m);
-                    var minimum   = (decimal)(ViewBag.MinimumThreshold ?? 20000m);
+                    var minimum   = (decimal)(ViewBag.MinimumThreshold ?? SolarPortal.Application.Services.PaymentService.MinimumPaymentThreshold);
 
                     // Image point 1 — money already deposited through the cPanel order
                     // of an already-active ID. It is a genuine credit against this
@@ -205,7 +205,7 @@
                            onclick), which on some browsers makes the dialog open,
                            close, and require a SECOND click to actually pick. *@
                         <div class="upload-area">
-                            <input type="file" name="receiptImage" id="payReceipt" accept="image/*,.pdf"
+                            <input type="file" name="receiptImage" id="payReceipt" accept="image/*,.pdf" data-camera
                                    onchange="previewSingle('payReceipt','pay-prev')" />
                             <div class="upload-icon">🖼️</div>
                             <div class="upload-txt">Upload payment screenshot / receipt</div>

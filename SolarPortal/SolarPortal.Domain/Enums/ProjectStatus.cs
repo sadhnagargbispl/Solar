@@ -51,7 +51,12 @@ public enum DocumentType
     // NOTE: values 11-14 are used by the Admin project on the shared
     // PMDocuments.DocumentType column, so we use 15/16 to avoid a clash.
     Photo = 15,
-    Signature = 16
+    Signature = 16,
+    // Aadhaar has two sides. AadharCard (=1) stays the FRONT so every existing row
+    // keeps its meaning; the back gets its own type and its own upload slot.
+    // 17 is free in the ADMIN project's copy of this enum too — both apps share
+    // the PMDocuments.DocumentType column, so the numbers must stay in step.
+    AadharCardBack = 17
 }
 
 public enum RequestType

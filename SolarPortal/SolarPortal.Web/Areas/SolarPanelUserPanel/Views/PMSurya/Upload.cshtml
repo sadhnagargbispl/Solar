@@ -19,19 +19,26 @@
     // PM Surya Ghar ID: this app writes PMSuryaGharIdNo, the admin app writes PmSuryaApplicationNo.
     var pmGharId = !string.IsNullOrWhiteSpace(req.PMSuryaGharIdNo) ? req.PMSuryaGharIdNo : req.PmSuryaApplicationNo;
 
+    @* Property Document is OPTIONAL now — it is still offered and still reviewed
+       if uploaded, but it does not count towards the progress and nothing waits
+       for it (PMSuryaDocRules.RequiredTypes leaves it out too). *@
     var requiredDocs = new[]
     {
-        new { Type = "AadharCard",       Label = "Aadhaar Card",                                Icon = "🪪" },
-        new { Type = "PANCard",          Label = "PAN Card",                                    Icon = "💳" },
-        new { Type = "LightBill",        Label = "Light Bill (Last 3 Months)",                  Icon = "💡" },
-        new { Type = "BankPassbook",     Label = "Cancelled Cheque / Passbook",                 Icon = "🏦" },
-        new { Type = "PropertyDocument", Label = "Property Document (Farad / पट्टा / Registry)", Icon = "🏠" },
-        new { Type = "GPSPhoto",         Label = "GPS / Location Photo",                        Icon = "📍" },
-        new { Type = "Photo",            Label = "Applicant Photo",                             Icon = "📷" },
-        new { Type = "Signature",        Label = "Signature",                                   Icon = "✍️" }
+        @* Aadhaar is taken as two shots now — the single slot meant the back side
+           either replaced the front or never reached the admin at all. *@
+        new { Type = "AadharCard",       Label = "Aadhaar Card — Front",                        Icon = "🪪", Optional = false },
+        new { Type = "AadharCardBack",   Label = "Aadhaar Card — Back",                         Icon = "🪪", Optional = false },
+        new { Type = "PANCard",          Label = "PAN Card",                                    Icon = "💳", Optional = false },
+        new { Type = "LightBill",        Label = "Light Bill (Last 3 Months)",                  Icon = "💡", Optional = false },
+        new { Type = "BankPassbook",     Label = "Cancelled Cheque / Passbook",                 Icon = "🏦", Optional = false },
+        new { Type = "PropertyDocument", Label = "Property Document (Farad / पट्टा / Registry)", Icon = "🏠", Optional = true  },
+        new { Type = "GPSPhoto",         Label = "GPS / Location Photo",                        Icon = "📍", Optional = false },
+        new { Type = "Photo",            Label = "Applicant Photo",                             Icon = "📷", Optional = false },
+        new { Type = "Signature",        Label = "Signature",                                   Icon = "✍️", Optional = false }
     };
-    var doneCount = requiredDocs.Count(d => userDocs.Any(x => x.DocumentType.ToString() == d.Type));
-    var totalCount = requiredDocs.Length;
+    var mandatoryDocs = requiredDocs.Where(d => !d.Optional).ToArray();
+    var doneCount = mandatoryDocs.Count(d => userDocs.Any(x => x.DocumentType.ToString() == d.Type));
+    var totalCount = mandatoryDocs.Length;
     var pct = totalCount > 0 ? (int)Math.Round(doneCount * 100.0 / totalCount) : 0;
 
     // Submit is only allowed while something is actually pending admin review.
@@ -111,9 +118,16 @@
                     <div class="pm-doc @(uploaded != null ? "done" : "")">
                         <div class="pm-doc-ic">@d.Icon</div>
                         <div class="pm-doc-body">
-                            <div class="pm-doc-name">@d.Label</div>
+                            <div class="pm-doc-name">
+                                @d.Label
+                                @if (d.Optional)
+                                {
+                                    <span style="font-size:11px;font-weight:600;color:var(--text3);background:var(--bg3);border-radius:4px;padding:1px 6px;margin-left:6px">Optional</span>
+                                }
+                            </div>
                             <div class="pm-doc-sub">
-                                @if (uploaded == null) { <text>Not uploaded yet</text> }
+                                @if (uploaded == null && d.Optional) { <text>Not uploaded — not required</text> }
+                                else if (uploaded == null) { <text>Not uploaded yet</text> }
                                 else if (uploaded.Status == SolarPortal.Domain.Enums.ApprovalStatus.Pending && !IsSubmitted(uploaded)) { <text>Uploaded - not submitted yet</text> }
                                 else { <text>Uploaded</text> }
                             </div>                            @if (uploaded != null && !string.IsNullOrWhiteSpace(uploaded.Remarks))
@@ -151,9 +165,19 @@
                                 {
                                     <button type="button" class="btn btn-sm btn-p" onclick="openLivePhoto()">📷 Live Photo</button>
                                 }
-                                @if (d.Type == "Signature")
+                                else if (d.Type == "Signature")
                                 {
                                     <button type="button" class="btn btn-sm btn-p" onclick="openSignaturePad()">✍️ Draw</button>
+                                }
+                                else
+                                {
+                                    @* Camera on every document. openCameraFor() (camera-capture.js)
+                                       uses the webcam on a PC and the OS camera on a phone, then
+                                       drops the shot into this document's own file input — so the
+                                       page's existing .pm-file change handler uploads it exactly
+                                       like a picked file. *@
+                                    <button type="button" class="btn btn-sm btn-s"
+                                            onclick="openCameraFor(document.getElementById('file-@d.Type'))">📷 Camera</button>
                                 }
                                 <button class="btn btn-sm @(uploaded != null ? "btn-s" : "btn-p") pm-pick" data-target="file-@d.Type">
                                     @(uploaded != null ? "Replace" : "Upload")

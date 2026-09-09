@@ -3,7 +3,8 @@
     ViewData["Title"] = "Project Status";
     var subTotal = (decimal)(ViewBag.TotalSubmitted ?? 0m);
     var verTotal = (decimal)(ViewBag.VerifiedPaid ?? 0m);
-    var minVal = (decimal)(ViewBag.Minimum ?? 20000m);
+    @* Fallback reads the one server constant, so it can never quote a stale floor. *@
+    var minVal = (decimal)(ViewBag.Minimum ?? SolarPortal.Application.Services.PaymentService.MinimumPaymentThreshold);
     // Point 1: money the member already paid on the cPanel order that activated
     // their ID. It is already inside VerifiedPaid, so it must be NAMED here -
     // otherwise "Paid ₹30,000" against ₹10,100 of visible receipts looks wrong.
