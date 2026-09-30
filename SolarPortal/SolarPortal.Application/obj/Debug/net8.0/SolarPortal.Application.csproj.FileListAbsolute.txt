@@ -33,3 +33,6 @@ E:\Sadhna Garg\SolarGithub\Solar\SolarPortal\SolarPortal.Application\obj\Debug\n
 \\localhost\Sadhna\SolerGithub\Solar\SolarPortal\SolarPortal.Application\obj\Debug\net8.0\refint\SolarPortal.Application.dll
 \\localhost\Sadhna\SolerGithub\Solar\SolarPortal\SolarPortal.Application\obj\Debug\net8.0\SolarPortal.Application.pdb
 \\localhost\Sadhna\SolerGithub\Solar\SolarPortal\SolarPortal.Application\obj\Debug\net8.0\ref\SolarPortal.Application.dll
+C:\Users\Claude1\AppData\Local\Temp\claude\--localhost-Sadhna-SolerGithub-Solar\d6d85878-fa9e-4485-ba03-59f91d1ebd9a\scratchpad\build\SolarPortal.Application.deps.json
+C:\Users\Claude1\AppData\Local\Temp\claude\--localhost-Sadhna-SolerGithub-Solar\d6d85878-fa9e-4485-ba03-59f91d1ebd9a\scratchpad\build\SolarPortal.Application.dll
+C:\Users\Claude1\AppData\Local\Temp\claude\--localhost-Sadhna-SolerGithub-Solar\d6d85878-fa9e-4485-ba03-59f91d1ebd9a\scratchpad\build\SolarPortal.Application.pdb

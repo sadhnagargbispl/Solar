@@ -25,3 +25,9 @@ E:\Sadhna Garg\SolarGithub\Solar\SolarPortal\SolarPortal.Domain\obj\Debug\net8.0
 \\localhost\Sadhna\SolerGithub\Solar\SolarPortal\SolarPortal.Domain\obj\Debug\net8.0\SolarPortal.Domain.pdb
 \\localhost\Sadhna\SolerGithub\Solar\SolarPortal\SolarPortal.Domain\bin\Debug\net8.0\SolarPortal.Domain.dll
 \\localhost\Sadhna\SolerGithub\Solar\SolarPortal\SolarPortal.Domain\obj\Debug\net8.0\ref\SolarPortal.Domain.dll
+C:\Users\Claude1\AppData\Local\Temp\claude\--localhost-Sadhna-SolerGithub-Solar\d6d85878-fa9e-4485-ba03-59f91d1ebd9a\scratchpad\build\SolarPortal.Domain.deps.json
+C:\Users\Claude1\AppData\Local\Temp\claude\--localhost-Sadhna-SolerGithub-Solar\d6d85878-fa9e-4485-ba03-59f91d1ebd9a\scratchpad\build\SolarPortal.Domain.dll
+C:\Users\Claude1\AppData\Local\Temp\claude\--localhost-Sadhna-SolerGithub-Solar\d6d85878-fa9e-4485-ba03-59f91d1ebd9a\scratchpad\build\SolarPortal.Domain.pdb
+C:\Users\Claude1\AppData\Local\Temp\claude\--localhost-Sadhna-SolerGithub-Solar\f7ca3285-56f3-492b-aa92-d5552ee67c11\scratchpad\build\SolarPortal.Domain.deps.json
+C:\Users\Claude1\AppData\Local\Temp\claude\--localhost-Sadhna-SolerGithub-Solar\f7ca3285-56f3-492b-aa92-d5552ee67c11\scratchpad\build\SolarPortal.Domain.dll
+C:\Users\Claude1\AppData\Local\Temp\claude\--localhost-Sadhna-SolerGithub-Solar\f7ca3285-56f3-492b-aa92-d5552ee67c11\scratchpad\build\SolarPortal.Domain.pdb

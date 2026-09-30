@@ -42,9 +42,13 @@
                     var idDeposit = (decimal)(ViewBag.ActiveIdDeposit ?? 0m);
                     var payableAmt = (decimal)(ViewBag.PayableAmount ?? Model.RequestedAmount);
 
-                    var dueAmt    = Math.Max(0, payableAmt - totalPaid);
+                    // TotalPaid / VerifiedPaid from the controller already include the
+                    // deposit, and payableAmt already has it netted off — so Due must be
+                    // measured against the portal payments only, else the deposit is
+                    // subtracted twice.
+                    var paidOnPortal = Math.Max(0, totalPaid - idDeposit);
+                    var dueAmt    = Math.Max(0, payableAmt - paidOnPortal);
                     var pendingAmt = Math.Max(0, totalPaid - verified);
-                    var remaining = Math.Max(0, minimum - verified);
                 }
                 @if (idDeposit > 0m)
                 {
@@ -143,13 +147,13 @@
                             // The FIRST payment has to clear the ₹20,000 minimum in one
                             // go (server enforces the same in AddPayment). Once something
                             // is already paid, a smaller top-up is fine.
-                            var minThisPay = totalPaid <= 0 ? minimum : 1m;
+                            var minThisPay = paidOnPortal <= 0 ? minimum : 1m;
                         }
                             <input type="number" name="Amount" id="payAmt" placeholder="@minThisPay.ToString("0")"
                                    required min="@minThisPay.ToString("0")" max="@dueAmt" data-min="@minThisPay.ToString("0")" />
                         </div>
                         <small style="color:var(--text2);font-size:11px">
-                            @if (totalPaid <= 0)
+                            @if (paidOnPortal <= 0)
                             {
                                 <text>First payment must be at least ₹@minimum.ToString("N0"). </text>
                             }

@@ -149,6 +149,36 @@ GO
 
 
 /* ============================================================================
+   Per-head FormNo - m_membermaster.FormNo of each income head's IdNo, so the
+   payout can credit by FormNo directly. Filled by the member panel on every
+   save (RemainingBvController.Save); the UPDATE below backfills older rows.
+   ============================================================================ */
+IF COL_LENGTH('dbo.RemainingBvUpdates', 'DiscomIncFormNo') IS NULL
+    ALTER TABLE dbo.RemainingBvUpdates ADD DiscomIncFormNo NUMERIC(18,0) NULL;
+IF COL_LENGTH('dbo.RemainingBvUpdates', 'DcloseIncFormNo') IS NULL
+    ALTER TABLE dbo.RemainingBvUpdates ADD DcloseIncFormNo NUMERIC(18,0) NULL;
+IF COL_LENGTH('dbo.RemainingBvUpdates', 'SciIncFormNo') IS NULL
+    ALTER TABLE dbo.RemainingBvUpdates ADD SciIncFormNo    NUMERIC(18,0) NULL;
+GO
+
+UPDATE r
+SET    r.DiscomIncFormNo = ISNULL(r.DiscomIncFormNo, d.FormNo),
+       r.DcloseIncFormNo = ISNULL(r.DcloseIncFormNo, c.FormNo),
+       r.SciIncFormNo    = ISNULL(r.SciIncFormNo,    s.FormNo)
+FROM   dbo.RemainingBvUpdates r
+OUTER  APPLY (SELECT TOP 1 m.FormNo FROM dbo.M_MemberMaster m
+              WHERE LTRIM(RTRIM(m.IdNo)) = LTRIM(RTRIM(r.DiscomIncomeIdNo))) d
+OUTER  APPLY (SELECT TOP 1 m.FormNo FROM dbo.M_MemberMaster m
+              WHERE LTRIM(RTRIM(m.IdNo)) = LTRIM(RTRIM(r.DealCloseIdNo))) c
+OUTER  APPLY (SELECT TOP 1 m.FormNo FROM dbo.M_MemberMaster m
+              WHERE LTRIM(RTRIM(m.IdNo)) = LTRIM(RTRIM(r.SciIncomeIdNo))) s
+WHERE  r.DiscomIncFormNo IS NULL
+   OR  r.DcloseIncFormNo IS NULL
+   OR  r.SciIncFormNo    IS NULL;
+GO
+
+
+/* ============================================================================
    Where the per-head money comes from - the plan master.
    ============================================================================ */
 /*

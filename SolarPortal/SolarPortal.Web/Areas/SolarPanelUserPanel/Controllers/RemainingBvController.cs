@@ -208,16 +208,19 @@ public class RemainingBvController : Controller
         row.DiscomIncomeIdNo = discom.IdNo;
         row.DiscomIncomeName = discom.Name;
         row.DiscomIncomeAmount = vm.DiscomIncomeAmount;
+        row.DiscomIncFormNo = discom.FormNo;
 
         row.DealCloseMode = DealCloseMode;
         row.DealCloseIdNo = dealClose.IdNo;
         row.DealCloseName = dealClose.Name;
         row.DealCloseAmount = vm.DealCloseAmount;
+        row.DcloseIncFormNo = dealClose.FormNo;
 
         // "SCI Income - Default Sponsor ka ID save hoga." Never member-editable.
         row.SciIncomeIdNo = vm.SponsorIdNo;
         row.SciIncomeName = vm.SponsorName;
         row.SciIncomeAmount = vm.SciIncomeAmount;
+        row.SciIncFormNo = PositiveOrNull(vm.SponsorFormNo);
 
         // Re-submitting after a rejection clears the rejection and puts the row
         // back in the admin's queue.
@@ -420,6 +423,7 @@ public class RemainingBvController : Controller
             MemberFormNo = member?.FormNo ?? order?.FormNo ?? 0m,
             SponsorIdNo = member?.SponsorIdNo,
             SponsorName = member?.SponsorName,
+            SponsorFormNo = member?.SponsorFormNo,
             PlanName = project?.Name,
             SolarTypeKV = project?.SolarTypeKV ?? req.KVCapacity,
             OrderNo = order?.OrderNo,
@@ -484,30 +488,34 @@ public class RemainingBvController : Controller
     }
 
     /// <summary>
-    /// Turns one Self/Other choice into the IdNo + name that gets stored, adding a
-    /// ModelState error instead when an "Other" ID fails the upline rule. The AJAX
-    /// verify is a convenience; this is where the rule is actually enforced.
+    /// Turns one Self/Other choice into the IdNo + name + m_membermaster FormNo that
+    /// gets stored, adding a ModelState error instead when an "Other" ID fails the
+    /// upline rule. The AJAX verify is a convenience; this is where the rule is
+    /// actually enforced.
     /// </summary>
-    private async Task<(string? IdNo, string? Name)> ResolveHeadAsync(
+    private async Task<(string? IdNo, string? Name, decimal? FormNo)> ResolveHeadAsync(
         RemainingBvViewModel vm, BvBeneficiaryMode mode, string? typedIdNo, string headLabel)
     {
         if (mode == BvBeneficiaryMode.Self)
-            return (vm.MemberIdNo, vm.MemberName);
+            return (vm.MemberIdNo, vm.MemberName, PositiveOrNull(vm.MemberFormNo));
 
         var typed = (typedIdNo ?? string.Empty).Trim();
         if (typed.Length == 0)
         {
             ModelState.AddModelError(string.Empty, $"{headLabel}: you selected 'Other', so an ID number must be entered.");
-            return (null, null);
+            return (null, null, null);
         }
 
         var check = await _sponsorTree.CheckRelationAsync(vm.MemberIdNo, typed);
         if (!check.IsAcceptable)
         {
             ModelState.AddModelError(string.Empty, $"{headLabel}: {check.Message}");
-            return (null, null);
+            return (null, null, null);
         }
 
-        return (check.IdNo, check.Name);
+        return (check.IdNo, check.Name, PositiveOrNull(check.FormNo));
     }
+
+    /// <summary>A FormNo of 0 means "not found in m_membermaster" - store NULL, not 0.</summary>
+    private static decimal? PositiveOrNull(decimal? formNo) => formNo > 0m ? formNo : null;
 }

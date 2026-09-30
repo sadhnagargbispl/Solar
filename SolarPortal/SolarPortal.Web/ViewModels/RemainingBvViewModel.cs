@@ -21,6 +21,7 @@ public class RemainingBvViewModel
     public decimal MemberFormNo { get; set; }
     public string? SponsorIdNo { get; set; }
     public string? SponsorName { get; set; }
+    public decimal? SponsorFormNo { get; set; }
 
     // ─── Verified product order ───────────────────────────────────────────
     public string? PlanName { get; set; }

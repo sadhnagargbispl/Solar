@@ -11,6 +11,8 @@ public class SponsorMemberDto
     /// <summary>Sponsor's IdNo (m_membermaster.RefFormNo -> that row's IdNo). Null at the tree root.</summary>
     public string? SponsorIdNo { get; set; }
     public string? SponsorName { get; set; }
+    /// <summary>Sponsor's FormNo (m_membermaster.RefFormNo). Null at the tree root.</summary>
+    public decimal? SponsorFormNo { get; set; }
     public bool IsActive { get; set; }
 }
 
@@ -24,6 +26,9 @@ public class SponsorRelationResult
 
     /// <summary>The IdNo exactly as m_membermaster stores it.</summary>
     public string? IdNo { get; set; }
+
+    /// <summary>The typed-in member's m_membermaster.FormNo, when one was found.</summary>
+    public decimal? FormNo { get; set; }
 
     /// <summary>1 = direct sponsor, 2 = sponsor's sponsor, ... Only set for Upline.</summary>
     public int Level { get; set; }

@@ -71,22 +71,27 @@ public class RemainingBvUpdate : BaseEntity
     // The Amount on each head is the money that head pays, copied from the
     // SolarProjects master (DiscomWork / DealClose / SCZMenue). It is display
     // only - neither the member nor the admin types it.
+    // The *IncFormNo on each head is m_membermaster.FormNo of that head's IdNo,
+    // resolved on save so the payout can credit by FormNo directly.
 
     public BvBeneficiaryMode DiscomIncomeMode { get; set; } = BvBeneficiaryMode.Self;
     public string? DiscomIncomeIdNo { get; set; }
     public string? DiscomIncomeName { get; set; }
     public decimal DiscomIncomeAmount { get; set; }
+    public decimal? DiscomIncFormNo { get; set; }
 
     public BvBeneficiaryMode DealCloseMode { get; set; } = BvBeneficiaryMode.Self;
     public string? DealCloseIdNo { get; set; }
     public string? DealCloseName { get; set; }
     public decimal DealCloseAmount { get; set; }
+    public decimal? DcloseIncFormNo { get; set; }
 
     /// <summary>Always the sponsor's IdNo, kept as its own column so a later
     /// sponsor change never rewrites a record that was already paid.</summary>
     public string? SciIncomeIdNo { get; set; }
     public string? SciIncomeName { get; set; }
     public decimal SciIncomeAmount { get; set; }
+    public decimal? SciIncFormNo { get; set; }
 
     // ─── Admin verification ───────────────────────────────────────────────
     /// <summary>Pending -> Approved (frozen) or Rejected (back to the member).</summary>

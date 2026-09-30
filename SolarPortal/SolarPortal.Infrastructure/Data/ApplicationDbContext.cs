@@ -309,6 +309,9 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
             e.Property(x => x.DiscomIncomeAmount).HasColumnType("decimal(18,2)");
             e.Property(x => x.DealCloseAmount).HasColumnType("decimal(18,2)");
             e.Property(x => x.SciIncomeAmount).HasColumnType("decimal(18,2)");
+            e.Property(x => x.DiscomIncFormNo).HasColumnType("numeric(18,0)");
+            e.Property(x => x.DcloseIncFormNo).HasColumnType("numeric(18,0)");
+            e.Property(x => x.SciIncFormNo).HasColumnType("numeric(18,0)");
             // Computed on the entity, never stored.
             e.Ignore(x => x.IsLocked);
             e.Ignore(x => x.IsRejected);

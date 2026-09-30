@@ -51,6 +51,7 @@ public class SponsorTreeService : ISponsorTreeService
                    LTRIM(RTRIM(ISNULL(m.MemFirstName,'') + ' ' + ISNULL(m.MemLastName,''))) AS MemName,
                    m.ActiveStatus,
                    LTRIM(RTRIM(ISNULL(s.IdNo,'')))                       AS SponsorIdNo,
+                   s.FormNo                                              AS SponsorFormNo,
                    LTRIM(RTRIM(ISNULL(s.MemFirstName,'') + ' ' + ISNULL(s.MemLastName,''))) AS SponsorName
             FROM   m_membermaster m
             LEFT   JOIN m_membermaster s ON s.FormNo = m.RefFormNo
@@ -74,6 +75,7 @@ public class SponsorTreeService : ISponsorTreeService
             FullName    = Str(reader, "MemName"),
             SponsorIdNo = sponsorId.Length == 0 ? null : sponsorId,
             SponsorName = sponsorId.Length == 0 ? null : Str(reader, "SponsorName"),
+            SponsorFormNo = sponsorId.Length == 0 ? null : Dec(reader, "SponsorFormNo"),
             IsActive    = string.Equals(Str(reader, "ActiveStatus"), "Y", StringComparison.OrdinalIgnoreCase)
         };
     }
@@ -97,7 +99,8 @@ public class SponsorTreeService : ISponsorTreeService
         var result = new SponsorRelationResult
         {
             IdNo = candidateRow.IdNo,
-            Name = candidateRow.FullName
+            Name = candidateRow.FullName,
+            FormNo = candidateRow.FormNo
         };
 
         // Walk UP from the member: is the candidate one of their sponsors?

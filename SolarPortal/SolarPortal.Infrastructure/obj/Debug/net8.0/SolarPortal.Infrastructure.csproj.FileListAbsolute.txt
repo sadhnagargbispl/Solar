@@ -42,3 +42,11 @@ E:\Sadhna Garg\SolarGithub\Solar\SolarPortal\SolarPortal.Infrastructure\obj\Debu
 \\localhost\Sadhna\SolerGithub\Solar\SolarPortal\SolarPortal.Infrastructure\obj\Debug\net8.0\SolarPortal.Infrastructure.pdb
 \\localhost\Sadhna\SolerGithub\Solar\SolarPortal\SolarPortal.Infrastructure\obj\Debug\net8.0\SolarPortal.Infrastructure.genruntimeconfig.cache
 \\localhost\Sadhna\SolerGithub\Solar\SolarPortal\SolarPortal.Infrastructure\obj\Debug\net8.0\ref\SolarPortal.Infrastructure.dll
+C:\Users\Claude1\AppData\Local\Temp\claude\--localhost-Sadhna-SolerGithub-Solar\d6d85878-fa9e-4485-ba03-59f91d1ebd9a\scratchpad\build\SolarPortal.Infrastructure.deps.json
+C:\Users\Claude1\AppData\Local\Temp\claude\--localhost-Sadhna-SolerGithub-Solar\d6d85878-fa9e-4485-ba03-59f91d1ebd9a\scratchpad\build\SolarPortal.Infrastructure.runtimeconfig.json
+C:\Users\Claude1\AppData\Local\Temp\claude\--localhost-Sadhna-SolerGithub-Solar\d6d85878-fa9e-4485-ba03-59f91d1ebd9a\scratchpad\build\SolarPortal.Infrastructure.dll
+C:\Users\Claude1\AppData\Local\Temp\claude\--localhost-Sadhna-SolerGithub-Solar\d6d85878-fa9e-4485-ba03-59f91d1ebd9a\scratchpad\build\SolarPortal.Infrastructure.pdb
+C:\Users\Claude1\AppData\Local\Temp\claude\--localhost-Sadhna-SolerGithub-Solar\f7ca3285-56f3-492b-aa92-d5552ee67c11\scratchpad\build\SolarPortal.Infrastructure.deps.json
+C:\Users\Claude1\AppData\Local\Temp\claude\--localhost-Sadhna-SolerGithub-Solar\f7ca3285-56f3-492b-aa92-d5552ee67c11\scratchpad\build\SolarPortal.Infrastructure.runtimeconfig.json
+C:\Users\Claude1\AppData\Local\Temp\claude\--localhost-Sadhna-SolerGithub-Solar\f7ca3285-56f3-492b-aa92-d5552ee67c11\scratchpad\build\SolarPortal.Infrastructure.dll
+C:\Users\Claude1\AppData\Local\Temp\claude\--localhost-Sadhna-SolerGithub-Solar\f7ca3285-56f3-492b-aa92-d5552ee67c11\scratchpad\build\SolarPortal.Infrastructure.pdb
