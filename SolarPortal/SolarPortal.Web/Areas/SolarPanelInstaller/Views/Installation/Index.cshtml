@@ -14,13 +14,171 @@
     // than after they have filled the form.
     var kycBlock = ViewBag.KycBlock as string;
 
-    // Stored paths may be "uploads/x.jpg" or "/uploads/x.jpg" — normalise.
-    string PhotoUrl(string? p)
+    // The fixed INC upload format (IncUploadFormats) — both forms are built from it.
+    var formats = ViewBag.Formats as List<SolarPortal.Domain.Entities.IncUploadFormat>
+                  ?? new List<SolarPortal.Domain.Entities.IncUploadFormat>();
+
+    string RuleText(SolarPortal.Domain.Entities.IncUploadFormat f)
     {
-        if (string.IsNullOrWhiteSpace(p)) return "";
-        return "/" + p.Replace("\\", "/").TrimStart('/');
+        var parts = new List<string>();
+        if (f.MaxPhotos > 0)
+            parts.Add(f.MinPhotos == f.MaxPhotos
+                ? $"{f.MaxPhotos} photo{(f.MaxPhotos == 1 ? "" : "s")} required"
+                : $"{f.MinPhotos} to {f.MaxPhotos} photos");
+        if (f.VideoCount > 0) parts.Add(f.VideoCount == 1 ? "1 video required" : $"{f.VideoCount} videos required");
+        if (f.RemarkRequired) parts.Add("Written details required");
+        return string.Join(" · ", parts);
+    }
+
+    // The three kinds of line, shown as separate sections of the checklist.
+    var photoLines = formats.Where(f => f.MaxPhotos > 0 && f.VideoCount == 0 && !f.RemarkRequired).ToList();
+    var detailLines = formats.Where(f => f.RemarkRequired && f.VideoCount == 0).ToList();
+    var videoLines = formats.Except(photoLines).Except(detailLines).ToList();
+
+    // What each rejected installation already holds per line, for the Update form:
+    // { installationId: { formatId: { p: photos, v: videos, r: "detail" } } }
+    var clState = Model.Where(r => r.Installation != null)
+        .ToDictionary(
+            r => r.Installation!.Id,
+            r => r.Checklist.ToDictionary(l => l.Format.Id, l => new { p = l.Photos, v = l.Videos, r = l.Remark ?? "" }));
+}
+
+@* One checklist line per IncUploadFormat row. Used by both the Mark and the
+   Update form; field names are what InstallationController.ReadSubmission reads. *@
+@{
+    void ChecklistLine(SolarPortal.Domain.Entities.IncUploadFormat f)
+    {
+        <div class="cl-line" data-min="@f.MinPhotos" data-max="@f.MaxPhotos" data-video="@f.VideoCount"
+             data-remark="@(f.RemarkRequired ? 1 : 0)" data-label="@f.SrNo. @f.Work"
+             data-fid="@f.Id" data-ex-photos="0" data-ex-videos="0">
+            @* Ticking the item opens its input: photo → Camera / Gallery, video →
+               video picker, details → text box. The checkbox itself is not posted. *@
+            <label class="cl-row">
+                <input type="checkbox" class="cl-cb" onchange="clToggle(this)" />
+                <span class="cl-no">@f.SrNo</span>
+                <div class="cl-main">
+                    <div class="cl-title">@f.Work</div>
+                    <div class="cl-rule">@RuleText(f)</div>
+                </div>
+                <span class="cl-pill">Pending</span>
+            </label>
+            <div class="cl-body">
+                @if (f.MaxPhotos > 0)
+                {
+                    @* The real input sits inside the label, so a tap anywhere on the
+                       button opens it (and photo-source.js adds Camera / Gallery). *@
+                    <label class="cl-btn" onclick="return clCanAdd(this, event)">
+                        <input type="file" class="cl-file" name="photos_@f.Id" accept="image/jpeg,image/png" data-kind="photo"
+                               multiple="@(f.MaxPhotos > 1)" data-photo-label="@f.Work" onchange="clPicked(this)" />
+                        <span>&#128247; @(f.MaxPhotos > 1 ? $"Add photos (max {f.MaxPhotos})" : "Add photo")</span>
+                    </label>
+                    <div class="cl-thumbs"></div>
+                }
+                @if (f.VideoCount > 0)
+                {
+                    <label class="cl-btn" onclick="return clCanAdd(this, event)">
+                        <input type="file" class="cl-file" name="video_@f.Id" accept="video/*" data-kind="video"
+                               multiple="@(f.VideoCount > 1)" onchange="clPicked(this)" />
+                        <span>&#127916; Select video</span>
+                    </label>
+                    <div class="cl-vids"></div>
+                }
+                @if (f.RemarkRequired)
+                {
+                    <textarea name="remark_@f.Id" rows="2" maxlength="1000" data-kind="remark" class="cl-text"
+                              placeholder="Size, length, make / brand…" oninput="clRefresh(this.closest('.cl-line'))"></textarea>
+                }
+                <div class="cl-info"></div>
+            </div>
+        </div>
+    }
+
+    void ChecklistSection(string title, string hint, List<SolarPortal.Domain.Entities.IncUploadFormat> lines)
+    {
+        if (!lines.Any()) return;
+        <div class="cl-group">
+            <div class="cl-gtitle">@title <span>@hint</span></div>
+            @foreach (var f in lines) { ChecklistLine(f); }
+        </div>
+    }
+
+    // Field names are what InstallationController.ReadSubmission reads.
+    void ChecklistFields()
+    {
+        <div class="cl-list">
+            @{ ChecklistSection("Photos", "JPG / PNG, up to 10 MB each", photoLines); }
+            @{ ChecklistSection("Cable & wire details", "Type the details", detailLines); }
+            @{ ChecklistSection("Video", "MP4 / MOV, up to 200 MB", videoLines); }
+        </div>
     }
 }
+<style>
+    /* ── Modal shell: fixed header + footer, scrolling body ─────────────── */
+    .cl-overlay { display: none; position: fixed; inset: 0; background: rgba(15,23,42,.55); z-index: 1050; padding: 3vh 12px; }
+    .cl-modal { max-width: 820px; margin: 0 auto; background: #fff; border-radius: 14px; max-height: 94vh;
+                display: flex; flex-direction: column; box-shadow: 0 20px 50px rgba(0,0,0,.25); overflow: hidden; }
+    .cl-mhead { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px;
+                padding: 16px 20px; border-bottom: 1px solid #e5e7eb; }
+    .cl-mtitle { font-size: 17px; font-weight: 700; color: #0f172a; }
+    .cl-msub { font-size: 12.5px; color: #64748b; margin-top: 3px; }
+    .cl-x { border: 0; background: #f1f5f9; width: 32px; height: 32px; border-radius: 8px; font-size: 18px; line-height: 1; cursor: pointer; color: #475569; }
+    .cl-x:hover { background: #e2e8f0; }
+    .cl-form { display: flex; flex-direction: column; min-height: 0; flex: 1; margin: 0; }
+    .cl-mbody { overflow-y: auto; padding: 16px 20px; flex: 1; }
+    .cl-mfoot { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap;
+                padding: 12px 20px; border-top: 1px solid #e5e7eb; background: #f8fafc; }
+    .cl-foot-note { font-size: 12px; color: #64748b; flex: 1; min-width: 200px; }
+    .cl-sec { margin-bottom: 18px; }
+    .cl-sechead { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 10px; flex-wrap: wrap; }
+    .cl-sectitle { font-size: 13px; font-weight: 700; color: #0f172a; text-transform: uppercase; letter-spacing: .04em; }
+    .cl-grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    @@media (max-width: 640px) { .cl-grid2 { grid-template-columns: 1fr; } }
+
+    /* ── Progress ───────────────────────────────────────────────────────── */
+    .cl-progress { display: flex; align-items: center; gap: 8px; font-size: 12.5px; color: #475569; }
+    .cl-pbar { width: 140px; height: 8px; background: #e5e7eb; border-radius: 99px; overflow: hidden; }
+    .cl-pbar i { display: block; height: 100%; width: 0; background: #16a34a; transition: width .2s; }
+
+    /* ── Checklist lines ────────────────────────────────────────────────── */
+    .cl-list { display: flex; flex-direction: column; gap: 16px; }
+    .cl-gtitle { font-size: 12.5px; font-weight: 700; color: #334155; margin-bottom: 8px; }
+    .cl-gtitle span { font-weight: 400; color: #94a3b8; margin-left: 6px; }
+    .cl-group { display: flex; flex-direction: column; gap: 8px; }
+    .cl-line { border: 1px solid #e2e8f0; border-radius: 10px; padding: 12px 14px; background: #fff; transition: border-color .15s, background .15s; }
+    .cl-line.ok { border-color: #bbf7d0; background: #f7fef9; }
+    .cl-line.bad { border-color: #fca5a5; background: #fff7f7; }
+    .cl-row { display: flex; align-items: flex-start; gap: 10px; cursor: pointer; margin: 0; font-weight: normal; }
+    .cl-cb { flex: 0 0 auto; width: 20px; height: 20px; margin: 3px 0 0; accent-color: #16a34a; cursor: pointer; }
+    .cl-body { display: none; }
+    .cl-line.open .cl-body { display: block; }
+    .cl-no { flex: 0 0 26px; height: 26px; border-radius: 50%; background: #f1f5f9; color: #475569; text-align: center; line-height: 26px; font-size: 12px; font-weight: 700; }
+    .cl-line.ok .cl-no { background: #16a34a; color: #fff; }
+    .cl-main { flex: 1; min-width: 0; }
+    .cl-title { font-size: 13.5px; font-weight: 600; color: #0f172a; }
+    .cl-rule { font-size: 12px; color: #64748b; margin-top: 2px; }
+    .cl-pill { flex: 0 0 auto; font-size: 11px; font-weight: 600; padding: 3px 10px; border-radius: 99px; background: #f1f5f9; color: #64748b; white-space: nowrap; }
+    .cl-line.ok .cl-pill { background: #dcfce7; color: #15803d; }
+    .cl-line.bad .cl-pill { background: #fee2e2; color: #b91c1c; }
+    .cl-line.open .cl-body { margin: 10px 0 0 66px; }
+    .cl-btn { display: inline-flex; align-items: center; gap: 6px; padding: 7px 14px; border: 1px solid #cbd5e1; border-radius: 8px;
+              background: #fff; color: #1e293b; font-size: 13px; font-weight: 600; cursor: pointer; position: relative; }
+    .cl-btn:hover { border-color: #16a34a; color: #15803d; background: #f0fdf4; }
+    .cl-file { position: absolute; width: 1px; height: 1px; opacity: 0; overflow: hidden; }
+    .cl-thumbs, .cl-vids { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
+    .cl-thumbs:empty, .cl-vids:empty { display: none; }
+    .cl-thumb { position: relative; width: 64px; height: 64px; border-radius: 8px; overflow: hidden; border: 1px solid #e2e8f0; }
+    .cl-thumb img { width: 100%; height: 100%; object-fit: cover; }
+    .cl-rm { position: absolute; top: 2px; right: 2px; width: 20px; height: 20px; border: 0; border-radius: 50%;
+             background: rgba(15,23,42,.75); color: #fff; font-size: 13px; line-height: 20px; cursor: pointer; padding: 0; }
+    .cl-vid { display: flex; align-items: center; gap: 8px; padding: 6px 10px; border: 1px solid #e2e8f0; border-radius: 8px; font-size: 12.5px; background: #f8fafc; }
+    .cl-vid .cl-rm { position: static; background: #94a3b8; }
+    .cl-text { width: 100%; }
+    .cl-info { font-size: 12px; color: #64748b; margin-top: 6px; }
+    .cl-info:empty { display: none; }
+    .cl-warn { color: #b91c1c; font-weight: 600; display: block; margin-bottom: 2px; }
+    .cl-errors { display: none; background: #fef2f2; border: 1px solid #fca5a5; color: #b91c1c; border-radius: 10px; padding: 10px 14px; font-size: 12.5px; margin-top: 4px; }
+    @@media (max-width: 640px) { .cl-line.open .cl-body { margin-left: 0; } .cl-pill { display: none; } }
+</style>
 <div class="page active">
     <div class="ph">
         <div class="ph-bc">Installer / <span>Installations</span></div>
@@ -72,7 +230,6 @@
                             <th>Plan</th>
                             <th>Material Dispatch</th>
                             <th>Admin Remark</th>
-                            <th>Photos</th>
                             <th>Status</th>
                             <th>Action</th>
                         </tr>
@@ -113,25 +270,7 @@
                                 <td style="font-size:12px;color:#6b7280">
                                     @(string.IsNullOrWhiteSpace(row.AdminRemark) ? "—" : row.AdminRemark)
                                 </td>
-                                @* Image point 11 — thumbnail strip of everything sent to admin. *@
-                                <td style="min-width:120px">
-                                    @if (row.Photos.Any())
-                                    {
-                                        <div style="display:flex;flex-wrap:wrap;gap:4px;max-width:150px">
-                                            @foreach (var ph in row.Photos.Take(6))
-                                            {
-                                                <img src="@PhotoUrl(ph.FilePath)" alt="installation photo"
-                                                     style="width:34px;height:34px;object-fit:cover;border-radius:5px;border:1px solid #e5e7eb;cursor:pointer"
-                                                     onclick="openPhoto('@PhotoUrl(ph.FilePath)')" />
-                                            }
-                                        </div>
-                                        <div style="font-size:11px;color:#6b7280;margin-top:3px">@row.Photos.Count photo(s)</div>
-                                    }
-                                    else
-                                    {
-                                        <span class="text-muted">—</span>
-                                    }
-                                </td>
+                                @* Photos, video and checklist live on the View page (Details). *@
                                 <td>
                                     @if (row.IsRejected)
                                     {
@@ -146,7 +285,9 @@
                                     else if (row.IsApproved)
                                     {
                                         <span class="sts sts-act">&#9989; Approved</span>
-                                        <div style="font-size:11px;color:#6b7280">Commission credited</div>
+                                        <div style="font-size:11px;color:#6b7280">
+                                            @(row.Installation?.CommissionCredited == true ? "Commission credited" : "Commission pending")
+                                        </div>
                                     }
                                     else if (row.IsCompleted)
                                     {
@@ -168,24 +309,31 @@
                                     }
                                 </td>
                                 <td>
-                                    @if (row.IsRejected && row.Installation != null)
-                                    {
-                                        <button type="button" class="btn btn-p btn-sm"
-                                                onclick="openResubmit(@row.Installation.Id, '@r.RequestNumber')">
-                                            &#128260; Update Photos
-                                        </button>
-                                    }
-                                    else if (canAct)
-                                    {
-                                        <button type="button" class="btn btn-p btn-sm"
-                                                onclick="openMark(@r.Id, '@r.RequestNumber')">
-                                            &#128295; Mark Installation
-                                        </button>
-                                    }
-                                    else
-                                    {
-                                        <span class="text-muted">—</span>
-                                    }
+                                    <div style="display:flex;flex-direction:column;gap:6px;align-items:flex-start">
+                                        @* Everything submitted for this installation, per checklist item. *@
+                                        @if (row.IsCompleted && row.Installation != null)
+                                        {
+                                            <a class="btn btn-s btn-sm" asp-action="Details" asp-route-id="@row.Installation.Id">&#128065; View</a>
+                                        }
+                                        @if (row.IsRejected && row.Installation != null)
+                                        {
+                                            <button type="button" class="btn btn-p btn-sm"
+                                                    onclick="openResubmit(@row.Installation.Id, '@r.RequestNumber')">
+                                                &#128260; Update Upload
+                                            </button>
+                                        }
+                                        else if (canAct)
+                                        {
+                                            <button type="button" class="btn btn-p btn-sm"
+                                                    onclick="openMark(@r.Id, '@r.RequestNumber')">
+                                                &#128295; Mark Installation
+                                            </button>
+                                        }
+                                        else if (!(row.IsCompleted && row.Installation != null))
+                                        {
+                                            <span class="text-muted">—</span>
+                                        }
+                                    </div>
                                 </td>
                             </tr>
                         }
@@ -198,44 +346,64 @@
 
 @* Mark-installation form. Hidden by default; openMark() fills in the request and
    reveals it, so one form serves every row (file upload needs a real form post). *@
-<div id="markWrap" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:1050">
-    <div style="max-width:520px;margin:6vh auto;background:#fff;border-radius:12px;padding:20px">
-        <h3 style="margin:0 0 4px" id="markTitle">Mark Installation</h3>
-        <p style="font-size:12px;color:#6b7280;margin:0 0 14px">
-            Marking this installation complete will move the project to the next stage.
-        </p>
+<div id="markWrap" class="cl-overlay">
+    <div class="cl-modal">
+        <div class="cl-mhead">
+            <div>
+                <div class="cl-mtitle" id="markTitle">Mark Installation</div>
+                <div class="cl-msub">Complete every item of the installation checklist to submit it for admin approval.</div>
+            </div>
+            <button type="button" class="cl-x" onclick="closeMark()" aria-label="Close">&times;</button>
+        </div>
         <form asp-area="SolarPanelInstaller" asp-controller="Installation" asp-action="MarkComplete"
-              method="post" enctype="multipart/form-data">
+              method="post" enctype="multipart/form-data" class="cl-form" onsubmit="return clValidate(this)">
             @Html.AntiForgeryToken()
             <input type="hidden" name="requestId" id="markRequestId" />
 
-            <div class="fg">
-                <label>Installation Date</label>
-                <input type="date" name="installationDate" value="@today" required />
-            </div>
-            <div class="fg">
-                <label>Notes</label>
-                <textarea name="notes" rows="2" placeholder="Panels installed, inverter SN, meter reading..."></textarea>
-            </div>
-            <div class="fg">
-                <label>Remark</label>
-                <textarea name="remark" rows="2" placeholder="Your remark (leave blank to keep the admin's remark)"></textarea>
-            </div>
-            @* Image point 11 — multiple photos, up to @maxPhotos. The Camera /
-               Gallery chooser is added automatically by wwwroot/js/photo-source.js. *@
-            <div class="fg">
-                <label>Installation Photos <span style="color:#dc2626">*</span></label>
-                <input type="file" name="completionPhotos" id="markPhotos" accept="image/*" multiple
-                       data-photo-label="Installation photo" onchange="onPhotosPicked(this, 'markPhotoInfo')" />
-                <div style="font-size:12px;color:#6b7280;margin-top:4px" id="markPhotoInfo">
-                    Attach up to @maxPhotos photos. Admin reviews them and your commission
-                    is credited once they are approved.
+            <div class="cl-mbody">
+                <div class="cl-sec">
+                    <div class="cl-sechead"><div class="cl-sectitle">Installation details</div></div>
+                    <div class="cl-grid2">
+                        <div class="fg" style="margin:0">
+                            <label>Installation Date <span style="color:#dc2626">*</span></label>
+                            <input type="date" name="installationDate" value="@today" required />
+                        </div>
+                        <div class="fg" style="margin:0">
+                            <label>Remark</label>
+                            <input type="text" name="remark" maxlength="500" placeholder="Leave blank to keep the admin's remark" />
+                        </div>
+                    </div>
+                    <div class="fg" style="margin:12px 0 0">
+                        <label>Notes</label>
+                        <textarea name="notes" rows="2" placeholder="Panels installed, inverter serial number, meter reading…"></textarea>
+                    </div>
                 </div>
+
+                @* Fixed INC upload format. The Camera / Gallery chooser is added to the
+                   photo inputs automatically by wwwroot/js/photo-source.js. *@
+                <div class="cl-sec">
+                    <div class="cl-sechead">
+                        <div class="cl-sectitle">Installation checklist</div>
+                        <div class="cl-progress"><span class="cl-pbar"><i></i></span><b class="cl-pcount">0 / @formats.Count</b> complete</div>
+                    </div>
+                    @if (formats.Count == 0)
+                    {
+                        <div class="text-muted">The installation checklist is not set up yet. Please contact the admin.</div>
+                    }
+                    else
+                    {
+                        ChecklistFields();
+                    }
+                </div>
+                <div class="cl-errors"></div>
             </div>
 
-            <div style="display:flex;gap:8px;margin-top:14px">
-                <button type="submit" class="btn btn-p">&#9989; Mark Complete</button>
-                <button type="button" class="btn btn-s" onclick="closeMark()">Cancel</button>
+            <div class="cl-mfoot">
+                <span class="cl-foot-note">Your commission is credited only after every item is complete and admin approves the installation.</span>
+                <div style="display:flex;gap:8px">
+                    <button type="button" class="btn btn-s" onclick="closeMark()">Cancel</button>
+                    <button type="submit" class="btn btn-p" @(formats.Count == 0 ? "disabled" : "")>Submit Installation</button>
+                </div>
             </div>
         </form>
     </div>
@@ -243,90 +411,375 @@
 
 @* Re-upload form for a REJECTED installation (image point 11:
    "Reject hone par INC wala wapas update karega"). *@
-<div id="resubWrap" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:1050">
-    <div style="max-width:520px;margin:6vh auto;background:#fff;border-radius:12px;padding:20px">
-        <h3 style="margin:0 0 4px" id="resubTitle">Update Installation Photos</h3>
-        <p style="font-size:12px;color:#6b7280;margin:0 0 14px">
-            Admin rejected the earlier photos. Attach the corrected ones — the
-            installation goes straight back for approval.
-        </p>
+<div id="resubWrap" class="cl-overlay">
+    <div class="cl-modal">
+        <div class="cl-mhead">
+            <div>
+                <div class="cl-mtitle" id="resubTitle">Update Installation</div>
+                <div class="cl-msub">
+                    Admin rejected this installation. Re-upload only the items that need correcting —
+                    new uploads replace that item's earlier files; other items stay as they are.
+                </div>
+            </div>
+            <button type="button" class="cl-x" onclick="closeResubmit()" aria-label="Close">&times;</button>
+        </div>
         <form asp-area="SolarPanelInstaller" asp-controller="Installation" asp-action="Resubmit"
-              method="post" enctype="multipart/form-data">
+              method="post" enctype="multipart/form-data" class="cl-form" onsubmit="return clValidate(this)">
             @Html.AntiForgeryToken()
             <input type="hidden" name="installationId" id="resubInstallationId" />
 
-            <div class="fg">
-                <label>Notes</label>
-                <textarea name="notes" rows="2" placeholder="What you corrected"></textarea>
-            </div>
-            <div class="fg">
-                <label>Photos <span style="color:#dc2626">*</span></label>
-                <input type="file" name="completionPhotos" id="resubPhotos" accept="image/*" multiple
-                       data-photo-label="Installation photo" onchange="onPhotosPicked(this, 'resubPhotoInfo')" />
-                <div style="font-size:12px;color:#6b7280;margin-top:4px" id="resubPhotoInfo">
-                    Up to @maxPhotos photos in total for this installation.
+            <div class="cl-mbody">
+                <div class="cl-sec">
+                    <div class="fg" style="margin:0">
+                        <label>What did you correct?</label>
+                        <textarea name="notes" rows="2" placeholder="Briefly describe the changes for the admin"></textarea>
+                    </div>
                 </div>
+
+                <div class="cl-sec">
+                    <div class="cl-sechead">
+                        <div class="cl-sectitle">Installation checklist</div>
+                        <div class="cl-progress"><span class="cl-pbar"><i></i></span><b class="cl-pcount">0 / @formats.Count</b> complete</div>
+                    </div>
+                    @if (formats.Count == 0)
+                    {
+                        <div class="text-muted">The installation checklist is not set up yet. Please contact the admin.</div>
+                    }
+                    else
+                    {
+                        ChecklistFields();
+                    }
+                </div>
+                <div class="cl-errors"></div>
             </div>
 
-            <div style="display:flex;gap:8px;margin-top:14px">
-                <button type="submit" class="btn btn-p">&#128260; Re-submit for Approval</button>
-                <button type="button" class="btn btn-s" onclick="closeResubmit()">Cancel</button>
+            <div class="cl-mfoot">
+                <span class="cl-foot-note">Every item must be complete before the installation can be re-submitted.</span>
+                <div style="display:flex;gap:8px">
+                    <button type="button" class="btn btn-s" onclick="closeResubmit()">Cancel</button>
+                    <button type="submit" class="btn btn-p">Re-submit for Approval</button>
+                </div>
             </div>
         </form>
     </div>
 </div>
 
-@* Lightbox for the photo thumbnails. *@
-<div id="photoLightbox" onclick="this.style.display='none'"
-     style="display:none;position:fixed;inset:0;background:rgba(15,23,42,.85);z-index:2100;align-items:center;justify-content:center;padding:20px">
-    <img id="photoLightboxImg" src="" alt="installation photo"
-         style="max-width:95%;max-height:90vh;border-radius:10px" />
-</div>
 
 @section Scripts {
     <script>
-        const MAX_PHOTOS = @maxPhotos;
+        // What each rejected installation already holds per upload-format line.
+        const CL_STATE = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(clState));
+
+        function resetForm(wrap) {
+            wrap.querySelectorAll('.cl-line').forEach(line => {
+                line.querySelectorAll('input[type=file]').forEach(i => clSetFiles(i, []));
+                const ta = line.querySelector('textarea');
+                if (ta) ta.value = '';
+                line.dataset.exPhotos = '0';
+                line.dataset.exVideos = '0';
+                line.dataset.exRemark = '';
+                line._warn = '';
+                line.classList.remove('bad', 'open');
+                const cb = line.querySelector('.cl-cb');
+                if (cb) cb.checked = false;
+                clRefresh(line);
+            });
+            const err = wrap.querySelector('.cl-errors');
+            if (err) err.style.display = 'none';
+            const body = wrap.querySelector('.cl-mbody');
+            if (body) body.scrollTop = 0;
+        }
 
         function openMark(requestId, requestNumber) {
+            const wrap = document.getElementById('markWrap');
+            resetForm(wrap);
             document.getElementById('markRequestId').value = requestId;
             document.getElementById('markTitle').textContent = 'Mark Installation — ' + requestNumber;
-            document.getElementById('markWrap').style.display = 'block';
+            wrap.style.display = 'block';
         }
         function closeMark() {
             document.getElementById('markWrap').style.display = 'none';
         }
 
         function openResubmit(installationId, requestNumber) {
+            const wrap = document.getElementById('resubWrap');
+            resetForm(wrap);
+            // Show what is already on file, so only the wrong lines need re-uploading.
+            const state = CL_STATE[installationId] || {};
+            wrap.querySelectorAll('.cl-line').forEach(line => {
+                const s = state[line.dataset.fid];
+                if (!s) return;
+                line.dataset.exPhotos = s.p;
+                line.dataset.exVideos = s.v;
+                line.dataset.exRemark = s.r || '';
+                // Items that already hold something start ticked and open.
+                if (s.p > 0 || s.v > 0 || s.r) {
+                    line.classList.add('open');
+                    const cb = line.querySelector('.cl-cb');
+                    if (cb) cb.checked = true;
+                }
+                clRefresh(line);
+            });
             document.getElementById('resubInstallationId').value = installationId;
-            document.getElementById('resubTitle').textContent = 'Update Photos — ' + requestNumber;
-            document.getElementById('resubWrap').style.display = 'block';
+            document.getElementById('resubTitle').textContent = 'Update Installation — ' + requestNumber;
+            wrap.style.display = 'block';
         }
         function closeResubmit() {
             document.getElementById('resubWrap').style.display = 'none';
         }
 
-        // Image point 11 — tell the installer how many they picked and stop them
-        // going over the cap before the upload starts. The server enforces it too.
-        function onPhotosPicked(input, infoId) {
-            const info = document.getElementById(infoId);
-            const n = input.files ? input.files.length : 0;
-            if (!info) return;
-            if (n > MAX_PHOTOS) {
-                info.style.color = '#b91c1c';
-                info.textContent = `You selected ${n} photos — only ${MAX_PHOTOS} are allowed. Please choose fewer.`;
-                input.value = '';
-                return;
+        // The camera hands back ONE photo per pick, and a file input normally
+        // forgets the previous pick — so picks are collected on the input
+        // (DataTransfer) until the line has what it needs.
+        // Ticking an item opens its input straight away: a photo item opens the
+        // picker (photo-source.js turns that into Camera / Gallery on a phone), a
+        // video item opens the video picker, a details item focuses its text box.
+        // Unticking closes it and drops whatever was picked for it.
+        function clToggle(cb) {
+            const line = cb.closest('.cl-line');
+            if (cb.checked) {
+                line.classList.add('open');
+                const photo = line.querySelector('input[data-kind=photo]');
+                const video = line.querySelector('input[data-kind=video]');
+                const ta = line.querySelector('textarea');
+                if (photo && !photo.files.length && !+line.dataset.exPhotos) photo.click();
+                else if (video && !video.files.length && !+line.dataset.exVideos) video.click();
+                else if (ta) ta.focus();
+            } else {
+                const taNow = line.querySelector('textarea');
+                const hasPicks = clCount(line, 'photo') > 0 || clCount(line, 'video') > 0 || (taNow && taNow.value.trim());
+                if (hasPicks && !confirm('Remove the files / details you added for this item?')) {
+                    cb.checked = true;
+                    return;
+                }
+                line.classList.remove('open', 'bad');
+                line._warn = '';
+                line.querySelectorAll('input[type=file]').forEach(i => clSetFiles(i, []));
+                const ta = line.querySelector('textarea');
+                if (ta) ta.value = '';
             }
-            info.style.color = '#6b7280';
-            info.textContent = n === 0
-                ? `Attach up to ${MAX_PHOTOS} photos.`
-                : `${n} photo(s) selected (max ${MAX_PHOTOS}).`;
+            clRefresh(line);
         }
 
-        function openPhoto(url) {
-            const box = document.getElementById('photoLightbox');
-            document.getElementById('photoLightboxImg').src = url;
-            box.style.display = 'flex';
+        // Most files this input may hold: the item's max photos / required videos.
+        function clMax(input) {
+            const d = input.closest('.cl-line').dataset;
+            return input.dataset.kind === 'photo' ? +d.max : +d.video;
+        }
+
+        function clLimitMsg(input) {
+            const max = clMax(input);
+            const what = input.dataset.kind === 'photo'
+                ? (max === 1 ? 'photo' : 'photos') : (max === 1 ? 'video' : 'videos');
+            return `Maximum ${max} ${what} allowed for this item. You cannot upload more than ${max}.`;
+        }
+
+        // Stop the picker opening at all once the item already holds its maximum.
+        function clCanAdd(label, ev) {
+            const input = label.querySelector('input[type=file]');
+            if (!input || ev.target === input || !input.multiple) return true;
+            if ((input.files ? input.files.length : 0) >= clMax(input)) {
+                ev.preventDefault();
+                const line = input.closest('.cl-line');
+                line._warn = clLimitMsg(input) + ' Remove a file first to add another.';
+                clRefresh(line);
+                alert(line._warn);
+                return false;
+            }
+            return true;
+        }
+
+        function clPicked(input) {
+            const line = input.closest('.cl-line');
+            const fresh = Array.from(input.files || []);
+            let all = input.multiple ? (input._held || []).concat(fresh) : fresh;
+            const max = clMax(input);
+            line._warn = '';
+            if (max > 0 && all.length > max) {
+                // Keep only what fits and tell the installer why the rest were dropped.
+                const dropped = all.length - max;
+                all = all.slice(0, max);
+                line._warn = clLimitMsg(input) + ` ${dropped} extra file(s) were not added.`;
+                alert(line._warn);
+            }
+            if (!clSetFiles(input, all)) clSetFiles(input, fresh.slice(0, max || fresh.length));   // very old browser: keep only this pick
+            clRefresh(line);
+        }
+
+        // Puts `files` on the input (what gets posted) and remembers them.
+        function clSetFiles(input, files) {
+            try {
+                const dt = new DataTransfer();
+                files.forEach(f => dt.items.add(f));
+                input.files = dt.files;
+                input._held = files;
+                return true;
+            } catch (e) {
+                if (!files.length) input.value = '';
+                input._held = Array.from(input.files || []);
+                return false;
+            }
+        }
+
+        function clRemove(input, index) {
+            const files = (input._held || Array.from(input.files || [])).slice();
+            files.splice(index, 1);
+            clSetFiles(input, files);
+            const line = input.closest('.cl-line');
+            line._warn = '';
+            clRefresh(line);
+        }
+
+        function clCount(line, kind) {
+            const i = line.querySelector(`input[data-kind=${kind}]`);
+            return i && i.files ? i.files.length : 0;
+        }
+
+        function clSize(bytes) {
+            return bytes >= 1048576 ? (bytes / 1048576).toFixed(1) + ' MB' : Math.max(1, Math.round(bytes / 1024)) + ' KB';
+        }
+
+        // Thumbnails of the picked photos / the picked video, each removable.
+        function clRenderPicks(line) {
+            const pIn = line.querySelector('input[data-kind=photo]');
+            const thumbs = line.querySelector('.cl-thumbs');
+            if (pIn && thumbs) {
+                thumbs.querySelectorAll('img').forEach(img => URL.revokeObjectURL(img.src));
+                thumbs.innerHTML = '';
+                Array.from(pIn.files || []).forEach((f, idx) => {
+                    const box = document.createElement('div');
+                    box.className = 'cl-thumb';
+                    const img = document.createElement('img');
+                    img.src = URL.createObjectURL(f);
+                    img.alt = f.name;
+                    const rm = document.createElement('button');
+                    rm.type = 'button'; rm.className = 'cl-rm'; rm.innerHTML = '&times;'; rm.title = 'Remove';
+                    rm.onclick = () => clRemove(pIn, idx);
+                    box.append(img, rm);
+                    thumbs.append(box);
+                });
+            }
+            const vIn = line.querySelector('input[data-kind=video]');
+            const vids = line.querySelector('.cl-vids');
+            if (vIn && vids) {
+                vids.innerHTML = '';
+                Array.from(vIn.files || []).forEach((f, idx) => {
+                    const row = document.createElement('div');
+                    row.className = 'cl-vid';
+                    row.append('🎬 ' + f.name + ' (' + clSize(f.size) + ')');
+                    const rm = document.createElement('button');
+                    rm.type = 'button'; rm.className = 'cl-rm'; rm.innerHTML = '&times;'; rm.title = 'Remove';
+                    rm.onclick = () => clRemove(vIn, idx);
+                    row.append(rm);
+                    vids.append(row);
+                });
+            }
+        }
+
+        // Same rules as InstallationChecklist.ProblemFor on the server. A line
+        // with nothing new picked keeps what is already on file (Update form).
+        function clProblem(line) {
+            const d = line.dataset;
+            const min = +d.min, max = +d.max, vids = +d.video;
+            const newP = clCount(line, 'photo'), newV = clCount(line, 'video');
+            const p = newP > 0 ? newP : +d.exPhotos;
+            const v = newV > 0 ? newV : +d.exVideos;
+            const ta = line.querySelector('textarea');
+            const issues = [];
+            if (max > 0) {
+                if (p < min) issues.push(min === 1 ? 'add a photo' : `add at least ${min} photos`);
+                else if (p > max) issues.push(`remove ${p - max} photo(s) — maximum ${max}`);
+            }
+            if (vids > 0 && v < vids) issues.push('add the video');
+            if (d.remark === '1' && (!ta || !ta.value.trim()) && !d.exRemark) issues.push('enter the details');
+            return issues.length ? `${d.label}: ${issues.join(', ')}` : null;
+        }
+
+        function clRefresh(line) {
+            if (!line) return;
+            const d = line.dataset;
+            const max = +d.max;
+            const newP = clCount(line, 'photo'), newV = clCount(line, 'video');
+            const problem = clProblem(line);
+            line.classList.toggle('ok', !problem);
+            if (!problem) line.classList.remove('bad');
+
+            clRenderPicks(line);
+
+            // Status pill: Complete, or how far along the photos are.
+            const pill = line.querySelector('.cl-pill');
+            if (pill) {
+                const p = newP > 0 ? newP : +d.exPhotos;
+                pill.textContent = !problem ? '✓ Complete'
+                    : (max > 1 && p > 0 ? `${p} / ${max}` : 'Pending');
+            }
+
+            // One line of guidance under the controls.
+            const info = line.querySelector('.cl-info');
+            if (!info) return;
+            const notes = [];
+            if (max > 0 && newP === 0 && +d.exPhotos > 0)
+                notes.push(`${d.exPhotos} photo(s) already uploaded — add new photos only to replace them.`);
+            else if (max > 1 && newP > 0)
+                notes.push(`${newP} of up to ${max} photos selected.`);
+            if (+d.video > 0 && newV === 0 && +d.exVideos > 0)
+                notes.push('Video already uploaded — select a new one only to replace it.');
+            const ta = line.querySelector('textarea');
+            if (d.exRemark && ta && !ta.value.trim())
+                notes.push(`Already entered: "${d.exRemark}" — type new details only to replace it.`);
+            info.textContent = notes.join(' ');
+            if (line._warn) {
+                const w = document.createElement('span');
+                w.className = 'cl-warn';
+                w.textContent = '⚠ ' + line._warn;
+                info.prepend(w);
+            }
+
+            clProgress(line.closest('form'));
+        }
+
+        // "x / 13 complete" bar in the checklist header.
+        function clProgress(form) {
+            if (!form) return;
+            const lines = form.querySelectorAll('.cl-line');
+            const done = form.querySelectorAll('.cl-line.ok').length;
+            const bar = form.querySelector('.cl-pbar i');
+            const cnt = form.querySelector('.cl-pcount');
+            if (bar) bar.style.width = (lines.length ? (done * 100 / lines.length) : 0) + '%';
+            if (cnt) cnt.textContent = `${done} / ${lines.length}`;
+        }
+
+        // Block a half-filled submit before minutes of uploading are wasted.
+        // The server re-checks everything.
+        function clValidate(form) {
+            const problems = [];
+            form.querySelectorAll('.cl-line').forEach(line => {
+                const p = clProblem(line);
+                line.classList.toggle('bad', !!p);
+                if (p) {
+                    problems.push(p);
+                    // Open the item so its input is right there to fix.
+                    line.classList.add('open');
+                    const cb = line.querySelector('.cl-cb');
+                    if (cb) cb.checked = true;
+                }
+            });
+            const box = form.querySelector('.cl-errors');
+            if (problems.length) {
+                if (box) {
+                    box.innerHTML = `<strong>${problems.length} item(s) still need attention:</strong><br>` +
+                        problems.map(p => '• ' + p.replace(/</g, '&lt;')).join('<br>');
+                    box.style.display = 'block';
+                }
+                // Take the installer straight to the first incomplete item.
+                const first = form.querySelector('.cl-line.bad');
+                if (first) first.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                return false;
+            }
+            if (box) box.style.display = 'none';
+            const btn = form.querySelector('button[type=submit]');
+            if (btn) btn.textContent = 'Uploading… please keep this page open';
+            return true;
         }
     </script>
 }

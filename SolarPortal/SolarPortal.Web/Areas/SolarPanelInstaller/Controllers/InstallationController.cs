@@ -133,6 +133,15 @@ public class InstallationController : Controller
             : (await _uow.InstallationPhotos.FindAsync(p => installIds.Contains(p.InstallationId)))
               .GroupBy(p => p.InstallationId)
               .ToDictionary(g => g.Key, g => g.OrderBy(p => p.Id).ToList());
+        var entriesByInstall = installIds.Count == 0
+            ? new Dictionary<int, List<InstallationChecklistEntry>>()
+            : (await _uow.InstallationChecklistEntries.FindAsync(e => installIds.Contains(e.InstallationId)))
+              .GroupBy(e => e.InstallationId)
+              .ToDictionary(g => g.Key, g => g.OrderBy(e => e.Id).ToList());
+
+        // The fixed INC upload format the Mark / Update forms are built from.
+        var formats = await LoadFormatsAsync();
+        ViewBag.Formats = formats;
 
         var allRows = requestIds
             .Where(requests.ContainsKey)
@@ -140,14 +149,20 @@ public class InstallationController : Controller
             {
                 myInstalls.TryGetValue(id, out var inst);
                 myDispatches.TryGetValue(id, out var disp);
+                var photos = inst != null && photosByInstall.TryGetValue(inst.Id, out var ph)
+                                ? ph
+                                : new List<InstallationPhoto>();
+                var entries = inst != null && entriesByInstall.TryGetValue(inst.Id, out var en)
+                                ? en
+                                : new List<InstallationChecklistEntry>();
                 return new InstallationRow
                 {
                     Request = requests[id],
                     Installation = inst,
                     Dispatch = disp,
-                    Photos = inst != null && photosByInstall.TryGetValue(inst.Id, out var ph)
-                                ? ph
-                                : new List<InstallationPhoto>()
+                    Photos = photos,
+                    Entries = entries,
+                    Checklist = InstallationChecklist.Evaluate(formats, photos, entries)
                 };
             })
             .OrderByDescending(row => row.Request.CreatedAt)
@@ -179,18 +194,62 @@ public class InstallationController : Controller
         return View(rows);
     }
 
+    // GET: /SolarPanelInstaller/Installation/Details/5   (5 = Installations.Id)
+    // Everything the installer submitted for one installation, laid out per
+    // checklist item: which photos belong to which item, the video, the details.
+    public async Task<IActionResult> Details(int id)
+    {
+        var wid = WorkerId;
+        var installation = await _uow.Installations.GetByIdAsync(id);
+        if (installation == null || installation.AssignedWorkerId != wid)
+        {
+            TempData["Warning"] = "Installation not found.";
+            return RedirectToAction(nameof(Index));
+        }
+
+        var request = await _uow.SolarRequests.GetByIdAsync(installation.SolarRequestId);
+        if (request == null)
+        {
+            TempData["Warning"] = "Request not found.";
+            return RedirectToAction(nameof(Index));
+        }
+
+        var dispatch = (await _uow.MaterialDispatches.FindAsync(m => m.SolarRequestId == request.Id))
+                       .OrderByDescending(m => m.CreatedAt)
+                       .FirstOrDefault();
+        var photos = (await _uow.InstallationPhotos.FindAsync(p => p.InstallationId == id))
+                     .OrderBy(p => p.Id).ToList();
+        var entries = (await _uow.InstallationChecklistEntries.FindAsync(e => e.InstallationId == id))
+                      .OrderBy(e => e.Id).ToList();
+        var formats = await LoadFormatsAsync();
+
+        return View(new InstallationRow
+        {
+            Request = request,
+            Installation = installation,
+            Dispatch = dispatch,
+            Photos = photos,
+            Entries = entries,
+            Checklist = InstallationChecklist.Evaluate(formats, photos, entries)
+        });
+    }
+
     // POST: /SolarPanelInstaller/Installation/MarkComplete
     // Mirrors the admin flow that used to live in OperationsController.SubmitInstallation:
     // completes the Installation row, logs the WorkerAssignment and advances the stage
     // (Domestic -> DCR Update, Commercial -> Completed).
     //
-    // Image point 11: the installer now attaches MULTIPLE photos (up to 30) and the
-    // installation goes to admin as Pending. Commission is credited only after admin
-    // approves; a rejected installation is re-uploaded through Resubmit below.
+    // The installer files the FIXED INC upload format (IncUploadFormats): every line's
+    // photos (min..max), the video and the typed details. Nothing is saved unless the
+    // whole format is filled — "ye pura fill hoga tabhi INC commission de sakta hai".
+    // The installation then goes to admin as Pending; commission waits for approval,
+    // and a rejected installation is corrected through Resubmit below.
     [HttpPost]
     [ValidateAntiForgeryToken]
+    [RequestSizeLimit(MaxSubmissionBytes)]
+    [RequestFormLimits(MultipartBodyLengthLimit = MaxSubmissionBytes)]
     public async Task<IActionResult> MarkComplete(int requestId, DateTime? installationDate,
-        string? notes, string? remark, IFormFile? completionPhoto, List<IFormFile>? completionPhotos)
+        string? notes, string? remark)
     {
         var wid = WorkerId;
         if (wid <= 0)
@@ -228,19 +287,33 @@ public class InstallationController : Controller
             return RedirectToAction(nameof(Index));
         }
 
-        // Image point 11: "Multiple photo upload — upto 30 photo."
-        // Both field names are accepted so an older cached page posting the single
-        // `completionPhoto` still works; everything lands in one list.
-        var incoming = BuildPhotoList(completionPhoto, completionPhotos);
-        if (incoming.Count > InstallationPhoto.MaxPerInstallation)
+        var formats = await LoadFormatsAsync();
+        if (formats.Count == 0)
         {
-            TempData["Warning"] = $"You selected {incoming.Count} photos — a maximum of " +
-                                  $"{InstallationPhoto.MaxPerInstallation} is allowed.";
+            TempData["Warning"] = "The INC upload format is not set up yet. Please contact the admin.";
             return RedirectToAction(nameof(Index));
         }
-        if (incoming.Count == 0)
+
+        // Validate the WHOLE format before a single file is written.
+        var sub = ReadSubmission(formats);
+        var problems = FileProblems(formats, sub);
+        problems.AddRange(formats
+            .Select(f => InstallationChecklist.ProblemFor(
+                f, sub.Photos[f.Id].Count, sub.Videos[f.Id].Count, sub.Remarks[f.Id]))
+            .Where(p => p != null)!);
+        if (problems.Count > 0)
         {
-            TempData["Warning"] = "Please attach at least one installation photo before marking it complete.";
+            TempData["Warning"] = "Upload format is not complete — nothing was saved. " +
+                                  string.Join(" | ", problems);
+            return RedirectToAction(nameof(Index));
+        }
+
+        // Files go up before any DB change, so a failed upload can't leave a
+        // half-filled installation marked complete.
+        var (uploaded, uploadError) = await UploadChecklistFilesAsync(requestId, formats, sub);
+        if (uploadError != null)
+        {
+            TempData["Warning"] = $"Upload failed — nothing was saved. {uploadError}";
             return RedirectToAction(nameof(Index));
         }
 
@@ -268,18 +341,18 @@ public class InstallationController : Controller
             // Save first so a new row has its Id before the FK reference below.
             await _uow.SaveChangesAsync();
 
-            // Photos need the Installation.Id, so they are stored right after.
-            var savedPaths = await SavePhotosAsync(installation, requestId, wid, incoming);
-            if (savedPaths.Count == 0)
-            {
-                TempData["Warning"] = "Installation photos could not be uploaded. Please try again.";
-                return RedirectToAction(nameof(Index));
-            }
+            // Checklist rows need the Installation.Id, so they are stored right after.
+            await WriteChecklistRowsAsync(installation, wid, uploaded, sub);
+
             // Keep the legacy single-photo column pointing at the first photo so
             // every existing screen that reads it keeps rendering something.
-            installation.CompletionPhotoPath = savedPaths[0];
-            _uow.Installations.Update(installation);
-            await _uow.SaveChangesAsync();
+            var firstPhoto = uploaded.FirstOrDefault(u => !u.IsVideo);
+            if (firstPhoto != null)
+            {
+                installation.CompletionPhotoPath = firstPhoto.Path;
+                _uow.Installations.Update(installation);
+                await _uow.SaveChangesAsync();
+            }
 
             var assignment = (await _uow.WorkerAssignments.FindAsync(a => a.InstallationId == installation.Id))
                              .OrderByDescending(a => a.Id)
@@ -337,12 +410,15 @@ public class InstallationController : Controller
 
     // POST: /SolarPanelInstaller/Installation/Resubmit
     // Image point 11: "Reject hone par INC wala wapas update karega."
-    // Admin rejected the photos — the installer attaches a fresh set, which clears
-    // the reject reason and puts the installation back in front of admin.
+    // Admin rejected it — the installer corrects the upload format: any line they
+    // upload new photos / video / detail for REPLACES that line's old set; lines
+    // left blank keep what is already there. The result must again fill the whole
+    // format, then the reject reason is cleared and it goes back to admin.
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Resubmit(int installationId, string? notes,
-        List<IFormFile>? completionPhotos)
+    [RequestSizeLimit(MaxSubmissionBytes)]
+    [RequestFormLimits(MultipartBodyLengthLimit = MaxSubmissionBytes)]
+    public async Task<IActionResult> Resubmit(int installationId, string? notes)
     {
         var wid = WorkerId;
         if (wid <= 0)
@@ -363,33 +439,73 @@ public class InstallationController : Controller
             return RedirectToAction(nameof(Index));
         }
 
-        var incoming = BuildPhotoList(null, completionPhotos);
-        if (incoming.Count == 0)
+        var formats = await LoadFormatsAsync();
+        if (formats.Count == 0)
         {
-            TempData["Warning"] = "Please attach the corrected photos before re-submitting.";
+            TempData["Warning"] = "The INC upload format is not set up yet. Please contact the admin.";
             return RedirectToAction(nameof(Index));
         }
 
-        // Cap counts the photos already on the record — the new set is added to
-        // them, not swapped in, so admin can see what changed.
-        var existingCount = (await _uow.InstallationPhotos
-                                 .FindAsync(p => p.InstallationId == installation.Id)).Count();
-        if (existingCount + incoming.Count > InstallationPhoto.MaxPerInstallation)
+        var sub = ReadSubmission(formats);
+        if (!sub.HasAnything)
         {
-            TempData["Warning"] = $"This installation already has {existingCount} photo(s). " +
-                                  $"You can add at most {InstallationPhoto.MaxPerInstallation - existingCount} more.";
+            TempData["Warning"] = "Please upload the corrected photos / video / details before re-submitting.";
+            return RedirectToAction(nameof(Index));
+        }
+
+        // What the installation WILL hold once this submission replaces its lines.
+        var existingPhotos = (await _uow.InstallationPhotos
+                                  .FindAsync(p => p.InstallationId == installation.Id)).ToList();
+        var existingEntries = (await _uow.InstallationChecklistEntries
+                                   .FindAsync(e => e.InstallationId == installation.Id)).ToList();
+        var current = InstallationChecklist.Evaluate(formats, existingPhotos, existingEntries)
+                                           .ToDictionary(l => l.Format.Id);
+
+        var problems = FileProblems(formats, sub);
+        problems.AddRange(formats
+            .Select(f => InstallationChecklist.ProblemFor(f,
+                sub.Photos[f.Id].Count > 0 ? sub.Photos[f.Id].Count : current[f.Id].Photos,
+                sub.Videos[f.Id].Count > 0 ? sub.Videos[f.Id].Count : current[f.Id].Videos,
+                sub.Remarks[f.Id].Length > 0 ? sub.Remarks[f.Id] : current[f.Id].Remark))
+            .Where(p => p != null)!);
+        if (problems.Count > 0)
+        {
+            TempData["Warning"] = "Upload format is still not complete — nothing was saved. " +
+                                  string.Join(" | ", problems);
+            return RedirectToAction(nameof(Index));
+        }
+
+        var (uploaded, uploadError) = await UploadChecklistFilesAsync(installation.SolarRequestId, formats, sub);
+        if (uploadError != null)
+        {
+            TempData["Warning"] = $"Upload failed — nothing was saved. {uploadError}";
             return RedirectToAction(nameof(Index));
         }
 
         try
         {
-            var saved = await SavePhotosAsync(installation, installation.SolarRequestId, wid, incoming);
-            if (saved.Count == 0)
+            // Replace, line by line, whatever the installer re-filed. Soft delete,
+            // so the admin's query filter hides the old set and history survives.
+            foreach (var f in formats)
             {
-                TempData["Warning"] = "Photos could not be uploaded. Please try again.";
-                return RedirectToAction(nameof(Index));
+                if (sub.Photos[f.Id].Count > 0)
+                    foreach (var p in existingPhotos.Where(p => p.FormatItemId == f.Id))
+                    {
+                        p.IsDeleted = true;
+                        _uow.InstallationPhotos.Update(p);
+                    }
+                foreach (var e in existingEntries.Where(e => e.FormatItemId == f.Id &&
+                             ((e.EntryType == ChecklistEntryType.Video && sub.Videos[f.Id].Count > 0) ||
+                              (e.EntryType == ChecklistEntryType.Remark && sub.Remarks[f.Id].Length > 0))))
+                {
+                    e.IsDeleted = true;
+                    _uow.InstallationChecklistEntries.Update(e);
+                }
             }
+            await WriteChecklistRowsAsync(installation, wid, uploaded, sub);
 
+            var firstPhoto = uploaded.FirstOrDefault(u => !u.IsVideo);
+            if (firstPhoto != null) installation.CompletionPhotoPath = firstPhoto.Path;
             if (!string.IsNullOrWhiteSpace(notes)) installation.Notes = notes;
             installation.ApprovalStatus = ApprovalStatus.Pending;
             installation.RejectionReason = null;
@@ -399,7 +515,7 @@ public class InstallationController : Controller
             _uow.Installations.Update(installation);
             await _uow.SaveChangesAsync();
 
-            TempData["Success"] = $"{saved.Count} photo(s) added. Sent back to admin for approval.";
+            TempData["Success"] = "Upload format updated. Sent back to admin for approval.";
         }
         catch (Exception ex)
         {
@@ -411,51 +527,157 @@ public class InstallationController : Controller
 
     // ─── helpers ────────────────────────────────────────────────────────────
 
-    /// <summary>
-    /// Merges the legacy single-file field and the new multi-file field into one
-    /// list of real (non-empty) uploads, so both post shapes are handled the same.
-    /// </summary>
-    private static List<IFormFile> BuildPhotoList(IFormFile? single, List<IFormFile>? many)
+    // 39 photos x 10 MB + a 200 MB video, with headroom. IIS has its own cap in web.config.
+    private const long MaxSubmissionBytes = 1024L * 1024 * 1024;   // 1 GB
+    private const long MaxPhotoBytes = 10L * 1024 * 1024;          // same as FileUploadService
+    private static readonly string[] PhotoExtensions = { ".jpg", ".jpeg", ".png" };
+
+    private async Task<List<IncUploadFormat>> LoadFormatsAsync() =>
+        (await _uow.IncUploadFormats.FindAsync(f => f.IsActive)).OrderBy(f => f.SrNo).ToList();
+
+    /// <summary>What the installer posted for each format line.</summary>
+    private sealed class ChecklistSubmission
     {
-        var list = new List<IFormFile>();
-        if (many != null) list.AddRange(many.Where(f => f != null && f.Length > 0));
-        if (single != null && single.Length > 0 &&
-            !list.Any(f => f.FileName == single.FileName && f.Length == single.Length))
+        public Dictionary<int, List<IFormFile>> Photos { get; } = new();
+        public Dictionary<int, List<IFormFile>> Videos { get; } = new();
+        public Dictionary<int, string> Remarks { get; } = new();
+
+        public bool HasAnything =>
+            Photos.Values.Any(l => l.Count > 0) || Videos.Values.Any(l => l.Count > 0) ||
+            Remarks.Values.Any(r => r.Length > 0);
+    }
+
+    /// <summary>A file already stored on disk, waiting for its DB row.</summary>
+    private sealed record UploadedFile(int FormatItemId, IFormFile File, string Path, bool IsVideo);
+
+    // Field names per line: photos_{id} (multiple), video_{id}, remark_{id}.
+    private ChecklistSubmission ReadSubmission(List<IncUploadFormat> formats)
+    {
+        var form = Request.Form;
+        var sub = new ChecklistSubmission();
+        foreach (var f in formats)
         {
-            list.Add(single);
+            sub.Photos[f.Id] = f.MaxPhotos > 0
+                ? form.Files.GetFiles($"photos_{f.Id}").Where(x => x.Length > 0).ToList()
+                : new List<IFormFile>();
+            sub.Videos[f.Id] = f.VideoCount > 0
+                ? form.Files.GetFiles($"video_{f.Id}").Where(x => x.Length > 0).ToList()
+                : new List<IFormFile>();
+            var text = f.RemarkRequired ? form[$"remark_{f.Id}"].ToString().Trim() : "";
+            sub.Remarks[f.Id] = text.Length > 1000 ? text[..1000] : text;
         }
-        return list;
+        return sub;
+    }
+
+    /// <summary>Wrong file type / too big — checked up front so nothing is half-saved.</summary>
+    private static List<string> FileProblems(List<IncUploadFormat> formats, ChecklistSubmission sub)
+    {
+        var issues = new List<string>();
+        foreach (var f in formats)
+        {
+            foreach (var p in sub.Photos[f.Id])
+            {
+                var ext = Path.GetExtension(p.FileName).ToLowerInvariant();
+                if (!PhotoExtensions.Contains(ext))
+                    issues.Add($"{f.SrNo}. {p.FileName} is not a JPG / PNG photo");
+                else if (p.Length > MaxPhotoBytes)
+                    issues.Add($"{f.SrNo}. {p.FileName} is larger than 10 MB");
+            }
+            foreach (var v in sub.Videos[f.Id])
+            {
+                var ext = Path.GetExtension(v.FileName).ToLowerInvariant();
+                if (!FileUploadService.VideoExtensions.Contains(ext))
+                    issues.Add($"{f.SrNo}. {v.FileName} is not a video (MP4 / MOV / 3GP / WEBM / MKV / M4V)");
+                else if (v.Length > FileUploadService.MaxVideoBytes)
+                    issues.Add($"{f.SrNo}. {v.FileName} is larger than {FileUploadService.MaxVideoBytes / (1024 * 1024)} MB");
+            }
+        }
+        return issues;
     }
 
     /// <summary>
-    /// Stores each photo under uploads/installation/&lt;requestId&gt;/ and writes one
-    /// InstallationPhoto row per file. Returns the saved paths in upload order.
-    /// A file that fails to upload is skipped rather than failing the whole batch —
-    /// the installer would otherwise lose 29 good photos over one bad one.
+    /// Stores every posted photo / video under uploads/installation/&lt;requestId&gt;/.
+    /// All-or-nothing: on the first failure the files already stored are deleted
+    /// and the error is returned, so the installer re-submits a complete set.
     /// </summary>
-    private async Task<List<string>> SavePhotosAsync(
-        Installation installation, int requestId, int workerId, List<IFormFile> files)
+    private async Task<(List<UploadedFile> Uploaded, string? Error)> UploadChecklistFilesAsync(
+        int requestId, List<IncUploadFormat> formats, ChecklistSubmission sub)
     {
-        var saved = new List<string>();
-        foreach (var f in files)
+        var uploaded = new List<UploadedFile>();
+        var folder = $"installation/{requestId}";
+        foreach (var f in formats)
         {
-            var (ok, path, _) = await _fileUpload.UploadAsync(f, $"installation/{requestId}");
-            if (!ok || string.IsNullOrWhiteSpace(path)) continue;
+            foreach (var (file, isVideo) in sub.Photos[f.Id].Select(x => (x, false))
+                                             .Concat(sub.Videos[f.Id].Select(x => (x, true))))
+            {
+                var (ok, path, err) = isVideo
+                    ? await _fileUpload.UploadVideoAsync(file, folder)
+                    : await _fileUpload.UploadAsync(file, folder);
+                if (!ok || string.IsNullOrWhiteSpace(path))
+                {
+                    foreach (var u in uploaded) _fileUpload.DeleteFile(u.Path);
+                    return (new List<UploadedFile>(), $"{f.SrNo}. {file.FileName}: {err ?? "upload failed"}");
+                }
+                uploaded.Add(new UploadedFile(f.Id, file, path!, isVideo));
+            }
+        }
+        return (uploaded, null);
+    }
 
-            await _uow.InstallationPhotos.AddAsync(new InstallationPhoto
+    /// <summary>
+    /// Writes the DB rows for an uploaded checklist: photos into InstallationPhotos
+    /// (tagged with their line, so the admin approval page shows them as before),
+    /// videos and typed details into InstallationChecklistEntries.
+    /// </summary>
+    private async Task WriteChecklistRowsAsync(Installation installation, int workerId,
+        List<UploadedFile> uploaded, ChecklistSubmission sub)
+    {
+        foreach (var u in uploaded)
+        {
+            if (u.IsVideo)
+            {
+                await _uow.InstallationChecklistEntries.AddAsync(new InstallationChecklistEntry
+                {
+                    InstallationId     = installation.Id,
+                    SolarRequestId     = installation.SolarRequestId,
+                    FormatItemId       = u.FormatItemId,
+                    EntryType          = ChecklistEntryType.Video,
+                    FilePath           = u.Path,
+                    FileName           = Path.GetFileNameWithoutExtension(u.File.FileName),
+                    ContentType        = u.File.ContentType,
+                    FileSizeBytes      = u.File.Length,
+                    UploadedByWorkerId = workerId
+                });
+            }
+            else
+            {
+                await _uow.InstallationPhotos.AddAsync(new InstallationPhoto
+                {
+                    InstallationId     = installation.Id,
+                    SolarRequestId     = installation.SolarRequestId,
+                    FormatItemId       = u.FormatItemId,
+                    FilePath           = u.Path,
+                    FileName           = Path.GetFileNameWithoutExtension(u.File.FileName),
+                    ContentType        = u.File.ContentType,
+                    FileSizeBytes      = u.File.Length,
+                    UploadedByWorkerId = workerId
+                });
+            }
+        }
+
+        foreach (var (formatId, text) in sub.Remarks.Where(r => r.Value.Length > 0))
+        {
+            await _uow.InstallationChecklistEntries.AddAsync(new InstallationChecklistEntry
             {
                 InstallationId     = installation.Id,
-                SolarRequestId     = requestId,
-                FilePath           = path!,
-                FileName           = Path.GetFileNameWithoutExtension(f.FileName),
-                ContentType        = f.ContentType,
-                FileSizeBytes      = f.Length,
+                SolarRequestId     = installation.SolarRequestId,
+                FormatItemId       = formatId,
+                EntryType          = ChecklistEntryType.Remark,
+                RemarkText         = text,
                 UploadedByWorkerId = workerId
             });
-            saved.Add(path!);
         }
-        if (saved.Count > 0) await _uow.SaveChangesAsync();
-        return saved;
+        await _uow.SaveChangesAsync();
     }
 
     /// <summary>
@@ -483,8 +705,34 @@ public class InstallationController : Controller
         var worker = await _uow.Workers.GetByIdAsync(workerId);
         var messages = new List<string>();
 
+        // Fixed INC upload format gate: no commission until every line is filled.
+        var formats = await LoadFormatsAsync();
+        var ids = pending.Select(i => i.Id).ToHashSet();
+        var photos = (await _uow.InstallationPhotos.FindAsync(p => ids.Contains(p.InstallationId))).ToList();
+        var entries = (await _uow.InstallationChecklistEntries.FindAsync(e => ids.Contains(e.InstallationId))).ToList();
+        var reqIds = pending.Select(i => i.SolarRequestId).ToHashSet();
+        var reqNumbers = (await _uow.SolarRequests.FindAsync(r => reqIds.Contains(r.Id)))
+                         .ToDictionary(r => r.Id, r => r.RequestNumber);
+
         foreach (var inst in pending)
         {
+            if (worker != null && worker.Type == WorkerType.INC)
+            {
+                var missing = formats.Count == 0
+                    ? 1
+                    : InstallationChecklist.Problems(InstallationChecklist.Evaluate(formats,
+                          photos.Where(p => p.InstallationId == inst.Id),
+                          entries.Where(e => e.InstallationId == inst.Id))).Count;
+                if (missing > 0)
+                {
+                    // Leave CommissionCredited false: once the format is filled the
+                    // next sweep pays it.
+                    messages.Add($"Commission on hold for {reqNumbers.GetValueOrDefault(inst.SolarRequestId, "#" + inst.SolarRequestId)}: " +
+                                 $"the INC upload format is not complete ({missing} item(s) missing).");
+                    continue;
+                }
+            }
+
             // Mark first, credit second? No — credit first so a failure leaves the
             // row untouched and the next sweep retries. CreditInstallationCommissionAsync
             // is idempotent per request, so a retry can't double-pay.
@@ -521,6 +769,19 @@ public class InstallationController : Controller
 
         /// <summary>Every photo the installer attached for this installation (image point 11).</summary>
         public List<InstallationPhoto> Photos { get; set; } = new();
+
+        /// <summary>Videos + typed details filed against the fixed upload format.</summary>
+        public List<InstallationChecklistEntry> Entries { get; set; } = new();
+
+        /// <summary>Per-line state of the fixed INC upload format.</summary>
+        public List<InstallationChecklist.LineStatus> Checklist { get; set; } = new();
+        public int ChecklistDone => Checklist.Count(l => l.IsComplete);
+
+        /// <summary>
+        /// False for installations submitted before the checklist existed — they
+        /// have no tagged photos / entries, so showing "0 / 13" for them is wrong.
+        /// </summary>
+        public bool UsesChecklist => Photos.Any(p => p.FormatItemId != null) || Entries.Any();
 
         public bool IsCompleted => Installation?.IsCompleted == true;
         public string? AdminRemark => Installation?.Remark;

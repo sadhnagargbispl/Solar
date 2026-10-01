@@ -1864,3 +1864,4 @@ C:\Users\Claude1\AppData\Local\Temp\claude\--localhost-Sadhna-SolerGithub-Solar\
 C:\Users\Claude1\AppData\Local\Temp\claude\--localhost-Sadhna-SolerGithub-Solar\f7ca3285-56f3-492b-aa92-d5552ee67c11\scratchpad\build\refs\System.Xml.XPath.dll
 C:\Users\Claude1\AppData\Local\Temp\claude\--localhost-Sadhna-SolerGithub-Solar\f7ca3285-56f3-492b-aa92-d5552ee67c11\scratchpad\build\refs\System.Xml.XPath.XDocument.dll
 C:\Users\Claude1\AppData\Local\Temp\claude\--localhost-Sadhna-SolerGithub-Solar\f7ca3285-56f3-492b-aa92-d5552ee67c11\scratchpad\build\refs\WindowsBase.dll
+\\localhost\Sadhna\SolerGithub\Solar\SolarPortal\SolarPortal.Web\bin\Debug\net8.0\web.config

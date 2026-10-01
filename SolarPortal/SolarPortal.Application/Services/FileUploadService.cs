@@ -13,6 +13,12 @@ public class FileUploadService : IFileUploadService
     private readonly string[] _allowedExtensions = { ".jpg", ".jpeg", ".png", ".pdf" };
     private readonly long _maxFileSize = 10 * 1024 * 1024; // 10 MB
 
+    /// <summary>Video formats accepted by UploadVideoAsync (INC installation video).</summary>
+    public static readonly string[] VideoExtensions = { ".mp4", ".mov", ".3gp", ".webm", ".mkv", ".m4v" };
+
+    /// <summary>A phone walk-through of the structure + wiring easily runs past 100 MB.</summary>
+    public const long MaxVideoBytes = 200L * 1024 * 1024; // 200 MB
+
     public FileUploadService(
         IWebHostEnvironment env,
         IConfiguration config,
@@ -56,6 +62,30 @@ public class FileUploadService : IFileUploadService
         if (!_allowedExtensions.Contains(ext))
             return (false, null, "Invalid file type. Allowed: JPG, PNG, PDF");
 
+        return await SaveAsync(file, subfolder, ext);
+    }
+
+    public async Task<(bool Success, string? FilePath, string? Error)> UploadVideoAsync(
+        IFormFile file, string subfolder)
+    {
+        if (file == null || file.Length == 0)
+            return (false, null, "No file provided");
+
+        if (file.Length > MaxVideoBytes)
+            return (false, null, $"Video exceeds {MaxVideoBytes / (1024 * 1024)}MB limit");
+
+        var ext = Path.GetExtension(file.FileName).ToLowerInvariant();
+        if (!VideoExtensions.Contains(ext))
+            return (false, null, "Invalid video type. Allowed: MP4, MOV, 3GP, WEBM, MKV, M4V");
+
+        return await SaveAsync(file, subfolder, ext);
+    }
+
+    // Shared tail of UploadAsync / UploadVideoAsync: stores the (already
+    // validated) file under wwwroot/uploads/<subfolder> and mirrors it to admin.
+    private async Task<(bool Success, string? FilePath, string? Error)> SaveAsync(
+        IFormFile file, string subfolder, string ext)
+    {
         // Sanitise the subfolder. Callers pass things like "SCR-001/dcr" to
         // organise files per project. We allow letters, digits, dash, underscore
         // and the path separator between segments; everything else (spaces, "..",

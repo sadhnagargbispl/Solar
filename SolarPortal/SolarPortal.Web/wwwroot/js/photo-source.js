@@ -61,7 +61,7 @@
             'border-radius:16px 16px 0 0;padding:18px 16px calc(18px + env(safe-area-inset-bottom));' +
             'box-shadow:0 -6px 24px rgba(0,0,0,.2)">' +
             '  <div style="width:40px;height:4px;border-radius:2px;background:#e5e7eb;margin:0 auto 14px"></div>' +
-            '  <div style="font-weight:600;font-size:15px;color:#1f2937;margin-bottom:12px" id="psTitle">Photo kahan se lein?</div>' +
+            '  <div style="font-weight:600;font-size:15px;color:#1f2937;margin-bottom:12px" id="psTitle">Choose photo source</div>' +
             '  <button type="button" data-src="camera"  style="' + btnCss() + '">📷 &nbsp;Camera</button>' +
             '  <button type="button" data-src="gallery" style="' + btnCss() + '">🖼️ &nbsp;Gallery</button>' +
             '  <button type="button" data-src="files"   style="' + btnCss() + '" id="psFiles">📄 &nbsp;File / PDF</button>' +
@@ -109,7 +109,7 @@
         var title = sheet.querySelector('#psTitle');
         if (title) {
             var label = el.getAttribute('data-photo-label') || '';
-            title.textContent = label ? (label + ' — kahan se lein?') : 'Photo kahan se lein?';
+            title.textContent = label ? (label + ' — choose source') : 'Choose photo source';
         }
 
         // The "File / PDF" row only makes sense when the input takes non-images.

@@ -1,0 +1,355 @@
+@using SolarPortal.Web.Areas.SolarPanelInstaller.Controllers
+@using SolarPortal.Domain.Entities
+@model InstallationController.InstallationRow
+@{
+    var r = Model.Request;
+    var inst = Model.Installation!;
+    ViewData["Title"] = $"Installation — {r.RequestNumber}";
+
+    // Stored paths may be "uploads/x.jpg" or "/uploads/x.jpg" — normalise.
+    string FileUrl(string? p)
+    {
+        if (string.IsNullOrWhiteSpace(p)) return "";
+        return "/" + p.Replace("\\", "/").TrimStart('/');
+    }
+
+    string Local(DateTime? d, string fmt = "dd MMM yyyy") =>
+        d.HasValue ? d.Value.ToLocalTime().ToString(fmt) : "—";
+
+    // Photos per checklist item; photos from before the checklist have no item.
+    var photosByItem = Model.Photos.Where(p => p.FormatItemId != null)
+                                   .GroupBy(p => p.FormatItemId!.Value)
+                                   .ToDictionary(g => g.Key, g => g.ToList());
+    var otherPhotos = Model.Photos.Where(p => p.FormatItemId == null).ToList();
+    var videosByItem = Model.Entries.Where(e => e.EntryType == ChecklistEntryType.Video)
+                                    .GroupBy(e => e.FormatItemId)
+                                    .ToDictionary(g => g.Key, g => g.ToList());
+
+    var usesChecklist = Model.UsesChecklist;
+    var done = Model.ChecklistDone;
+    var total = Model.Checklist.Count;
+    var pct = total > 0 ? done * 100 / total : 0;
+
+    string RuleText(IncUploadFormat f)
+    {
+        var parts = new List<string>();
+        if (f.MaxPhotos > 0)
+            parts.Add(f.MinPhotos == f.MaxPhotos
+                ? $"{f.MaxPhotos} photo{(f.MaxPhotos == 1 ? "" : "s")} required"
+                : $"{f.MinPhotos} to {f.MaxPhotos} photos");
+        if (f.VideoCount > 0) parts.Add(f.VideoCount == 1 ? "1 video required" : $"{f.VideoCount} videos required");
+        if (f.RemarkRequired) parts.Add("Written details required");
+        return string.Join(" · ", parts);
+    }
+
+    // Running index into the page-wide gallery, so the viewer can step through
+    // every photo on the page in order.
+    var galleryIndex = 0;
+}
+
+<style>
+    .ins-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+    .ins-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; margin-bottom: 16px; }
+    @@media (max-width: 1100px) { .ins-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+    @@media (max-width: 600px)  { .ins-grid { grid-template-columns: 1fr; } }
+    .ins-card { background: #fff; border: 1px solid #e5e7eb; border-radius: 12px; padding: 14px 16px; }
+    .ins-label { font-size: 11px; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; color: #94a3b8; margin-bottom: 8px; }
+    .ins-main { font-size: 15px; font-weight: 700; color: #0f172a; }
+    .ins-sub { font-size: 12.5px; color: #64748b; margin-top: 3px; }
+    .ins-kv { display: flex; justify-content: space-between; gap: 10px; font-size: 12.5px; padding: 3px 0; }
+    .ins-kv span:first-child { color: #64748b; }
+    .ins-kv span:last-child { color: #0f172a; font-weight: 600; text-align: right; }
+    .ins-alert { border-radius: 10px; padding: 12px 14px; font-size: 13px; margin-bottom: 16px; }
+    .ins-notes { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; margin-bottom: 16px; }
+    @@media (max-width: 700px) { .ins-notes { grid-template-columns: 1fr; } }
+    .ins-text { font-size: 13px; color: #334155; white-space: pre-wrap; }
+
+    .ins-prog { display: flex; align-items: center; gap: 10px; font-size: 12.5px; color: #475569; }
+    .ins-bar { width: 160px; height: 8px; background: #e5e7eb; border-radius: 99px; overflow: hidden; }
+    .ins-bar i { display: block; height: 100%; background: #16a34a; }
+
+    .ins-item { border: 1px solid #e2e8f0; border-radius: 12px; padding: 14px 16px; margin-bottom: 10px; }
+    .ins-item.ok { border-color: #bbf7d0; }
+    .ins-item.miss { border-color: #fecaca; background: #fffafa; }
+    .ins-ihead { display: flex; align-items: flex-start; gap: 10px; }
+    .ins-no { flex: 0 0 28px; height: 28px; border-radius: 50%; background: #f1f5f9; color: #475569; text-align: center; line-height: 28px; font-weight: 700; font-size: 12.5px; }
+    .ins-item.ok .ins-no { background: #16a34a; color: #fff; }
+    .ins-ititle { font-size: 14px; font-weight: 600; color: #0f172a; }
+    .ins-irule { font-size: 12px; color: #64748b; margin-top: 2px; }
+    .ins-pill { margin-left: auto; flex: 0 0 auto; font-size: 11.5px; font-weight: 600; padding: 3px 10px; border-radius: 99px; white-space: nowrap; }
+    .ins-item.ok .ins-pill { background: #dcfce7; color: #15803d; }
+    .ins-item.miss .ins-pill { background: #fee2e2; color: #b91c1c; }
+    .ins-ibody { margin: 12px 0 0 38px; }
+    @@media (max-width: 600px) { .ins-ibody { margin-left: 0; } }
+    .ins-photos { display: grid; grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); gap: 10px; }
+    .ins-ph { position: relative; aspect-ratio: 1 / 1; border-radius: 10px; overflow: hidden; border: 1px solid #e2e8f0; cursor: zoom-in; background: #f8fafc; padding: 0; }
+    .ins-ph img { width: 100%; height: 100%; object-fit: cover; transition: transform .2s; }
+    .ins-ph:hover img { transform: scale(1.05); }
+    .ins-ph span { position: absolute; left: 6px; bottom: 6px; background: rgba(15,23,42,.7); color: #fff; font-size: 10.5px; padding: 1px 7px; border-radius: 99px; }
+    .ins-video { width: 100%; max-width: 560px; border-radius: 10px; background: #000; }
+    .ins-remark { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 10px 12px; font-size: 13px; color: #0f172a; white-space: pre-wrap; }
+    .ins-missing { font-size: 12.5px; color: #b91c1c; }
+    .ins-filemeta { font-size: 11.5px; color: #64748b; margin-top: 4px; }
+
+    /* Viewer */
+    .ins-lb { display: none; position: fixed; inset: 0; background: rgba(2,6,23,.92); z-index: 2100; flex-direction: column; }
+    .ins-lb.open { display: flex; }
+    .ins-lbbar { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 16px; color: #e2e8f0; }
+    .ins-lbcap { font-size: 13.5px; }
+    .ins-lbcap b { color: #fff; }
+    .ins-lbbtn { border: 0; background: rgba(255,255,255,.12); color: #fff; width: 40px; height: 40px; border-radius: 10px; font-size: 20px; cursor: pointer; }
+    .ins-lbbtn:hover { background: rgba(255,255,255,.22); }
+    .ins-lbstage { flex: 1; display: flex; align-items: center; justify-content: center; gap: 12px; padding: 0 12px 16px; min-height: 0; }
+    .ins-lbstage img { max-width: 100%; max-height: 100%; object-fit: contain; border-radius: 8px; }
+    .ins-lbimg { flex: 1; display: flex; align-items: center; justify-content: center; height: 100%; min-width: 0; }
+</style>
+
+<div class="page active">
+    <div class="ph">
+        <div class="ph-bc">
+            Installer / <a asp-action="Index" style="color:inherit">Installations</a> / <span>@r.RequestNumber</span>
+        </div>
+        <div class="ins-head">
+            <div>
+                <div class="ph-title">Installation — @r.RequestNumber</div>
+                <div class="ph-sub">Everything submitted for this installation, item by item.</div>
+            </div>
+            <a asp-action="Index" class="btn btn-s">&larr; Back to Installations</a>
+        </div>
+    </div>
+
+    @if (inst.ApprovalStatus == SolarPortal.Domain.Enums.ApprovalStatus.Rejected)
+    {
+        <div class="ins-alert" style="background:#fef2f2;border:1px solid #fecaca;color:#991b1b">
+            <strong>Rejected by admin.</strong>
+            @(string.IsNullOrWhiteSpace(inst.RejectionReason) ? "Admin asked for corrected uploads." : inst.RejectionReason)
+            <div style="margin-top:4px">Use <strong>Update Upload</strong> on the Installations page to correct and re-submit.</div>
+        </div>
+    }
+
+    @* ── Summary ─────────────────────────────────────────────────────── *@
+    <div class="ins-grid">
+        <div class="ins-card">
+            <div class="ins-label">Customer</div>
+            <div class="ins-main">@r.ApplicantName</div>
+            <div class="ins-sub">@r.MobileNumber</div>
+            <div class="ins-sub">@string.Join(", ", new[] { r.City, r.State }.Where(s => !string.IsNullOrWhiteSpace(s)))</div>
+        </div>
+        <div class="ins-card">
+            <div class="ins-label">Plan</div>
+            <div class="ins-main">@(string.IsNullOrWhiteSpace(r.SelectedPlan) ? "—" : r.SelectedPlan)</div>
+            <div class="ins-sub">@r.KVCapacity kV · @r.ConnectionType</div>
+        </div>
+        <div class="ins-card">
+            <div class="ins-label">Installation</div>
+            <div class="ins-kv"><span>Installed on</span><span>@Local(inst.InstallationDate)</span></div>
+            <div class="ins-kv"><span>Submitted</span><span>@Local(inst.SubmittedAt ?? inst.CompletedAt, "dd MMM yyyy, hh:mm tt")</span></div>
+            <div class="ins-kv"><span>Material dispatch</span><span>@Local(Model.DispatchDate)</span></div>
+        </div>
+        <div class="ins-card">
+            <div class="ins-label">Status</div>
+            <div>
+                @if (Model.IsApproved)
+                {
+                    <span class="sts sts-act">&#9989; Approved</span>
+                }
+                else if (Model.IsRejected)
+                {
+                    <span class="sts sts-rej">&#10060; Rejected</span>
+                }
+                else
+                {
+                    <span class="sts sts-pend">&#8987; Awaiting admin approval</span>
+                }
+            </div>
+            <div class="ins-kv" style="margin-top:8px"><span>Commission</span>
+                <span>@(inst.CommissionCredited ? "Credited" : (Model.IsApproved ? "Pending" : "After approval"))</span></div>
+            @if (inst.ReviewedAt.HasValue)
+            {
+                <div class="ins-kv"><span>Reviewed</span><span>@Local(inst.ReviewedAt)</span></div>
+            }
+        </div>
+    </div>
+
+    @if (!string.IsNullOrWhiteSpace(inst.Notes) || !string.IsNullOrWhiteSpace(inst.Remark))
+    {
+        <div class="ins-notes">
+            <div class="ins-card">
+                <div class="ins-label">Installer notes</div>
+                <div class="ins-text">@(string.IsNullOrWhiteSpace(inst.Notes) ? "—" : inst.Notes)</div>
+            </div>
+            <div class="ins-card">
+                <div class="ins-label">Remark</div>
+                <div class="ins-text">@(string.IsNullOrWhiteSpace(inst.Remark) ? "—" : inst.Remark)</div>
+            </div>
+        </div>
+    }
+
+    @* ── Checklist, item by item ─────────────────────────────────────── *@
+    @if (usesChecklist)
+    {
+        <div class="card">
+            <div class="ins-head" style="margin-bottom:14px">
+                <div class="ct" style="margin:0"><span class="ct-dot"></span>Installation checklist</div>
+                <div class="ins-prog"><span class="ins-bar"><i style="width:@pct%"></i></span><b>@done / @total</b> complete</div>
+            </div>
+
+            @foreach (var line in Model.Checklist)
+            {
+                var f = line.Format;
+                var photos = photosByItem.TryGetValue(f.Id, out var ph) ? ph : new List<InstallationPhoto>();
+                var videos = videosByItem.TryGetValue(f.Id, out var vd) ? vd : new List<InstallationChecklistEntry>();
+                <div class="ins-item @(line.IsComplete ? "ok" : "miss")">
+                    <div class="ins-ihead">
+                        <span class="ins-no">@f.SrNo</span>
+                        <div>
+                            <div class="ins-ititle">@f.Work</div>
+                            <div class="ins-irule">@RuleText(f)</div>
+                        </div>
+                        <span class="ins-pill">@(line.IsComplete ? "✓ Complete" : "Incomplete")</span>
+                    </div>
+                    <div class="ins-ibody">
+                        @if (f.MaxPhotos > 0)
+                        {
+                            if (photos.Any())
+                            {
+                                <div class="ins-photos">
+                                    @for (var i = 0; i < photos.Count; i++)
+                                    {
+                                        <button type="button" class="ins-ph" onclick="insOpen(@galleryIndex)"
+                                                data-gallery="@FileUrl(photos[i].FilePath)"
+                                                data-caption="@f.SrNo. @f.Work"
+                                                data-sub="Photo @(i + 1) of @photos.Count">
+                                            <img src="@FileUrl(photos[i].FilePath)" alt="@f.Work — photo @(i + 1)" loading="lazy" />
+                                            <span>@(i + 1)</span>
+                                        </button>
+                                        galleryIndex++;
+                                    }
+                                </div>
+                            }
+                            else
+                            {
+                                <div class="ins-missing">No photo uploaded.</div>
+                            }
+                        }
+                        @if (f.VideoCount > 0)
+                        {
+                            if (videos.Any())
+                            {
+                                foreach (var v in videos)
+                                {
+                                    <video class="ins-video" controls preload="metadata" src="@FileUrl(v.FilePath)"></video>
+                                    <div class="ins-filemeta">
+                                        @(v.FileName ?? "Video") · @(v.FileSizeBytes >= 1048576 ? $"{v.FileSizeBytes / 1048576.0:0.0} MB" : $"{Math.Max(1, v.FileSizeBytes / 1024)} KB")
+                                        · <a href="@FileUrl(v.FilePath)" target="_blank" style="color:#2563eb">Open in new tab</a>
+                                    </div>
+                                }
+                            }
+                            else
+                            {
+                                <div class="ins-missing">No video uploaded.</div>
+                            }
+                        }
+                        @if (f.RemarkRequired)
+                        {
+                            if (!string.IsNullOrWhiteSpace(line.Remark))
+                            {
+                                <div class="ins-remark">@line.Remark</div>
+                            }
+                            else
+                            {
+                                <div class="ins-missing">No details entered.</div>
+                            }
+                        }
+                    </div>
+                </div>
+            }
+        </div>
+    }
+
+    @* Photos sent before the checklist existed, or not tied to any item. *@
+    @if (otherPhotos.Any())
+    {
+        <div class="card" style="margin-top:16px">
+            <div class="ct"><span class="ct-dot"></span>@(usesChecklist ? "Other photos" : "Installation photos") (@otherPhotos.Count)</div>
+            @if (!usesChecklist)
+            {
+                <div class="ins-sub" style="margin:-4px 0 12px">Submitted before the installation checklist was introduced.</div>
+            }
+            <div class="ins-photos">
+                @for (var i = 0; i < otherPhotos.Count; i++)
+                {
+                    <button type="button" class="ins-ph" onclick="insOpen(@galleryIndex)"
+                            data-gallery="@FileUrl(otherPhotos[i].FilePath)"
+                            data-caption="@(usesChecklist ? "Other photos" : "Installation photos")"
+                            data-sub="Photo @(i + 1) of @otherPhotos.Count">
+                        <img src="@FileUrl(otherPhotos[i].FilePath)" alt="Installation photo @(i + 1)" loading="lazy" />
+                        <span>@(i + 1)</span>
+                    </button>
+                    galleryIndex++;
+                }
+            </div>
+        </div>
+    }
+
+    @if (!usesChecklist && !otherPhotos.Any())
+    {
+        <div class="card"><div class="text-muted" style="text-align:center;padding:24px">No photos were submitted for this installation.</div></div>
+    }
+</div>
+
+@* Photo viewer — steps through every photo on the page. *@
+<div class="ins-lb" id="insLb" onclick="if (event.target === this || event.target.classList.contains('ins-lbimg')) insClose()">
+    <div class="ins-lbbar">
+        <div class="ins-lbcap"><b id="insCap"></b> <span id="insSub" style="margin-left:8px;color:#94a3b8"></span></div>
+        <div style="display:flex;gap:8px">
+            <a id="insOpenNew" class="ins-lbbtn" target="_blank" title="Open original" style="display:inline-flex;align-items:center;justify-content:center;text-decoration:none">&#8599;</a>
+            <button type="button" class="ins-lbbtn" onclick="insClose()" title="Close (Esc)">&times;</button>
+        </div>
+    </div>
+    <div class="ins-lbstage">
+        <button type="button" class="ins-lbbtn" onclick="insStep(-1)" title="Previous (←)">&#8249;</button>
+        <div class="ins-lbimg"><img id="insImg" src="" alt="" /></div>
+        <button type="button" class="ins-lbbtn" onclick="insStep(1)" title="Next (→)">&#8250;</button>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        const INS_ITEMS = Array.from(document.querySelectorAll('[data-gallery]')).map(el => ({
+            src: el.dataset.gallery, caption: el.dataset.caption, sub: el.dataset.sub
+        }));
+        let insAt = 0;
+
+        function insShow() {
+            const it = INS_ITEMS[insAt];
+            if (!it) return;
+            document.getElementById('insImg').src = it.src;
+            document.getElementById('insImg').alt = it.caption;
+            document.getElementById('insCap').textContent = it.caption;
+            document.getElementById('insSub').textContent = `${it.sub} · ${insAt + 1} / ${INS_ITEMS.length} on this page`;
+            document.getElementById('insOpenNew').href = it.src;
+        }
+        function insOpen(i) {
+            insAt = i;
+            insShow();
+            document.getElementById('insLb').classList.add('open');
+            document.body.style.overflow = 'hidden';
+        }
+        function insClose() {
+            document.getElementById('insLb').classList.remove('open');
+            document.body.style.overflow = '';
+        }
+        function insStep(d) {
+            if (!INS_ITEMS.length) return;
+            insAt = (insAt + d + INS_ITEMS.length) % INS_ITEMS.length;
+            insShow();
+        }
+        document.addEventListener('keydown', e => {
+            if (!document.getElementById('insLb').classList.contains('open')) return;
+            if (e.key === 'Escape') insClose();
+            else if (e.key === 'ArrowLeft') insStep(-1);
+            else if (e.key === 'ArrowRight') insStep(1);
+        });
+    </script>
+}

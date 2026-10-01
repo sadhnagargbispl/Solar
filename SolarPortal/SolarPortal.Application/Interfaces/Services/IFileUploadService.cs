@@ -5,6 +5,13 @@ namespace SolarPortal.Application.Interfaces.Services;
 public interface IFileUploadService
 {
     Task<(bool Success, string? FilePath, string? Error)> UploadAsync(IFormFile file, string subfolder);
+
+    /// <summary>
+    /// Same as UploadAsync but for VIDEO files only (mp4 / mov / 3gp / webm / mkv /
+    /// m4v, up to FileUploadService.MaxVideoBytes). Kept separate so the ordinary
+    /// document / photo uploads never start accepting videos.
+    /// </summary>
+    Task<(bool Success, string? FilePath, string? Error)> UploadVideoAsync(IFormFile file, string subfolder);
     void DeleteFile(string filePath);
 
     /// <summary>

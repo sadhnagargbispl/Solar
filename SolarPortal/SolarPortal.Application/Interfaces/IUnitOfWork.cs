@@ -14,6 +14,10 @@ public interface IUnitOfWork : IDisposable
     IGenericRepository<Domain.Entities.Installation> Installations { get; }
     /// <summary>"Mark Installed" photo set — up to 30 per installation (image point 11).</summary>
     IGenericRepository<Domain.Entities.InstallationPhoto> InstallationPhotos { get; }
+    /// <summary>Fixed INC upload format lines (13) — what must be filed per installation.</summary>
+    IGenericRepository<Domain.Entities.IncUploadFormat> IncUploadFormats { get; }
+    /// <summary>Video / detail text filed against an IncUploadFormat line.</summary>
+    IGenericRepository<Domain.Entities.InstallationChecklistEntry> InstallationChecklistEntries { get; }
     /// <summary>KYC papers of commission-earning INC installers (image point 8).</summary>
     IGenericRepository<Domain.Entities.IncKycDocument> IncKycDocuments { get; }
     IGenericRepository<Domain.Entities.WorkerAssignment> WorkerAssignments { get; }

@@ -30,5 +30,11 @@ public class InstallationPhoto : BaseEntity
     /// <summary>Worker who uploaded it — the assigned INC installer.</summary>
     public int? UploadedByWorkerId { get; set; }
 
+    /// <summary>
+    /// IncUploadFormats line this photo was uploaded for. Null on photos from
+    /// before the fixed upload format existed.
+    /// </summary>
+    public int? FormatItemId { get; set; }
+
     public virtual Installation? Installation { get; set; }
 }

@@ -23,6 +23,9 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
     public DbSet<Installation> Installations => Set<Installation>();
     // Image point 11 — the full "Mark Installed" photo set (up to 30 per install).
     public DbSet<InstallationPhoto> InstallationPhotos => Set<InstallationPhoto>();
+    // Fixed INC upload format (13 lines) + the video / detail filed per line.
+    public DbSet<IncUploadFormat> IncUploadFormats => Set<IncUploadFormat>();
+    public DbSet<InstallationChecklistEntry> InstallationChecklistEntries => Set<InstallationChecklistEntry>();
     // Image point 8 — KYC papers of commission-earning (INC) installers.
     public DbSet<IncKycDocument> IncKycDocuments => Set<IncKycDocument>();
     public DbSet<DCRDocument> DCRDocuments => Set<DCRDocument>();
@@ -158,6 +161,24 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
              .HasForeignKey(x => x.InstallationId)
              .OnDelete(DeleteBehavior.Cascade);
             e.HasIndex(x => x.SolarRequestId);
+            e.HasQueryFilter(x => !x.IsDeleted);
+        });
+
+        // Fixed INC upload format — seeded by ADD-IncUploadFormat.sql.
+        builder.Entity<IncUploadFormat>(e =>
+        {
+            e.HasKey(x => x.Id);
+            e.Property(x => x.Work).HasMaxLength(300).IsRequired();
+            e.HasQueryFilter(x => !x.IsDeleted);
+        });
+
+        // Video / detail an INC filed against one IncUploadFormat line.
+        builder.Entity<InstallationChecklistEntry>(e =>
+        {
+            e.HasKey(x => x.Id);
+            e.Property(x => x.FilePath).HasMaxLength(500);
+            e.Property(x => x.RemarkText).HasMaxLength(1000);
+            e.HasIndex(x => x.InstallationId);
             e.HasQueryFilter(x => !x.IsDeleted);
         });
 

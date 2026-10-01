@@ -21,6 +21,8 @@ public class UnitOfWork : IUnitOfWork
     private IGenericRepository<MaterialDispatch>? _materialDispatches;
     private IGenericRepository<Installation>? _installations;
     private IGenericRepository<InstallationPhoto>? _installationPhotos;
+    private IGenericRepository<IncUploadFormat>? _incUploadFormats;
+    private IGenericRepository<InstallationChecklistEntry>? _installationChecklistEntries;
     private IGenericRepository<IncKycDocument>? _incKycDocuments;
     private IGenericRepository<WorkerAssignment>? _workerAssignments;
     private IGenericRepository<DCRDocument>? _dcrDocuments;
@@ -54,6 +56,10 @@ public class UnitOfWork : IUnitOfWork
         _installations ??= new GenericRepository<Installation>(_context);
     public IGenericRepository<InstallationPhoto> InstallationPhotos =>
         _installationPhotos ??= new GenericRepository<InstallationPhoto>(_context);
+    public IGenericRepository<IncUploadFormat> IncUploadFormats =>
+        _incUploadFormats ??= new GenericRepository<IncUploadFormat>(_context);
+    public IGenericRepository<InstallationChecklistEntry> InstallationChecklistEntries =>
+        _installationChecklistEntries ??= new GenericRepository<InstallationChecklistEntry>(_context);
     public IGenericRepository<IncKycDocument> IncKycDocuments =>
         _incKycDocuments ??= new GenericRepository<IncKycDocument>(_context);
     public IGenericRepository<WorkerAssignment> WorkerAssignments =>
