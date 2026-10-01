@@ -56,7 +56,7 @@
         </div>
         <div class="sc">
             <div class="sc-label">Due Amount</div>
-            <div class="sc-val red">₹@totalDue.ToString("N0")</div>
+            <div class="sc-val red">@(totalDue < 0 ? "-" : "")₹@Math.Abs(totalDue).ToString("N0")</div>
             <div class="sc-sub">Balance remaining</div>
         </div>
     </div>

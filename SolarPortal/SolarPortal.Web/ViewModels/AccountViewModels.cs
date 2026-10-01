@@ -5,7 +5,11 @@ namespace SolarPortal.Web.ViewModels;
 
 public class LoginViewModel
 {
+    // Users log in with their Member ID (the field is still named Email), so the
+    // error reads "The Member ID field is required." — the INC panel swaps in its
+    // own label in Login.cshtml / AccountController.
     [Required]
+    [Display(Name = "Member ID")]
     public string Email { get; set; } = string.Empty;
 
     [Required]

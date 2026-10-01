@@ -118,7 +118,8 @@ public class AccountController : Controller
         ViewBag.TotalPaid = creditedTotal;
         ViewBag.PaymentsOnly = totalPaid;   // receipts alone, for the sub-line
         ViewBag.ActiveIdDeposit = activeDeposit;
-        ViewBag.TotalDue = Math.Max(0m, totalProject - creditedTotal);
+        // Not clamped at 0 — an overpayment shows as a negative due (per spec).
+        ViewBag.TotalDue = totalProject - creditedTotal;
 
         return View();
     }

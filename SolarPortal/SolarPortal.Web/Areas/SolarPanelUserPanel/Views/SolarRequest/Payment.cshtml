@@ -48,6 +48,10 @@
                     // subtracted twice.
                     var paidOnPortal = Math.Max(0, totalPaid - idDeposit);
                     var dueAmt    = Math.Max(0, payableAmt - paidOnPortal);
+                    // Display-only balance: NOT clamped, so paying more than the plan
+                    // shows as a negative due (per spec). dueAmt still drives the form.
+                    var balance   = payableAmt - paidOnPortal;
+                    var balanceText = (balance < 0 ? "-" : "") + "₹" + Math.Abs(balance).ToString("N0");
                     var pendingAmt = Math.Max(0, totalPaid - verified);
                 }
                 @if (idDeposit > 0m)
@@ -62,7 +66,7 @@
                 {
                     <div class="sr"><span class="srk">Pending (Awaiting Approval)</span><span class="srv" style="color:#f59e0b">₹@pendingAmt.ToString("N0")</span></div>
                 }
-                <div class="sr"><span class="srk">Due</span><span class="srv" style="color:var(--sun)">₹@dueAmt.ToString("N0")</span></div>
+                <div class="sr"><span class="srk">Due</span><span class="srv" style="color:var(--sun)">@balanceText</span></div>
 
                 <div class="pay-card" style="margin-top:14px">
                     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
@@ -72,7 +76,7 @@
                                row values must be WHITE / light-green — `var(--green)` here is
                                the same dark green as the card and would render invisible. *@
                             <div style="font-family:Rajdhani,sans-serif;font-size:32px;font-weight:700;color:#ffffff;text-shadow:0 1px 2px rgba(0,0,0,0.3)">
-                                ₹@dueAmt.ToString("N0")
+                                @balanceText
                             </div>
                         </div>
                         <span style="font-size:28px">☀️</span>
@@ -86,7 +90,7 @@
                        The Due row below already shows the actionable balance. *@
                     <div class="pay-row" style="border-top:1px solid rgba(255,255,255,.15);padding-top:10px">
                         <span class="prk" style="color:#6EE7B7;font-weight:700">Due</span>
-                        <span class="prv" style="color:#ffffff;font-size:18px;font-weight:700">₹@dueAmt.ToString("N0")</span>
+                        <span class="prv" style="color:#ffffff;font-size:18px;font-weight:700">@balanceText</span>
                     </div>
                 </div>
             </div>
@@ -150,14 +154,15 @@
                             var minThisPay = paidOnPortal <= 0 ? minimum : 1m;
                         }
                             <input type="number" name="Amount" id="payAmt" placeholder="@minThisPay.ToString("0")"
-                                   required min="@minThisPay.ToString("0")" max="@dueAmt" data-min="@minThisPay.ToString("0")" />
+                                   required min="@minThisPay.ToString("0")" data-min="@minThisPay.ToString("0")" />
                         </div>
                         <small style="color:var(--text2);font-size:11px">
                             @if (paidOnPortal <= 0)
                             {
                                 <text>First payment must be at least ₹@minimum.ToString("N0"). </text>
                             }
-                            Maximum payable: ₹@dueAmt.ToString("N0") (remaining due)
+                            @* No upper cap — per spec the user may pay more than the due. *@
+                            Remaining due: ₹@dueAmt.ToString("N0") (you can pay more than this)
                         </small>
                     </div>
 

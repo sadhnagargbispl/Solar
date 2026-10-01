@@ -41,7 +41,8 @@
                                 ?? new Dictionary<int, List<(string url, string label)>>());
                 var sumTotal   = Model.Sum(p => p.RequestedAmount);
                 var sumPaid    = paidMap.Values.Sum();
-                var sumDue     = Math.Max(0, sumTotal - sumPaid);
+                // Not clamped — an overpayment shows as a negative due (per spec).
+                var sumDue     = sumTotal - sumPaid;
             }
 
             <!-- Portfolio summary strip -->
@@ -58,7 +59,7 @@
                 </div>
                 <div class="sc">
                     <div class="sc-label">Remaining Due</div>
-                    <div class="sc-val red">₹@sumDue.ToString("N0")</div>
+                    <div class="sc-val red">@(sumDue < 0 ? "-" : "")₹@Math.Abs(sumDue).ToString("N0")</div>
                     <div class="sc-sub">Balance to clear</div>
                 </div>
                 <div class="sc">
@@ -91,7 +92,7 @@
                         @foreach (var p in Model.OrderByDescending(x => x.CreatedAt))
                         {
                             var paid = paidMap.TryGetValue(p.Id, out var v) ? v : 0m;
-                            var due  = Math.Max(0, p.RequestedAmount - paid);
+                            var due  = p.RequestedAmount - paid;   // negative = paid more than the plan
                             var reqTypeLabel = p.RequestType switch
                             {
                                 Domain.Enums.RequestType.WithActivation              => "🔌 With Activation",
@@ -138,8 +139,8 @@
                                 <td data-label="Total Amount" style="text-align:right;color:var(--accent);font-weight:600">₹@p.RequestedAmount.ToString("N0")</td>
                                 <td data-label="Total Paid" style="text-align:right;color:var(--green);font-weight:600">₹@paid.ToString("N0")</td>
                                 <td data-label="Remaining" style="text-align:right;color:@(due > 0 ? "var(--danger)" : "var(--green)");font-weight:600">
-                                    ₹@due.ToString("N0")
-                                    @if (due == 0 && p.RequestedAmount > 0)
+                                    @(due < 0 ? "-" : "")₹@Math.Abs(due).ToString("N0")
+                                    @if (due <= 0 && p.RequestedAmount > 0)
                                     {
                                         <small style="display:block;font-size:10px;color:var(--green)">✓ Fully Paid</small>
                                     }

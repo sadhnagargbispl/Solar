@@ -144,7 +144,8 @@
                                 _ => r.RequestType.ToString()
                             };
                             var pmGharId = !string.IsNullOrWhiteSpace(r.PMSuryaGharIdNo) ? r.PMSuryaGharIdNo : r.PmSuryaApplicationNo;
-                            var due = (r.PlanAmount - PaidOf(r.Id)) > 0m ? (r.PlanAmount - PaidOf(r.Id)) : 0m;
+                            var due = r.PlanAmount - PaidOf(r.Id);   // negative = paid more than the plan
+                            var dueText = (due < 0 ? "-" : "") + "₹" + Math.Abs(due).ToString("N0");
                             var lightBillProofUrl = FileUrlOf(r.LightBillProofPath);
 
                             <tr>
@@ -167,7 +168,7 @@
                                         </div>
                                     }
                                 </td>
-                                <td style="color:@(due > 0 ? "#dc2626" : "#16a34a");font-weight:600">₹@due.ToString("N0")</td>
+                                <td style="color:@(due > 0 ? "#dc2626" : "#16a34a");font-weight:600">@dueText</td>
                                 <td><span class="sts sts-disp">@r.CurrentStage.ToString().Replace("_", " ")</span></td>
                                 <td>@Html.Raw(ApprovalBadge(effectiveApproval))</td>
                                 <td style="white-space:nowrap">@r.CreatedAt.ToLocalTime().ToString("dd MMM yyyy")</td>
@@ -198,7 +199,7 @@
                                                 <div class="kv"><div class="k">Connection Type</div><div class="v">@r.ConnectionType</div></div>
                                                 <div class="kv"><div class="k">Project Amount</div><div class="v">₹@r.PlanAmount.ToString("N0")</div></div>
                                                 <div class="kv"><div class="k">Paid (Verified)</div><div class="v" style="color:#16a34a">₹@PaidOf(r.Id).ToString("N0")</div></div>
-                                                <div class="kv"><div class="k">Due</div><div class="v" style="color:@(due > 0 ? "#dc2626" : "#16a34a")">₹@due.ToString("N0")</div></div>
+                                                <div class="kv"><div class="k">Due</div><div class="v" style="color:@(due > 0 ? "#dc2626" : "#16a34a")">@dueText</div></div>
                                             </div>
                                         </div>
                                         <div class="det-sec">

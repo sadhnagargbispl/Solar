@@ -123,7 +123,9 @@ public class DashboardService : IDashboardService
             : await _legacy.GetDepositForRequestAsync(depositOwner.RequestType, depositOwner.UserId);
 
         var creditedPaid = verifiedPaid + activeIdDeposit;
-        var totalDue     = Math.Max(0m, totalPlanned - creditedPaid);
+        // Per spec: NOT clamped at 0 — paying more than the plan shows as a
+        // negative due (e.g. ₹1,45,900 plan, ₹1,55,900 paid → -₹10,000).
+        var totalDue     = totalPlanned - creditedPaid;
 
         return new UserDashboardDto
         {

@@ -31,7 +31,8 @@
         <input type="hidden" name="panel" value="@panel" />
         <div class="fg">
             <label asp-for="Email">@(isInc ? "INC / Installer ID" : "Member ID")</label>
-            <input asp-for="Email" type="text" placeholder="@(isInc ? "Your INC login ID / email" : "Your Member ID")" autocomplete="username" />
+            <input asp-for="Email" type="text" placeholder="@(isInc ? "Your INC login ID / email" : "Your Member ID")" autocomplete="username"
+                   data-val-required="@(isInc ? "The INC / Installer ID field is required." : "The Member ID field is required.")" />
             <span asp-validation-for="Email" class="text-danger" style="font-size:11px"></span>
         </div>
         <div class="fg">

@@ -706,7 +706,7 @@ public class SolarRequestController : Controller
             else
             {
                 // No prior real project. Auto-match a plan by KV so PlanAmount isn't 0.
-                var matched = await FindMatchingPlanAsync(model.KVCapacity, model.ConnectionType);
+                var matched = await FindMatchingPlanAsync(model.SolarProjectId, model.KVCapacity, model.ConnectionType);
                 if (matched != null)
                 {
                     model.SolarProjectId = matched.Id;
@@ -725,7 +725,7 @@ public class SolarRequestController : Controller
         {
             // Mode 2: try to auto-link a plan by KV so the user sees a real
             // Project Amount on the Status page. Admin can change the plan later.
-            var matched = await FindMatchingPlanAsync(model.KVCapacity, model.ConnectionType);
+            var matched = await FindMatchingPlanAsync(model.SolarProjectId, model.KVCapacity, model.ConnectionType);
             if (matched != null)
             {
                 model.SolarProjectId = matched.Id;
@@ -779,6 +779,7 @@ public class SolarRequestController : Controller
                 return View(model);
             }
 
+            var pickedPlanId = model.SolarProjectId;           // plan picked in Solar Type
             model.SolarProjectId = null;                       // not a SolarProjects entry
             // Per spec: "With activation ho ya without ya already active — sabhi
             // mein project amount 1 kW / 2 kW (KV master plan) se hi hoga."
@@ -787,7 +788,7 @@ public class SolarRequestController : Controller
             // plan name + amount + capacity come from the KV master plan, exactly
             // like every other mode. We resolve that plan here by KVCapacity +
             // ConnectionType so PlanAmount is the kW amount, not the product DP.
-            var actMatched = await FindMatchingPlanAsync(model.KVCapacity, model.ConnectionType);
+            var actMatched = await FindMatchingPlanAsync(pickedPlanId, model.KVCapacity, model.ConnectionType);
             if (actMatched != null)
             {
                 model.SolarProjectId = actMatched.Id;
@@ -818,7 +819,7 @@ public class SolarRequestController : Controller
         else
         {
             // Mode 1 but no plan picked yet — try to auto-match
-            var matched = await FindMatchingPlanAsync(model.KVCapacity, model.ConnectionType);
+            var matched = await FindMatchingPlanAsync(model.SolarProjectId, model.KVCapacity, model.ConnectionType);
             if (matched != null)
             {
                 model.SolarProjectId = matched.Id;
@@ -834,7 +835,7 @@ public class SolarRequestController : Controller
         // the KV lookup is exactly what we want as the fallback.
         if (model.PlanAmount <= 0 && model.KVCapacity > 0)
         {
-            var lastChance = await FindMatchingPlanAsync(model.KVCapacity, model.ConnectionType);
+            var lastChance = await FindMatchingPlanAsync(model.SolarProjectId, model.KVCapacity, model.ConnectionType);
             if (lastChance != null)
             {
                 model.SolarProjectId ??= lastChance.Id;
@@ -1407,12 +1408,15 @@ public class SolarRequestController : Controller
     /// normalises identically — same rules, one copy.)
     private static string NormalizeIdNo(string? raw) => Helpers.MemberIdNo.Normalize(raw);
 
-    // Helper: find a SolarProject matching the given KV and connection type.
-    // Used by Mode 2 (and as fallback for Mode 1) to auto-fetch the project amount
-    // when the user hasn't explicitly picked a plan card.
-    private async Task<SolarProjectDto?> FindMatchingPlanAsync(decimal kv, ConnectionType conn)
+    // Helper: find the SolarProject for this request. The plan the user picked by
+    // name in the Solar Type dropdown (pickedId) wins when it is an active plan;
+    // otherwise fall back to matching by KV and connection type. Amount and name
+    // always come from the DB row, so a tampered hidden field can't misprice it.
+    private async Task<SolarProjectDto?> FindMatchingPlanAsync(int? pickedId, decimal kv, ConnectionType conn)
     {
         var all = await _solarProjectService.GetAllAsync(activeOnly: true);
+        var picked = pickedId.HasValue ? all.FirstOrDefault(p => p.Id == pickedId.Value) : null;
+        if (picked != null) return picked;
         // Require KV to match — picking a wildly different plan just because
         // the connection type happens to match would silently misprice the request.
         // Prefer exact KV+connection, fall back to KV-only.
@@ -1696,7 +1700,8 @@ public class SolarRequestController : Controller
     // Business rules enforced here:
     //   1. Amount must be > 0
     //   2. The FIRST payment must be ≥ ₹20,000 (minimum to start workflow)
-    //   3. Cumulative payments cannot exceed the project's total amount
+    //   3. A payment MAY exceed the remaining due / project amount (per spec) —
+    //      only an already fully-paid project refuses further payments
     //   4. Payment is saved as Pending — admin verification advances stage
     [HttpPost]
     public async Task<IActionResult> AddPayment(CreatePaymentDto dto, IFormFile? receiptImage)
@@ -1755,18 +1760,8 @@ public class SolarRequestController : Controller
                 message = $"First payment must be at least ₹{min:N0}. You entered ₹{dto.Amount:N0}."
             });
 
-        // Rule: total cannot exceed the project amount
-        if (alreadyPaid + dto.Amount > projectTotal)
-        {
-            var remaining = Math.Max(0, projectTotal - alreadyPaid);
-            return Json(new
-            {
-                success = false,
-                message = remaining > 0
-                    ? $"This payment of ₹{dto.Amount:N0} would exceed your project total of ₹{projectTotal:N0}. You've already submitted ₹{alreadyPaid:N0} — maximum you can add now is ₹{remaining:N0}."
-                    : $"Your submitted payments (₹{alreadyPaid:N0}) already match the project total of ₹{projectTotal:N0}. No further payment is needed."
-            });
-        }
+        // Per spec the user may pay MORE than the remaining due / project amount,
+        // so there is no upper cap here any more.
 
         if (receiptImage != null)
         {

@@ -39,7 +39,7 @@
                 <div class="sr"><span class="srk">Requested Amount</span><span class="srv" style="color:var(--sun)">₹@Model.RequestedAmount.ToString("N0")</span></div>
                 <div class="sr"><span class="srk">Approved Amount</span><span class="srv" style="color:var(--green)">₹@Model.ApprovedAmount.ToString("N0")</span></div>
                 <div class="sr"><span class="srk">Total Paid</span><span class="srv" style="color:var(--green)">₹@Model.TotalPaid.ToString("N0")</span></div>
-                <div class="sr"><span class="srk">Due Amount</span><span class="srv" style="color:var(--sun)">₹@Model.TotalDue.ToString("N0")</span></div>
+                <div class="sr"><span class="srk">Due Amount</span><span class="srv" style="color:var(--sun)">@(Model.TotalDue < 0 ? "-" : "")₹@Math.Abs(Model.TotalDue).ToString("N0")</span></div>
             </div>
 
             <div class="card">

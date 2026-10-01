@@ -206,30 +206,38 @@
                     </div>
                     <div class="fr">
                         <div class="fg">
-                            <label asp-for="KVCapacity">Solar Type <span class="req">*</span></label>
+                            <label for="planSelect">Solar Type <span class="req">*</span></label>
                             @{
-                                // Build the dropdown from the actual DB plans so the
-                                // KV value the user picks always matches a real
-                                // SolarProject row — otherwise the auto-amount lookup
-                                // silently fails and saves PlanAmount = 0.
-                                var plansList = ViewBag.Projects as IEnumerable<SolarPortal.Application.DTOs.SolarProjectDto>
-                                                ?? Enumerable.Empty<SolarPortal.Application.DTOs.SolarProjectDto>();
-                                var uniqueKvs = plansList
-                                    .Select(p => p.SolarTypeKV)
-                                    .Distinct()
-                                    .OrderBy(kv => kv)
-                                    .ToList();
+                                // Per spec: every active SolarProjects plan is listed by
+                                // name (grouped by kW), not just the distinct kW values —
+                                // one kW has up to 21 plans (On Grid DCR/NDCR, TATA,
+                                // Hybrid ...) and the user must pick the exact one.
+                                // KVCapacity is still posted, from the hidden input below,
+                                // kept in step with the picked plan by applyFetchedPlan().
+                                var plansList = (ViewBag.Projects as IEnumerable<SolarPortal.Application.DTOs.SolarProjectDto>
+                                                ?? Enumerable.Empty<SolarPortal.Application.DTOs.SolarProjectDto>()).ToList();
+                                var selPlan = plansList.FirstOrDefault(p => p.Id == Model.SolarProjectId)
+                                              ?? plansList.FirstOrDefault(p => p.SolarTypeKV == Model.KVCapacity)
+                                              ?? plansList.FirstOrDefault();
+                                var selKv = selPlan?.SolarTypeKV ?? Model.KVCapacity;
                             }
-                            <select asp-for="KVCapacity" onchange="onKvChange(this.value)">
-                                @if (!uniqueKvs.Any())
+                            <input type="hidden" name="KVCapacity" id="kvCapacityInput"
+                                   value="@selKv.ToString(System.Globalization.CultureInfo.InvariantCulture)" />
+                            <select id="planSelect" onchange="onPlanChange(this.value)">
+                                @if (!plansList.Any())
                                 {
                                     <option value="">-- No plans available --</option>
                                 }
                                 else
                                 {
-                                    foreach (var kv in uniqueKvs)
+                                    foreach (var grp in plansList.GroupBy(p => p.SolarTypeKV).OrderBy(g => g.Key))
                                     {
-                                        <option value="@kv">@kv kV — @(kv <= 2 ? "Domestic Small" : kv <= 5 ? "Standard" : kv <= 7 ? "Medium" : "Commercial")</option>
+                                        <optgroup label="@grp.Key.ToString("0.##") kV">
+                                            @foreach (var p in grp)
+                                            {
+                                                <option value="@p.Id" selected="@(p.Id == selPlan?.Id)">@p.Name — ₹@p.ProjectAmount.ToString("N0")</option>
+                                            }
+                                        </optgroup>
                                     }
                                 }
                             </select>
@@ -1071,6 +1079,8 @@
             // Sync the kv + connection-type form fields too
             const kvSel = document.querySelector('[name="KVCapacity"]');
             if (kvSel) kvSel.value = kv;
+            const planSel = document.getElementById('planSelect');
+            if (planSel) planSel.value = id;
             // NOTE: Intentionally do NOT overwrite ConnectionType when a plan is
             // clicked — the user has already made an explicit choice (Domestic /
             // Commercial). Overwriting it would silently change their selection.
@@ -1096,6 +1106,11 @@
         ];
 
         function fetchMatchingPlan() {
+            // The plan the user picked by name in the Solar Type dropdown wins.
+            const pickedId = parseInt(document.getElementById('planSelect')?.value || '0', 10);
+            const picked = pickedId ? PLANS.find(p => p.id === pickedId) : null;
+            if (picked) return picked;
+
             const kv = parseFloat(document.querySelector('[name="KVCapacity"]')?.value || '0');
             const conn = parseInt(document.querySelector('[name="ConnectionType"]')?.value || '1', 10);
             if (!kv) return null;
@@ -1131,6 +1146,10 @@
             }
             if (noPlanBox) noPlanBox.style.display = 'none';
             // Update hidden inputs so backend gets the correct values
+            const kvIn = document.getElementById('kvCapacityInput');
+            if (kvIn) kvIn.value = m.kv;
+            const kvDisp = document.getElementById('kvDisplay');
+            if (kvDisp) kvDisp.textContent = m.kv + ' kV';
             document.getElementById('solarProjectIdInput').value = m.id;
             document.getElementById('selectedPlanInput').value = m.name;
             document.getElementById('planAmountInput').value = m.amount;
@@ -1171,6 +1190,12 @@
 
             // Keep the already-active deposit banner in step with the new plan.
             refreshDepositLabel(); refreshMinPaymentLabel();
+        }
+
+        // Solar Type dropdown lists every plan by name; picking one sets the
+        // plan + its kW (applyFetchedPlan syncs the hidden KVCapacity input).
+        function onPlanChange(id) {
+            applyFetchedPlan();
         }
 
         function onKvChange(kv) {

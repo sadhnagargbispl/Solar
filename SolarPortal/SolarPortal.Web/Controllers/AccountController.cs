@@ -55,7 +55,16 @@ public class AccountController : Controller
         ViewBag.Panel = isInc ? "inc" : "user";
 
         if (!ModelState.IsValid)
+        {
+            // The INC panel labels this field "INC / Installer ID", not "Member ID".
+            if (isInc && string.IsNullOrWhiteSpace(model.Email) &&
+                ModelState.TryGetValue(nameof(model.Email), out var emailState))
+            {
+                emailState.Errors.Clear();
+                ModelState.AddModelError(nameof(model.Email), "The INC / Installer ID field is required.");
+            }
             return View(model);
+        }
 
         // ─── INC / Installer login (Workers table, NOT Identity) ──────────
         // INC workers are created by admin in the Workers table with
