@@ -1,4 +1,5 @@
 using System.Security.Claims;
+using System.Text;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
@@ -73,71 +74,18 @@ public class AccountController : Controller
         // installer area's [Authorize(Roles="Installer")] works.
         if (isInc)
         {
-            var uname = (model.Email ?? string.Empty).Trim();
-            // Both JOB and INC workers share this panel and can log in.
-            var worker = await _db.Workers.FirstOrDefaultAsync(w =>
-                !w.IsDeleted && w.LoginUsername != null && w.LoginUsername == uname);
+            if (await TrySignInWorkerAsync(model.Email, model.Password, model.RememberMe))
+                return RedirectToAction("Index", "Dashboard", new { area = "SolarPanelInstaller" });
 
-            if (worker == null || worker.LoginPassword != model.Password)
-            {
-                ModelState.AddModelError(string.Empty, "Invalid INC login. Check your ID and password.");
-                return View(model);
-            }
-
-            var claims = new List<Claim>
-            {
-                new Claim(ClaimTypes.NameIdentifier, "worker-" + worker.Id),
-                new Claim(ClaimTypes.Name, string.IsNullOrWhiteSpace(worker.Name) ? uname : worker.Name),
-                new Claim(ClaimTypes.Role, "Installer"),
-                new Claim("WorkerId", worker.Id.ToString()),
-                new Claim("WorkerType", worker.Type.ToString())
-            };
-            var identity = new ClaimsIdentity(claims, IdentityConstants.ApplicationScheme);
-            var principal = new ClaimsPrincipal(identity);
-            await HttpContext.SignInAsync(IdentityConstants.ApplicationScheme, principal,
-                new AuthenticationProperties { IsPersistent = model.RememberMe });
-
-            _logger.LogInformation("INC worker {User} (id {Id}) logged in.", uname, worker.Id);
-            return RedirectToAction("Index", "Dashboard", new { area = "SolarPanelInstaller" });
+            ModelState.AddModelError(string.Empty, "Invalid INC login. Check your ID and password.");
+            return View(model);
         }
 
-        // ─── LiveDB bridge ────────────────────────────────────────────────
-        // Bridge verifies against m_membermaster and returns a loaded
-        // ApplicationUser (via raw ADO.NET) or null. We DO NOT call
-        // UserManager.FindByEmailAsync because EF Core's model cache can
-        // produce stale SQL that fails against the live DB schema.
-        var bridgedUser = await _liveDbBridge.TryBridgeUserAsync(model.Email, model.Password);
-
-        ApplicationUser? user;
-
-        if (bridgedUser != null)
-        {
-            // Bridge already verified credentials against m_membermaster.
-            // Sign the user in DIRECTLY (no PasswordSignInAsync).
-            user = bridgedUser;
-            await _signInManager.SignInAsync(user, isPersistent: model.RememberMe);
-
-            _logger.LogInformation("User {Email} logged in via live DB bridge.", model.Email);
-
-            // Auto-create a SolarRequest on first login.
-            // The user is registered in m_membermaster, so Registration is
-            // marked as already done. CurrentStage is set to ProductSelection
-            // so the user picks their solar plan as the next step. Remaining
-            // stages (Payment, Site Survey, etc.) are completed manually.
-            var hasAnyRequest = await _db.SolarRequests
-                .AsNoTracking()
-                .AnyAsync(r => r.UserId == user.Id);
-
-            if (!hasAnyRequest)
-            {
-                await AutoCreateSolarRequestAsync(user.Id, model.Email);
-            }
-
+        if (await TrySignInMemberAsync(model.Email, model.Password, model.RememberMe))
             return RedirectToAction("Index", "Dashboard", new { area = "SolarPanelUserPanel" });
-        }
 
         // ─── Fallback to standard Identity flow for legacy demo accounts ──
-        user = await _userManager.FindByEmailAsync(model.Email);
+        var user = await _userManager.FindByEmailAsync(model.Email);
         if (user == null || !user.IsActive)
         {
             ModelState.AddModelError(string.Empty, "Invalid login attempt.");
@@ -172,6 +120,97 @@ public class AccountController : Controller
             ModelState.AddModelError(string.Empty, "Invalid email or password.");
 
         return View(model);
+    }
+
+    // Direct login from the member site, same format as the old app:
+    // /Account/Directlogin?refs=TG9naW4=&info=<Base64("IDNO;password")>
+    // refs is accepted for compatibility but not used. User panel only.
+    [HttpGet]
+    public async Task<IActionResult> Directlogin(string? refs, string? info)
+    {
+        try
+        {
+            var detail = Encoding.UTF8.GetString(Convert.FromBase64String(info ?? string.Empty));
+            var sep = detail.IndexOf(';');   // split on the first ';' only — passwords may contain ';'
+            if (sep > 0)
+            {
+                var idNo = detail[..sep].Trim();
+                var password = detail[(sep + 1)..];
+
+                // Drop any session already in this browser.
+                await _signInManager.SignOutAsync();
+
+                if (await TrySignInMemberAsync(idNo, password, rememberMe: false))
+                    return RedirectToAction("Index", "Dashboard", new { area = "SolarPanelUserPanel" });
+            }
+        }
+        catch (FormatException)
+        {
+            // info was not valid Base64 — fall through to the login page.
+        }
+
+        TempData["Error"] = "Direct login failed. Check ID and password.";
+        return RedirectToAction("Login");
+    }
+
+    // INC / Installer login (Workers table, NOT Identity). INC workers are
+    // created by admin in the Workers table with LoginUsername / LoginPassword.
+    // We issue a cookie with the "Installer" role claim so the installer
+    // area's [Authorize(Roles="Installer")] works.
+    private async Task<bool> TrySignInWorkerAsync(string? loginId, string password, bool rememberMe)
+    {
+        var uname = (loginId ?? string.Empty).Trim();
+        // Both JOB and INC workers share this panel and can log in.
+        var worker = await _db.Workers.FirstOrDefaultAsync(w =>
+            !w.IsDeleted && w.LoginUsername != null && w.LoginUsername == uname);
+
+        if (worker == null || worker.LoginPassword != password)
+            return false;
+
+        var claims = new List<Claim>
+        {
+            new Claim(ClaimTypes.NameIdentifier, "worker-" + worker.Id),
+            new Claim(ClaimTypes.Name, string.IsNullOrWhiteSpace(worker.Name) ? uname : worker.Name),
+            new Claim(ClaimTypes.Role, "Installer"),
+            new Claim("WorkerId", worker.Id.ToString()),
+            new Claim("WorkerType", worker.Type.ToString())
+        };
+        var identity = new ClaimsIdentity(claims, IdentityConstants.ApplicationScheme);
+        var principal = new ClaimsPrincipal(identity);
+        await HttpContext.SignInAsync(IdentityConstants.ApplicationScheme, principal,
+            new AuthenticationProperties { IsPersistent = rememberMe });
+
+        _logger.LogInformation("INC worker {User} (id {Id}) logged in.", uname, worker.Id);
+        return true;
+    }
+
+    // Member login via the LiveDB bridge. The bridge verifies against
+    // m_membermaster and returns a loaded ApplicationUser (via raw ADO.NET)
+    // or null. We DO NOT call UserManager.FindByEmailAsync because EF Core's
+    // model cache can produce stale SQL that fails against the live DB schema.
+    private async Task<bool> TrySignInMemberAsync(string idNo, string password, bool rememberMe)
+    {
+        var user = await _liveDbBridge.TryBridgeUserAsync(idNo, password);
+        if (user == null)
+            return false;
+
+        // Bridge already verified credentials — sign in DIRECTLY (no PasswordSignInAsync).
+        await _signInManager.SignInAsync(user, isPersistent: rememberMe);
+        _logger.LogInformation("User {Email} logged in via live DB bridge.", idNo);
+
+        // Auto-create a SolarRequest on first login.
+        // The user is registered in m_membermaster, so Registration is
+        // marked as already done. CurrentStage is set to ProductSelection
+        // so the user picks their solar plan as the next step. Remaining
+        // stages (Payment, Site Survey, etc.) are completed manually.
+        var hasAnyRequest = await _db.SolarRequests
+            .AsNoTracking()
+            .AnyAsync(r => r.UserId == user.Id);
+
+        if (!hasAnyRequest)
+            await AutoCreateSolarRequestAsync(user.Id, idNo);
+
+        return true;
     }
 
     [HttpGet]
