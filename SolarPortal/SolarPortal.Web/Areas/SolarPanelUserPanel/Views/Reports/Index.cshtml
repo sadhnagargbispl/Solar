@@ -13,7 +13,7 @@
 
     string ReqNum(int id) => reqLookup.TryGetValue(id, out var n) ? n : $"#{id}";
 
-    string Cls(string name) => f == name ? "btn btn-p" : "btn btn-outline";
+    string Cls(string name) => f == name ? "btn btn-p" : "btn btn-s";
 
     var fileExists = ViewBag.FileExists as Dictionary<string, bool> ?? new();
     var paidByReq  = ViewBag.PaidByRequest as Dictionary<int, decimal> ?? new();
@@ -42,13 +42,13 @@
     {
         SolarPortal.Domain.Enums.PaymentStatus.Completed => "<span class='sts sts-act'>✅ Verified</span>",
         SolarPortal.Domain.Enums.PaymentStatus.Rejected => "<span class='sts sts-rej'>❌ Rejected</span>",
-        _                                               => "<span class='sts sts-pen'>⏳ Pending</span>"
+        _                                               => "<span class='sts sts-pend'>⏳ Pending</span>"
     };
     string ApprovalBadge(SolarPortal.Domain.Enums.ApprovalStatus s) => s switch
     {
         SolarPortal.Domain.Enums.ApprovalStatus.Approved => "<span class='sts sts-act'>✅ Approved</span>",
         SolarPortal.Domain.Enums.ApprovalStatus.Rejected => "<span class='sts sts-rej'>❌ Rejected</span>",
-        _                                                => "<span class='sts sts-pen'>⏳ Pending</span>"
+        _                                                => "<span class='sts sts-pend'>⏳ Pending</span>"
     };
 }
 
@@ -308,7 +308,7 @@
                                     <td class="td-b" style="font-weight:700">@ReqNum(grp.Key)</td>
                                     <td>@grp.Count()</td>
                                     <td><span class="sts sts-act">✅ @aprCnt</span></td>
-                                    <td>@(penCnt > 0 ? Html.Raw($"<span class='sts sts-pen'>⏳ {penCnt}</span>") : Html.Raw("<span class='text-muted'>0</span>"))</td>
+                                    <td>@(penCnt > 0 ? Html.Raw($"<span class='sts sts-pend'>⏳ {penCnt}</span>") : Html.Raw("<span class='text-muted'>0</span>"))</td>
                                     <td>@(rejCnt > 0 ? Html.Raw($"<span class='sts sts-rej'>❌ {rejCnt}</span>") : Html.Raw("<span class='text-muted'>0</span>"))</td>
                                     <td style="white-space:nowrap">@lastUpd.ToLocalTime().ToString("dd MMM yyyy")</td>
                                     <td><button type="button" class="btn-det" onclick="toggleDet('pm-@grp.Key', this)">▸ Details</button></td>

@@ -118,6 +118,11 @@ app.MapControllerRoute(
     name: "areas",
     pattern: "{area:exists}/{controller=Dashboard}/{action=Index}/{id?}");
 
+// There is no root-level Dashboard - each panel has its own in an area. Old
+// links / bookmarks like "/Dashboard?area=User" used to 404; send them to "/",
+// where HomeController picks the right dashboard for the signed-in role.
+app.MapGet("/Dashboard", () => Results.Redirect("/"));
+
 app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Home}/{action=Index}/{id?}");

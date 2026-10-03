@@ -90,14 +90,14 @@
                 @if (isDone)
                 {
                     <div class="alert alert-s" style="margin-top:10px;font-size:13px">
-                        <span class="ai">✅</span>This project is <strong>Completed</strong>. No further actions are needed.
+                        <span class="ai">✅</span><div>This project is <strong>Completed</strong>. No further actions are needed.</div>
                     </div>
                 }
             </div>
 
             @if (Model.Documents != null && Model.Documents.Any())
             {
-                <div class="card" style="grid-column:span 2">
+                <div class="card" style="grid-column:1 / -1">
                     <div class="ct"><span class="ct-dot"></span>Submitted Documents (@Model.Documents.Count)</div>
                     <div class="tbl-wrap">
                         <table>

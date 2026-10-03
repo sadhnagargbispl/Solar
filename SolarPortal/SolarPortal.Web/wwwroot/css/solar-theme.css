@@ -132,6 +132,18 @@ html, body {
 }
 
 .top-right { display: flex; align-items: center; gap: 12px; }
+.top-user { font-size: 13px; color: var(--text2); }
+.menu-btn {
+    display: none;
+    background: none;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    width: 38px; height: 38px;
+    font-size: 20px;
+    line-height: 1;
+    color: var(--text1);
+    cursor: pointer;
+}
 .top-btn {
     background: var(--bg);
     color: var(--text1);
@@ -222,6 +234,7 @@ html, body {
 /* ===== MAIN ===== */
 .main-content {
     flex: 1;
+    min-width: 0;   /* lets wide tables scroll inside instead of stretching the page */
     padding: 24px 28px;
     overflow-x: hidden;
 }
@@ -709,12 +722,157 @@ tbody tr:hover { background: var(--bg3); }
 .mni:hover, .mni.active { color: var(--accent); background: var(--accent-light); }
 .mi2 { font-size: 19px; display: block; margin-bottom: 2px; }
 
+.sb-overlay { display: none; }
+
 @media (max-width: 768px) {
-    .sidebar { display: none; }
-    .sidebar.open { display: block; position: fixed; z-index: 200; }
+    .topbar { padding: 0 12px; }
+    .brand { gap: 8px; }
+    .menu-btn { display: flex; align-items: center; justify-content: center; }
+    .top-user { display: none; }
+
+    /* Sidebar becomes a slide-in drawer, opened by ☰ (topbar or bottom nav). */
+    .sidebar {
+        position: fixed;
+        top: 56px; left: 0; bottom: 0;
+        height: auto;
+        width: 260px;
+        max-width: 82vw;
+        z-index: 200;
+        transform: translateX(-100%);
+        transition: transform .2s ease;
+        box-shadow: 4px 0 16px rgba(0,0,0,.12);
+    }
+    .sidebar.open { transform: none; }
+    .sb-overlay {
+        position: fixed;
+        inset: 56px 0 0 0;
+        background: rgba(0,0,0,.35);
+        z-index: 150;
+    }
+    body.sb-open .sb-overlay { display: block; }
+    body.sb-open { overflow: hidden; }
+
     .main-content { padding: 14px; padding-bottom: 70px; }
     .mob-nav { display: block; }
     .ph-title { font-size: 22px; }
+}
+
+/* ===== MOBILE: pages, popups & modals =====
+   Page <style> blocks load after this file, so page-local classes are
+   prefixed with their parent class for specificity; inline styles need
+   !important. */
+@media (max-width: 768px) {
+    /* Grids: children may shrink (tables / long words no longer widen the
+       column), and inline grid-template-columns overrides still collapse
+       (Dashboard, Status, Withdraw). */
+    .g2 > *, .g3 > *, .g4 > * { min-width: 0; }
+    .g2[style*="grid-template-columns"],
+    .g3[style*="grid-template-columns"] { grid-template-columns: 1fr !important; }
+    .g4 { grid-template-columns: 1fr 1fr; }
+    .sc { padding: 14px 12px 12px; }
+    .sc-val { font-size: 22px; overflow-wrap: anywhere; }
+
+    .card { padding: 14px; }
+    .card .timeline-card { padding: 0 !important; box-shadow: none !important; }
+    .timeline-card > .d-flex:first-child { gap: 10px; }
+
+    /* Radio cards: one per row (Create, Activate) */
+    .rc-group { grid-template-columns: 1fr !important; }
+    .rc { flex-wrap: wrap; }
+
+    /* Key / value rows: long email, address, plan names wrap instead of overflowing */
+    .sr, .detail-row, .pay-row { gap: 12px; }
+    .srv, .dv, .prv { min-width: 0; text-align: right; overflow-wrap: anywhere; }
+
+    /* Tables scroll sideways instead of squashing into tall broken rows */
+    .tbl-wrap th, .tbl-wrap .sts, .tbl-wrap .btn { white-space: nowrap; }
+    /* Columns take their natural width (the wrapper scrolls); long text wraps
+       at 240px. Without this, an 8-column table squeezed every cell into
+       200px-tall rows (INC Installations). */
+    .tbl-wrap table { width: max-content; min-width: 100%; }
+    .tbl-wrap td { max-width: 240px; }
+    .tabs { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+    .tab { white-space: nowrap; flex-shrink: 0; }
+
+    /* Big submit buttons go full width (Create, Activate) */
+    #requestForm button[type="submit"],
+    #activateForm button[type="submit"] { width: 100%; padding: 12px 16px !important; }
+
+    /* 16px inputs stop iOS Safari zooming the page on focus */
+    input[type="text"], input[type="email"], input[type="password"], input[type="number"],
+    input[type="date"], input[type="tel"], select, textarea { font-size: 16px; }
+
+    /* Bottom nav: share the width between however many items there are */
+    .mob-nav-inner { grid-template-columns: none; grid-auto-flow: column; grid-auto-columns: 1fr; }
+
+    /* Page headers / wrappers that stacked extra padding (Reports, RemainingBv, Site Survey) */
+    .main-content > .page-header { padding: 0 0 10px !important; }
+    .main-content h2 { font-size: 20px; }
+    .main-content > .container-fluid { padding-left: 0; padding-right: 0; }
+    .main-content > div[style*="max-width:1100px"] { padding: 0 !important; }
+    .main-content .survey-card { padding: 14px; }
+    .main-content .fc { min-width: 0; flex-basis: 100%; }
+
+    /* Report "Full Details" rows: keep the detail box on screen while the table scrolls */
+    .det-tr .det-box {
+        position: sticky; left: 0;
+        width: calc(100vw - 30px); max-width: 100%;
+        overflow-x: auto; padding: 12px;
+    }
+
+    /* PM Surya document rows: action buttons drop under the name */
+    .pm-doc { flex-wrap: wrap; }
+    .pm-doc .pm-doc-act { flex-direction: row; flex-wrap: wrap; flex-basis: 100%; padding-left: 54px; }
+
+    /* ── Popups / modals ── */
+    /* SweetAlert */
+    .swal2-popup:not(.swal2-toast) { padding: 18px 14px 14px !important; width: calc(100% - 16px) !important; }
+    .swal2-actions { justify-content: stretch !important; }
+    .swal2-actions button { flex: 1 1 auto; }
+    .swal2-html-container .swal2-input,
+    .swal2-html-container .swal2-textarea { font-size: 16px !important; }
+    body.swal2-toast-shown .swal2-container.swal2-top-end { top: 56px !important; }   /* below the topbar */
+
+    /* Bootstrap modals: almost full width, body scrolls */
+    .modal-dialog { margin: 8px; max-width: none; }
+    .modal-content { max-height: calc(100dvh - 16px); }
+    .modal-body { overflow-y: auto; }
+    .modal-footer { flex-wrap: wrap; }
+
+    /* Live photo / signature capture (PM Surya) */
+    .cap-overlay .cap-box { max-height: calc(100dvh - 32px); overflow-y: auto; }
+
+    /* Image lightbox (My Projects) - label + Close stay on screen */
+    #imgLightbox { padding: 8px !important; }
+    #imgLightboxImg { max-width: 100% !important; max-height: calc(100dvh - 120px) !important; }
+
+    /* JS warning toast on Create - was squeezed to half the screen */
+    #sp-warn-toast { left: 12px !important; right: 12px !important; transform: none !important; max-width: none !important; }
+
+    /* Installer: Mark / Update Installation modal - footer stays reachable */
+    .cl-overlay { padding: 8px; }
+    .cl-overlay .cl-modal { max-height: calc(100dvh - 16px); border-radius: 12px; }
+    .cl-overlay .cl-mhead, .cl-overlay .cl-mbody, .cl-overlay .cl-mfoot { padding-left: 14px; padding-right: 14px; }
+    .cl-overlay .cl-mfoot > div { flex-wrap: wrap; width: 100%; }
+    .cl-overlay .cl-mfoot > div .btn { flex: 1 1 auto; }
+    .cl-overlay .cl-foot-note { min-width: 0; flex-basis: 100%; }
+
+    /* Installer: photo viewer - prev/next float over the image */
+    .ins-lb .ins-lbstage { position: relative; padding: 0 0 12px; gap: 0; }
+    .ins-lb .ins-lbstage > .ins-lbbtn { position: absolute; top: 50%; transform: translateY(-50%); z-index: 1; }
+    .ins-lb .ins-lbstage > .ins-lbbtn:first-child { left: 6px; }
+    .ins-lb .ins-lbstage > .ins-lbbtn:last-child { right: 6px; }
+    .ins-lb .ins-lbcap { min-width: 0; font-size: 12.5px; }
+
+    /* Login / Register / Forgot password */
+    .auth-bg, .auth-wrapper { padding: 12px; align-items: flex-start; }
+    .auth-card { padding: 22px 16px; border-radius: 12px; }
+}
+
+@media (max-width: 420px) {
+    .brand-name { font-size: 16px; letter-spacing: .5px; }
+    .brand-role { display: none; }
+    .brand-logo { width: 32px; height: 32px; font-size: 17px; }
 }
 
 /* ===== UTILITIES ===== */
@@ -835,6 +993,15 @@ table.table-hover tbody tr:hover { background: var(--bg3); }
     background: var(--bg) !important;
 }
 .swal2-progress-steps { display: none !important; }  /* Hide stray progress bar */
+
+/* Toasts (_Toasts.cshtml) - the form-modal rules above made them big and underlined */
+.swal2-popup.swal2-toast { padding: 10px 12px !important; border-radius: 10px !important; }
+.swal2-toast .swal2-title {
+    font-size: 13.5px !important;
+    border-bottom: 0 !important;
+    padding: 0 !important;
+    margin: 0 .6em !important;
+}
 .swal2-validation-message {
     background: #fef2f2 !important;
     color: #991b1b !important;

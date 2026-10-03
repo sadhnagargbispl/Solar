@@ -33,12 +33,14 @@
     <!-- TOP BAR -->
     <div class="topbar">
         <div class="brand">
+            @* Hamburger - only shown on mobile, where the sidebar is hidden. *@
+            <button type="button" class="menu-btn" onclick="toggleSidebar()" aria-label="Menu">☰</button>
             <div class="brand-logo">☀️</div>
             <span class="brand-name">SOLAR PORTAL</span>
             <span class="brand-role">@roleLabel.ToUpper()</span>
         </div>
         <div class="top-right">
-            <span style="font-size:13px;color:var(--text2)">@user?.FullName</span>
+            <span class="top-user">@user?.FullName</span>
             <form asp-area="" asp-controller="Account" asp-action="Logout" method="post" style="display:inline">
                 @Html.AntiForgeryToken()
                 <button type="submit" class="top-btn">⬅ Logout</button>
@@ -60,6 +62,7 @@
                 <partial name="~/Views/Shared/_UserSidebar.cshtml" />
             }
         </div>
+        <div class="sb-overlay" onclick="toggleSidebar(false)"></div>
 
         <!-- MAIN CONTENT -->
         <div class="main-content">
@@ -70,14 +73,27 @@
     <!-- MOBILE NAV -->
     <div class="mob-nav">
         <div class="mob-nav-inner">
-            <div class="mni" onclick="location.href='@Url.Action("Index","Dashboard",new{area="SolarPanelUserPanel"})'">
-                <span class="mi2">📊</span><span class="ml2">Dashboard</span>
-            </div>
-            <div class="mni" onclick="location.href='@Url.Action("Status","SolarRequest",new{area="SolarPanelUserPanel"})'">
-                <span class="mi2">📍</span><span class="ml2">Status</span>
-            </div>
-            <div class="mni" onclick="location.href='@Url.Action("Create","SolarRequest",new{area="SolarPanelUserPanel"})'">
-                <span class="mi2">➕</span><span class="ml2">New</span>
+            @if (isInstaller)
+            {
+                <div class="mni" onclick="location.href='@Url.Action("Index","Dashboard",new{area="SolarPanelInstaller"})'">
+                    <span class="mi2">📊</span><span class="ml2">Dashboard</span>
+                </div>
+            }
+            else
+            {
+                <div class="mni" onclick="location.href='@Url.Action("Index","Dashboard",new{area="SolarPanelUserPanel"})'">
+                    <span class="mi2">📊</span><span class="ml2">Dashboard</span>
+                </div>
+                <div class="mni" onclick="location.href='@Url.Action("Status","SolarRequest",new{area="SolarPanelUserPanel"})'">
+                    <span class="mi2">📍</span><span class="ml2">Status</span>
+                </div>
+                <div class="mni" onclick="location.href='@Url.Action("Create","SolarRequest",new{area="SolarPanelUserPanel"})'">
+                    <span class="mi2">➕</span><span class="ml2">New</span>
+                </div>
+            }
+            @* Opens the full sidebar - every menu item, not just these shortcuts. *@
+            <div class="mni" onclick="toggleSidebar()">
+                <span class="mi2">☰</span><span class="ml2">Menu</span>
             </div>
         </div>
     </div>

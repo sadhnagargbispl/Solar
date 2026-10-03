@@ -698,11 +698,13 @@
                 }
 
                 <div class="alert alert-i" style="font-size:13px" id="paymentHint">
-                    <span class="ai">ℹ</span>Minimum first payment is <strong id="minPaymentLabel">₹@minFirstPayment.ToString("N0")</strong>. Cannot exceed project amount.
-                    Payment is saved as <strong>Pending</strong> — admin will verify it.
+                    @* Text wrapped in one <div>: .alert is flex, so loose text + <strong>
+                       would each become a separate column on a phone. *@
+                    <span class="ai">ℹ</span><div>Minimum first payment is <strong id="minPaymentLabel">₹@minFirstPayment.ToString("N0")</strong>. Cannot exceed project amount.
+                    Payment is saved as <strong>Pending</strong> — admin will verify it.</div>
                 </div>
                 <div class="alert alert-s" style="font-size:13px;display:none" id="paymentOptionalHint">
-                    <span class="ai">✅</span>Since your ID is already active, payment is <strong>optional</strong>. You can submit this request without entering any payment.
+                    <span class="ai">✅</span><div>Since your ID is already active, payment is <strong>optional</strong>. You can submit this request without entering any payment.</div>
                 </div>
 
                 <div class="fr">

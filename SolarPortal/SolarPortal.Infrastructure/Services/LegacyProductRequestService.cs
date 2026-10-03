@@ -222,7 +222,10 @@ WHERE ProdId = @ProdId;";
             cmdI.Parameters.AddWithValue("@TxnDate", (object?)input.TxnDate ?? DBNull.Value);
             cmdI.Parameters.AddWithValue("@ImageFile", (object?)input.ImageFileName ?? DBNull.Value);
             cmdI.Parameters.AddWithValue("@PayMode", input.PayModeId);
-            cmdI.Parameters.AddWithValue("@Addr", (object?)input.Address ?? DBNull.Value);
+            // UserAddress is varchar(250); the full member address can be longer.
+            cmdI.Parameters.AddWithValue("@Addr", input.Address is { Length: > 250 } addr
+                ? addr[..250]
+                : (object?)input.Address ?? DBNull.Value);
             cmdI.Parameters.AddWithValue("@City", (object?)input.City ?? DBNull.Value);
             cmdI.Parameters.AddWithValue("@Dist", (object?)input.District ?? DBNull.Value);
             object pinParam = DBNull.Value;

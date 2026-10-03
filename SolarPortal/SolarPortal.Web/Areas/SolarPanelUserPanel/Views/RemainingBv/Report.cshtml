@@ -102,10 +102,10 @@
     {
         <div class="mb-3 no-print" style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
             <a href="javascript:void(0)" class="btn btn-p"       data-f="all"      onclick="rbvFilter('all', this)">📋 All (@Model.Count)</a>
-            <a href="javascript:void(0)" class="btn btn-outline" data-f="pending"  onclick="rbvFilter('pending', this)">⏳ Pending (@pending)</a>
-            <a href="javascript:void(0)" class="btn btn-outline" data-f="approved" onclick="rbvFilter('approved', this)">✅ Approved (@approved)</a>
-            <a href="javascript:void(0)" class="btn btn-outline" data-f="rejected" onclick="rbvFilter('rejected', this)">❌ Sent back (@rejected)</a>
-            <button type="button" class="btn btn-outline" style="margin-left:auto" onclick="window.print()">🖨️ Print</button>
+            <a href="javascript:void(0)" class="btn btn-s" data-f="pending"  onclick="rbvFilter('pending', this)">⏳ Pending (@pending)</a>
+            <a href="javascript:void(0)" class="btn btn-s" data-f="approved" onclick="rbvFilter('approved', this)">✅ Approved (@approved)</a>
+            <a href="javascript:void(0)" class="btn btn-s" data-f="rejected" onclick="rbvFilter('rejected', this)">❌ Sent back (@rejected)</a>
+            <button type="button" class="btn btn-s" style="margin-left:auto" onclick="window.print()">🖨️ Print</button>
         </div>
 
         <div class="rpt-sum">
@@ -332,7 +332,7 @@
     // never be left expanded behind a filter.
     function rbvFilter(f, el) {
         document.querySelectorAll('[data-f]').forEach(function (b) {
-            b.className = (b.getAttribute('data-f') === f) ? 'btn btn-p' : 'btn btn-outline';
+            b.className = (b.getAttribute('data-f') === f) ? 'btn btn-p' : 'btn btn-s';
         });
 
         document.querySelectorAll('.rbv-det').forEach(function (d) { d.style.display = 'none'; });

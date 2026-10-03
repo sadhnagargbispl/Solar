@@ -133,9 +133,11 @@ public class SolarRequestController : Controller
             ? meUser!.FullName!
             : (meMember != null ? meMember.FullName : (meUser?.UserName ?? ""));
 
-        string profileAddress = meUser?.Address
-                              ?? meMember?.Address1
-                              ?? "";
+        // Full member address (Address1 + Address2 + Tehsil + District) wins
+        // over the Identity profile, which is blank / partial for bridged users.
+        string profileAddress = !string.IsNullOrWhiteSpace(meMember?.FullAddress)
+                              ? meMember!.FullAddress
+                              : meUser?.Address ?? "";
         string profileCity = meUser?.City ?? meMember?.City ?? "";
         string profileState = meUser?.State ?? "";       // states stored as code on MMemberMaster — skip
         string profilePin = meUser?.PinCode ?? meMember?.PinCode ?? "";
@@ -203,7 +205,7 @@ public class SolarRequestController : Controller
             {
                 ViewBag.Projects        = await _solarProjectService.GetAllAsync(activeOnly: true);
                 ViewBag.BasicProducts   = await _basicProducts.GetActiveAsync();
-                ViewBag.PayModes        = await _payModes.GetActiveAsync();
+                ViewBag.PayModes        = await GetRequestPayModesAsync();
                 ViewBag.States          = await _states.GetActiveAsync();
                 ViewBag.ProfileReadonly = true;
                 ViewBag.IsReactivation     = true;
@@ -254,7 +256,7 @@ public class SolarRequestController : Controller
                 // Allow the form to open so the user can pick a plan + fill / re-fill
                 ViewBag.Projects = await _solarProjectService.GetAllAsync(activeOnly: true);
                 ViewBag.BasicProducts = await _basicProducts.GetActiveAsync();
-                ViewBag.PayModes = await _payModes.GetActiveAsync();
+                ViewBag.PayModes = await GetRequestPayModesAsync();
                 ViewBag.States = await _states.GetActiveAsync();
 
                 if (isRejected)
@@ -326,7 +328,7 @@ public class SolarRequestController : Controller
 
         ViewBag.Projects = await _solarProjectService.GetAllAsync(activeOnly: true);
         ViewBag.BasicProducts = await _basicProducts.GetActiveAsync();
-        ViewBag.PayModes = await _payModes.GetActiveAsync();
+        ViewBag.PayModes = await GetRequestPayModesAsync();
         ViewBag.States = await _states.GetActiveAsync();
         ViewBag.ProfileReadonly = true;
         return View(new CreateSolarRequestViewModel
@@ -388,7 +390,8 @@ public class SolarRequestController : Controller
         model.ApplicantName = Keep(profileName, model.ApplicantName ?? string.Empty);
         model.MobileNumber  = Keep(meUser?.MobileNumber ?? meMember?.Mobl?.ToString(), model.MobileNumber ?? string.Empty);
         model.Email         = Keep(rawEmail, model.Email ?? string.Empty);
-        model.Address       = Keep(meUser?.Address ?? meMember?.Address1, model.Address ?? string.Empty);
+        model.Address       = Keep(!string.IsNullOrWhiteSpace(meMember?.FullAddress) ? meMember!.FullAddress : meUser?.Address,
+                                   model.Address ?? string.Empty);
         model.City          = Keep(meUser?.City ?? meMember?.City, model.City ?? string.Empty);
         // States are stored as a code on m_membermaster, so only the Identity
         // profile is authoritative here - same as the GET handler.
@@ -487,7 +490,7 @@ public class SolarRequestController : Controller
             ViewBag.IsActiveMember = true;
             ViewBag.Projects = await _solarProjectService.GetAllAsync(activeOnly: true);
             ViewBag.BasicProducts = await _basicProducts.GetActiveAsync();
-            ViewBag.PayModes = await _payModes.GetActiveAsync();
+            ViewBag.PayModes = await GetRequestPayModesAsync();
             ViewBag.States = await _states.GetActiveAsync();
             ViewBag.ProfileReadonly = true;
             ViewBag.PreservedReceiptName = model.PaymentReceipt?.FileName;
@@ -507,7 +510,7 @@ public class SolarRequestController : Controller
             ViewBag.IsActiveMember = false;
             ViewBag.Projects = await _solarProjectService.GetAllAsync(activeOnly: true);
             ViewBag.BasicProducts = await _basicProducts.GetActiveAsync();
-            ViewBag.PayModes = await _payModes.GetActiveAsync();
+            ViewBag.PayModes = await GetRequestPayModesAsync();
             ViewBag.States = await _states.GetActiveAsync();
             ViewBag.ProfileReadonly = true;
             ViewBag.PreservedReceiptName = model.PaymentReceipt?.FileName;
@@ -590,6 +593,12 @@ public class SolarRequestController : Controller
         //   1. walletreq.chqno — live cooperative master table
         //   2. Payments.UTRNumber — our own payment ledger (Rejected rows excluded)
         //
+        // Cash is hidden from the request form; block it here too so an old
+        // cached form can't still post it.
+        if (collectPayment && IsCashMode(model.PaymentMethod))
+            ModelState.AddModelError(nameof(model.PaymentMethod),
+                "Cash is not accepted for a solar request. Please choose another payment method.");
+
         // Reactivation skip: no payment is collected there.
         if (collectPayment && model.PaymentAmount > 0 && !string.IsNullOrWhiteSpace(model.PaymentUTR))
         {
@@ -660,7 +669,7 @@ public class SolarRequestController : Controller
         {
             ViewBag.Projects = await _solarProjectService.GetAllAsync(activeOnly: true);
             ViewBag.BasicProducts = await _basicProducts.GetActiveAsync();
-            ViewBag.PayModes = await _payModes.GetActiveAsync();
+            ViewBag.PayModes = await GetRequestPayModesAsync();
             ViewBag.States = await _states.GetActiveAsync();
             ViewBag.ProfileReadonly = true;
             ViewBag.IsActiveMember = isActiveMemberPost;
@@ -756,7 +765,7 @@ public class SolarRequestController : Controller
                     "Selected product is not available. Please pick another.");
                 ViewBag.Projects = await _solarProjectService.GetAllAsync(activeOnly: true);
                 ViewBag.BasicProducts = await _basicProducts.GetActiveAsync();
-                ViewBag.PayModes = await _payModes.GetActiveAsync();
+                ViewBag.PayModes = await GetRequestPayModesAsync();
                 ViewBag.States = await _states.GetActiveAsync();
                 ViewBag.ProfileReadonly = true;
                 ViewBag.IsReactivation = canReactivate;
@@ -770,7 +779,7 @@ public class SolarRequestController : Controller
                     $"\"{product.ProductName}\" is out of stock. Please pick another product.");
                 ViewBag.Projects = await _solarProjectService.GetAllAsync(activeOnly: true);
                 ViewBag.BasicProducts = await _basicProducts.GetActiveAsync();
-                ViewBag.PayModes = await _payModes.GetActiveAsync();
+                ViewBag.PayModes = await GetRequestPayModesAsync();
                 ViewBag.States = await _states.GetActiveAsync();
                 ViewBag.ProfileReadonly = true;
                 ViewBag.IsReactivation = canReactivate;
@@ -898,7 +907,7 @@ public class SolarRequestController : Controller
             {
                 ViewBag.Projects = await _solarProjectService.GetAllAsync(activeOnly: true);
                 ViewBag.BasicProducts = await _basicProducts.GetActiveAsync();
-                ViewBag.PayModes = await _payModes.GetActiveAsync();
+                ViewBag.PayModes = await GetRequestPayModesAsync();
                 ViewBag.States = await _states.GetActiveAsync();
                 ViewBag.ProfileReadonly = true;
                 ViewBag.IsActiveMember = isActiveMemberPost;
@@ -1021,7 +1030,7 @@ public class SolarRequestController : Controller
                 ModelState.AddModelError(string.Empty, error);
             ViewBag.Projects = await _solarProjectService.GetAllAsync(activeOnly: true);
             ViewBag.BasicProducts = await _basicProducts.GetActiveAsync();
-            ViewBag.PayModes = await _payModes.GetActiveAsync();
+            ViewBag.PayModes = await GetRequestPayModesAsync();
             ViewBag.States = await _states.GetActiveAsync();
             ViewBag.ProfileReadonly = true;
             ViewBag.IsActiveMember = isActiveMemberPost;
@@ -1424,19 +1433,31 @@ public class SolarRequestController : Controller
             ?? all.FirstOrDefault(p => p.SolarTypeKV == kv);
     }
 
+    // Cash is not offered when a solar request is submitted - the request
+    // payment must carry a traceable transaction. (The later Payment page
+    // still uses the full M_PayModeMaster list.)
+    private static bool IsCashMode(string? mode) =>
+        string.Equals(mode?.Trim(), "Cash", StringComparison.OrdinalIgnoreCase);
+
+    private async Task<List<PayModeDto>> GetRequestPayModesAsync() =>
+        (await _payModes.GetActiveAsync()).Where(m => !IsCashMode(m.Paymode)).ToList();
+
     /// <summary>
-    /// Cross-checks a UTR / Transaction number against both:
-    ///   1. walletreq.chqno   — live cooperative DB master
-    ///   2. Payments.UTRNumber — our own ledger, EXCLUDING Rejected payments
-    ///      (a rejected submission releases its UTR for re-use).
-    /// Returns a user-friendly error message if the UTR is already in use, else null.
+    /// Cross-checks a UTR / Cheque / Transaction number against:
+    ///   1. WalletReq.ChqNo              — live DB, IsApprove N/Y (not R)
+    ///   2. TrnProductorderDetail.txnid  — live DB, IsApprove N/Y (not R)
+    ///   3. TrnOrder.ChDDNo (numeric)    — live DB, ActiveStatus not D
+    ///   4. Payments.UTRNumber           — our own ledger, EXCLUDING Rejected
+    /// Only pending / approved rows block reuse; a rejected submission releases
+    /// its number. Returns a user-friendly error message if in use, else null.
     /// </summary>
     private async Task<string?> CheckUtrDuplicateAsync(string utr)
     {
         if (string.IsNullOrWhiteSpace(utr)) return null;
         var trimmed = utr.Trim();
 
-        // 1. walletreq master (raw SQL — table is outside our entity model).
+        // 1-3. Legacy tables (raw SQL — they are outside our entity model).
+        //      Status values there: N = pending, Y = approved, R = rejected.
         //    Use a SEPARATE SqlConnection — never wrap the DbContext's own
         //    connection in a `using` block, because disposing it leaves EF
         //    Core's DbContext with no ConnectionString for later queries.
@@ -1449,11 +1470,26 @@ public class SolarRequestController : Controller
                 using var sqlConn = new Microsoft.Data.SqlClient.SqlConnection(connStr);
                 await sqlConn.OpenAsync();
                 using var cmd = sqlConn.CreateCommand();
-                cmd.CommandText = "SELECT COUNT(1) FROM walletreq WHERE LTRIM(RTRIM(chqno)) = @utr";
+                cmd.CommandText = @"
+                    SELECT
+                      (SELECT COUNT(1) FROM WalletReq
+                        WHERE LTRIM(RTRIM(ChqNo)) = @utr AND ISNULL(IsApprove, 'N') <> 'R')
+                    + (SELECT COUNT(1) FROM TrnProductorderDetail
+                        WHERE LTRIM(RTRIM(txnid)) = @utr AND ISNULL(IsApprove, 'N') <> 'R')
+                    + (CASE WHEN @num IS NULL THEN 0 ELSE
+                        (SELECT COUNT(1) FROM TrnOrder
+                          WHERE ChDDNo = @num AND ISNULL(ActiveStatus, 'Y') <> 'D') END)";
                 var p = cmd.CreateParameter();
                 p.ParameterName = "@utr";
                 p.Value = trimmed;
                 cmd.Parameters.Add(p);
+
+                // TrnOrder.ChDDNo is numeric, so it can only match an all-digit number.
+                var pNum = cmd.CreateParameter();
+                pNum.ParameterName = "@num";
+                pNum.Value = trimmed.All(char.IsDigit) && decimal.TryParse(trimmed, out var num) && num > 0
+                    ? num : DBNull.Value;
+                cmd.Parameters.Add(pNum);
 
                 var result = await cmd.ExecuteScalarAsync();
                 var count = Convert.ToInt32(result ?? 0);

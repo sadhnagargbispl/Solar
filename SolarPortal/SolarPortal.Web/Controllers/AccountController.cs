@@ -40,8 +40,10 @@ public class AccountController : Controller
     [HttpGet]
     public IActionResult Login(string? returnUrl = null, string? panel = null)
     {
+        // Already signed in: Home/Index sends each role to its own area dashboard
+        // (a bare "Dashboard" redirect has no area and 404s).
         if (User.Identity?.IsAuthenticated == true)
-            return RedirectToAction("Index", "Dashboard");
+            return RedirectToAction("Index", "Home");
 
         ViewData["ReturnUrl"] = returnUrl;
         ViewBag.Panel = string.Equals(panel, "inc", StringComparison.OrdinalIgnoreCase) ? "inc" : "user";
@@ -217,7 +219,7 @@ public class AccountController : Controller
     public IActionResult Register()
     {
         if (User.Identity?.IsAuthenticated == true)
-            return RedirectToAction("Index", "Dashboard");
+            return RedirectToAction("Index", "Home");
         return View();
     }
 
@@ -355,7 +357,7 @@ public class AccountController : Controller
                 ApplicantName  = member.FullName,
                 MobileNumber   = member.Mobl?.ToString() ?? string.Empty,
                 Email          = member.EMail ?? string.Empty,
-                Address        = member.Address1 ?? string.Empty,
+                Address        = member.FullAddress,
                 City           = member.City ?? string.Empty,
                 State          = "Rajasthan",  // adjust if you have state mapping
                 PinCode        = member.PinCode ?? string.Empty,

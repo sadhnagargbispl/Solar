@@ -16,6 +16,8 @@ public class MMemberMaster
     public string? PanNo { get; set; }
     public string? AadharNo { get; set; }
     public string? Address1 { get; set; }
+    public string? Address2 { get; set; }
+    public string? Tehsil { get; set; }
     public string? City { get; set; }
     public string? District { get; set; }
     public decimal? StateCode { get; set; }
@@ -24,4 +26,12 @@ public class MMemberMaster
     public string? ActiveStatus { get; set; }
 
     public string FullName => $"{MemFirstName?.Trim()} {MemLastName?.Trim()}".Trim();
+
+    // Address1 + Address2 + Tehsil + District, skipping blanks. City / PinCode
+    // have their own form fields, so they are not repeated here.
+    public string FullAddress => string.Join(", ",
+        new[] { Address1, Address2, Tehsil, District }
+            .Select(s => s?.Trim())
+            .Where(s => !string.IsNullOrEmpty(s))
+            .Distinct(StringComparer.OrdinalIgnoreCase));
 }

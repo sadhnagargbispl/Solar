@@ -166,10 +166,21 @@ function animateProgressBars() {
 }
 
 // ===== SIDEBAR TOGGLE (MOBILE) =====
-function toggleSidebar() {
+// force: true = open, false = close, omitted = toggle.
+function toggleSidebar(force) {
     const sb = document.querySelector('.sidebar');
-    if (sb) sb.classList.toggle('open');
+    if (!sb) return;
+    const open = sb.classList.toggle('open', force);
+    document.body.classList.toggle('sb-open', open);
 }
+
+// Close the drawer on Escape, and when a menu link is tapped.
+document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape') toggleSidebar(false);
+});
+document.addEventListener('click', function (e) {
+    if (e.target.closest && e.target.closest('.sidebar a')) toggleSidebar(false);
+});
 
 // ===== INIT =====
 document.addEventListener('DOMContentLoaded', function () {
