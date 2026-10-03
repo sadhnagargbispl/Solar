@@ -1433,9 +1433,9 @@ public class SolarRequestController : Controller
             ?? all.FirstOrDefault(p => p.SolarTypeKV == kv);
     }
 
-    // Cash is not offered when a solar request is submitted - the request
-    // payment must carry a traceable transaction. (The later Payment page
-    // still uses the full M_PayModeMaster list.)
+    // Cash is not offered for a solar request payment - neither on the request
+    // form (Create) nor on the later Payment page / AddPayment. Every payment
+    // must carry a traceable transaction.
     private static bool IsCashMode(string? mode) =>
         string.Equals(mode?.Trim(), "Cash", StringComparison.OrdinalIgnoreCase);
 
@@ -1727,8 +1727,9 @@ public class SolarRequestController : Controller
         ViewBag.MinimumThreshold = payMin;
         ViewBag.HasMetMinimum = await _paymentService.HasMetMinimumAsync(id);
         // Payment methods come from the legacy M_PayModeMaster table so the
-        // dropdown matches the old SolFit system exactly (per spec).
-        ViewBag.PayModes = await _payModes.GetActiveAsync();
+        // dropdown matches the old SolFit system exactly (per spec) - minus
+        // Cash, which is not accepted for a solar request.
+        ViewBag.PayModes = await GetRequestPayModesAsync();
         return View(result.Data);
     }
 
@@ -1751,6 +1752,9 @@ public class SolarRequestController : Controller
         // Payment method mandatory (per spec)
         if (string.IsNullOrWhiteSpace(dto.PaymentMethod))
             return Json(new { success = false, message = "Payment Method is required." });
+
+        if (IsCashMode(dto.PaymentMethod))
+            return Json(new { success = false, message = "Cash is not accepted for a solar request. Please choose another payment method." });
 
         // UTR duplicate check — fail fast before any other validation so the
         // user sees the exact reason and doesn't lose the receipt upload to a

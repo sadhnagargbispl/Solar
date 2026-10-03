@@ -18,12 +18,12 @@
     <div class="auth-logo">
         <div class="brand-logo-lg">☀️</div>
         <h1 class="auth-title">SOLAR PORTAL</h1>
-        <p class="auth-sub">@(isInc ? "Sign in to the INC / Installer panel" : "Sign in to your account")</p>
+        <p class="auth-sub">@(isInc ? "Sign in to the INC/Job panel" : "Sign in to your account")</p>
     </div>
 
     <div class="auth-tabs">
         <a class="auth-tab @(isInc ? "" : "active")" href="@Url.Action("Login", "Account", new { panel = "user" })">&#128100; User Panel</a>
-        <a class="auth-tab @(isInc ? "active" : "")" href="@Url.Action("Login", "Account", new { panel = "inc" })">&#128736; INC Panel</a>
+        <a class="auth-tab @(isInc ? "active" : "")" href="@Url.Action("Login", "Account", new { panel = "inc" })">&#128736; INC/Job Panel</a>
     </div>
 
     <form asp-action="Login" method="post" id="loginForm">
@@ -51,7 +51,7 @@
             <a asp-action="ForgotPassword" style="font-size:12px;color:var(--sun)">Forgot password?</a>
         </div>
         <button type="submit" class="btn btn-p btn-full" style="margin-top:4px">
-            @(isInc ? "Sign In to INC Panel" : "☀️ Sign In")
+            @(isInc ? "Sign In to INC/Job Panel" : "☀️ Sign In")
         </button>
     </form>
 
