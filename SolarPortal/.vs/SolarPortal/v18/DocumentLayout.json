@@ -1,12 +1,54 @@
 {
   "Version": 1,
-  "WorkspaceRootPath": "\\\\localhost\\Sadhna\\SolerGithub\\Solar\\SolarPortal\\",
-  "Documents": [],
+  "WorkspaceRootPath": "E:\\Sadhna Garg\\SolarGithub\\Solar\\SolarPortal\\",
+  "Documents": [
+    {
+      "AbsoluteMoniker": "D:0:0:{44444444-4444-4444-4444-444444444444}|SolarPortal.Web\\SolarPortal.Web.csproj|e:\\sadhna garg\\solargithub\\solar\\solarportal\\solarportal.web\\areas\\solarpanelinstaller\\views\\installation\\index.cshtml||{40D31677-CBC0-4297-A9EF-89D907823A98}",
+      "RelativeMoniker": "D:0:0:{44444444-4444-4444-4444-444444444444}|SolarPortal.Web\\SolarPortal.Web.csproj|solutionrelative:solarportal.web\\areas\\solarpanelinstaller\\views\\installation\\index.cshtml||{40D31677-CBC0-4297-A9EF-89D907823A98}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{44444444-4444-4444-4444-444444444444}|SolarPortal.Web\\SolarPortal.Web.csproj|e:\\sadhna garg\\solargithub\\solar\\solarportal\\solarportal.web\\wwwroot\\css\\solar-theme.css||{A5401142-F49D-43DB-90B1-F57BA349E55C}",
+      "RelativeMoniker": "D:0:0:{44444444-4444-4444-4444-444444444444}|SolarPortal.Web\\SolarPortal.Web.csproj|solutionrelative:solarportal.web\\wwwroot\\css\\solar-theme.css||{A5401142-F49D-43DB-90B1-F57BA349E55C}"
+    }
+  ],
   "DocumentGroupContainers": [
     {
       "Orientation": 0,
       "VerticalTabListWidth": 256,
-      "DocumentGroups": []
+      "DocumentGroups": [
+        {
+          "DockedWidth": 200,
+          "SelectedChildIndex": 0,
+          "Children": [
+            {
+              "$type": "Document",
+              "DocumentIndex": 0,
+              "Title": "Index.cshtml",
+              "DocumentMoniker": "E:\\Sadhna Garg\\SolarGithub\\Solar\\SolarPortal\\SolarPortal.Web\\Areas\\SolarPanelInstaller\\Views\\Installation\\Index.cshtml",
+              "RelativeDocumentMoniker": "SolarPortal.Web\\Areas\\SolarPanelInstaller\\Views\\Installation\\Index.cshtml",
+              "ToolTip": "E:\\Sadhna Garg\\SolarGithub\\Solar\\SolarPortal\\SolarPortal.Web\\Areas\\SolarPanelInstaller\\Views\\Installation\\Index.cshtml",
+              "RelativeToolTip": "SolarPortal.Web\\Areas\\SolarPanelInstaller\\Views\\Installation\\Index.cshtml",
+              "ViewState": "AgIAAPECAAAAAAAAAAAwwA4DAAAuAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000759|",
+              "WhenOpened": "2026-10-03T05:43:40.555Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 1,
+              "Title": "solar-theme.css",
+              "DocumentMoniker": "E:\\Sadhna Garg\\SolarGithub\\Solar\\SolarPortal\\SolarPortal.Web\\wwwroot\\css\\solar-theme.css",
+              "RelativeDocumentMoniker": "SolarPortal.Web\\wwwroot\\css\\solar-theme.css",
+              "ToolTip": "E:\\Sadhna Garg\\SolarGithub\\Solar\\SolarPortal\\SolarPortal.Web\\wwwroot\\css\\solar-theme.css",
+              "RelativeToolTip": "SolarPortal.Web\\wwwroot\\css\\solar-theme.css",
+              "ViewState": "AgIAAKMHAAAAAAAAAAAwwNYHAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.003000|",
+              "WhenOpened": "2026-10-03T05:36:11.886Z",
+              "EditorCaption": ""
+            }
+          ]
+        }
+      ]
     }
   ]
 }

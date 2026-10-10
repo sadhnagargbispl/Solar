@@ -1,4 +1,5 @@
 E:\Sadhna Garg\SolarGithub\Solar\SolarPortal\SolarPortal.Web\obj\Release\net8.0\PubTmp\Out\SolarPortal.Web.exe
+E:\Sadhna Garg\SolarGithub\Solar\SolarPortal\SolarPortal.Web\obj\Release\net8.0\PubTmp\Out\web.config
 E:\Sadhna Garg\SolarGithub\Solar\SolarPortal\SolarPortal.Web\obj\Release\net8.0\PubTmp\Out\appsettings.Development.json
 E:\Sadhna Garg\SolarGithub\Solar\SolarPortal\SolarPortal.Web\obj\Release\net8.0\PubTmp\Out\appsettings.json
 E:\Sadhna Garg\SolarGithub\Solar\SolarPortal\SolarPortal.Web\obj\Release\net8.0\PubTmp\Out\dotnet-tools.json

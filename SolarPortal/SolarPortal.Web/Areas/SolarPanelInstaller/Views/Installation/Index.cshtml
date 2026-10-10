@@ -106,9 +106,15 @@
     void ChecklistFields()
     {
         <div class="cl-list">
-            @{ ChecklistSection("Photos", "JPG / PNG, up to 10 MB each", photoLines); }
-            @{ ChecklistSection("Cable & wire details", "Type the details", detailLines); }
-            @{ ChecklistSection("Video", "MP4 / MOV, up to 200 MB", videoLines); }
+            @{
+                ChecklistSection("Photos", "JPG / PNG, up to 10 MB each", photoLines);
+            }
+            @{
+                ChecklistSection("Cable & wire details", "Type the details", detailLines);
+            }
+            @{
+                ChecklistSection("Video", "MP4 / MOV, up to 200 MB", videoLines);
+            }
         </div>
     }
 }
@@ -133,6 +139,19 @@
     .cl-sectitle { font-size: 13px; font-weight: 700; color: #0f172a; text-transform: uppercase; letter-spacing: .04em; }
     .cl-grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
     @@media (max-width: 640px) { .cl-grid2 { grid-template-columns: 1fr; } }
+
+    /* Phone: the Mark / Update Installation modal goes full screen. The header
+       stays at the top, the checklist scrolls, Submit / Cancel stay at the
+       bottom (100dvh = the visible height, toolbar excluded). */
+    @@media (max-width: 768px) {
+        .cl-overlay { padding: 0; }
+        .cl-modal { max-width: none; height: 100vh; height: 100dvh; max-height: none; border-radius: 0; box-shadow: none; }
+        .cl-mhead, .cl-mbody, .cl-mfoot { padding-left: 14px; padding-right: 14px; }
+        .cl-mfoot { padding-bottom: calc(12px + env(safe-area-inset-bottom)); }
+        .cl-mfoot > div { flex-wrap: wrap; width: 100%; }
+        .cl-mfoot > div .btn { flex: 1 1 auto; }
+        .cl-foot-note { min-width: 0; flex-basis: 100%; }
+    }
 
     /* ── Progress ───────────────────────────────────────────────────────── */
     .cl-progress { display: flex; align-items: center; gap: 8px; font-size: 12.5px; color: #475569; }

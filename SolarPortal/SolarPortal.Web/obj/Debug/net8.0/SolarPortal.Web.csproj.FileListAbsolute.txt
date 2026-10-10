@@ -2177,3 +2177,4 @@ C:\Users\Claude1\AppData\Local\Temp\solarbuildcheck\refs\System.Xml.XmlSerialize
 C:\Users\Claude1\AppData\Local\Temp\solarbuildcheck\refs\System.Xml.XPath.dll
 C:\Users\Claude1\AppData\Local\Temp\solarbuildcheck\refs\System.Xml.XPath.XDocument.dll
 C:\Users\Claude1\AppData\Local\Temp\solarbuildcheck\refs\WindowsBase.dll
+E:\Sadhna Garg\SolarGithub\Solar\SolarPortal\SolarPortal.Web\bin\Debug\net8.0\web.config

@@ -1398,3 +1398,4 @@ E:\Sadhna Garg\SolarGithub\Solar\SolarPortal\SolarPortal.Web\obj\Release\net8.0\
 \\localhost\Sadhna\SolerGithub\Solar\SolarPortal\SolarPortal.Web\obj\Release\net8.0\SolarPortal.Web.pdb
 \\localhost\Sadhna\SolerGithub\Solar\SolarPortal\SolarPortal.Web\obj\Release\net8.0\SolarPortal.Web.genruntimeconfig.cache
 \\localhost\Sadhna\SolerGithub\Solar\SolarPortal\SolarPortal.Web\obj\Release\net8.0\ref\SolarPortal.Web.dll
+E:\Sadhna Garg\SolarGithub\Solar\SolarPortal\SolarPortal.Web\bin\Release\net8.0\web.config
